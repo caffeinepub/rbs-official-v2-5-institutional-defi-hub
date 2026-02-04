@@ -1,0 +1,95 @@
+{
+  "kind": "build_request",
+  "title": "Unify AI Sentiment + Market Intel, fix passcode lock/unlock gating, and replace Voting page with coming-soon",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Combine AI sentiment and market Intel in only one"
+        ]
+      },
+      "acceptanceCriteria": [
+        "There is one primary route/page for the combined experience (Market Intel + AI Sentiment).",
+        "Bottom navigation no longer presents AI Sentiment as a separate destination from Market Intel (either removed or redirected to the unified page).",
+        "No blank/placeholder AI sentiment page is reachable (current AISentimentPage is not exposed as an empty page)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "fix code unlock and lock B2420075112009P and make sure that signal providing required unlock while the content of AI sentiment must remain open"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When the user is locked (no Market Intel access), the unified page still renders AI Sentiment content normally.",
+        "When locked, Market Intel signal UI is not shown and signal data is not fetched/computed (no standard or binary signal queries execute while locked).",
+        "Entering passcode \"B2420075112009P\" unlocks Market Intel and enables selecting assets/timeframes and viewing signals.",
+        "Locking (with passcode) reliably revokes access, clears any previously displayed signal results, and returns the Market Intel area to the locked state without requiring a refresh.",
+        "After locking, attempting to refresh or change assets/timeframes does not show any signals unless unlocked again."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "fix every other sections theme fix them more better"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All major pages reachable from BottomNav use consistent theme primitives (background treatment, card styling, headings/body typography, and readable contrast in light/dark).",
+        "No page has noticeably broken readability (e.g., low-contrast text on similar background) compared to the unified theme.",
+        "Spacing and component styling feel consistent across pages (cards, buttons, section headers)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "in vote section remove every content in it and write bold that voting session will coming soon"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The /community-voting page displays only the bold text \"Voting session will coming soon\" and no other voting content, metrics, proposals, or buttons.",
+        "User-facing text matches exactly: \"Voting session will coming soon\"."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not modified).",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/*."
+  ],
+  "nonGoals": [
+    "Do not add third-party authentication providers (only Internet Identity is supported).",
+    "Do not add real-time sockets/chat or push notifications.",
+    "Do not introduce external databases or non-Motoko backend services.",
+    "Do not change the passcode value (must remain exactly \"B2420075112009P\")."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

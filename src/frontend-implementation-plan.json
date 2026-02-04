@@ -1,0 +1,117 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Unified Market Intel + AI Sentiment page, corrected lock gating, consistent Interlink-ID theme, and Voting coming-soon placeholder",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Unify Market Intel and AI Sentiment into one primary page/route and update navigation so there is only one entry point.",
+      "acceptanceCriteria": [
+        "There is one primary route/page for the combined experience (Market Intel + AI Sentiment).",
+        "Bottom navigation no longer presents AI Sentiment as a separate destination from Market Intel (either removed or redirected to the unified page).",
+        "No blank/placeholder AI sentiment page is reachable (current AISentimentPage is not exposed as an empty page)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/BottomNav.tsx",
+          "operation": "modify",
+          "description": "Remove the separate bottom-nav item for \"/ai-sentiment\" so users have a single navigation entry point into the unified Market Intel + AI Sentiment section. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Update routing so \"/market-intel\" remains the single primary unified route, and the \"/ai-sentiment\" route no longer exposes a separate page experience (wire it to a redirect-only page component). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AISentimentPage.tsx",
+          "operation": "modify",
+          "description": "Replace the empty placeholder with a redirect-only implementation that navigates users from \"/ai-sentiment\" to the unified \"/market-intel\" route (no standalone AI sentiment page UI). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Fix passcode lock/unlock gating so AI Sentiment stays accessible when locked, while Market Intel signals/computation remain inaccessible and cleared upon re-lock.",
+      "acceptanceCriteria": [
+        "When the user is locked (no Market Intel access), the unified page still renders AI Sentiment content normally.",
+        "When locked, Market Intel signal UI is not shown and signal data is not fetched/computed (no standard or binary signal queries execute while locked).",
+        "Entering passcode \"B2420075112009P\" unlocks Market Intel and enables selecting assets/timeframes and viewing signals.",
+        "Locking (with passcode) reliably revokes access, clears any previously displayed signal results, and returns the Market Intel area to the locked state without requiring a refresh.",
+        "After locking, attempting to refresh or change assets/timeframes does not show any signals unless unlocked again."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add frontend-side gating support to Market Intel React Query hooks so Market Intel signal queries can be disabled when locked (e.g., accept an explicit enabled flag and ensure query execution is suppressed while locked). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Refactor the unified page layout so AI Sentiment content always renders regardless of lock state, while the Market Intel section is passcode-gated. Ensure Market Intel selectors/signal cards are not rendered when locked, and ensure Market Intel queries are disabled unless unlocked. On re-lock, clear local Market Intel UI state (selected asset/timeframe/mode) and clear any cached signal query results via React Query to prevent signals from reappearing until re-unlocked. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Standardize Interlink-ID-inspired theme primitives across major pages for consistent typography, spacing, contrast, and card/background styling.",
+      "acceptanceCriteria": [
+        "All major pages reachable from BottomNav use consistent theme primitives (background treatment, card styling, headings/body typography, and readable contrast in light/dark).",
+        "No page has noticeably broken readability (e.g., low-contrast text on similar background) compared to the unified theme.",
+        "Spacing and component styling feel consistent across pages (cards, buttons, section headers)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Introduce/standardize reusable theme utility classes (e.g., consistent page shell background, section spacing, and card wrappers) that align with the existing Interlink-ID tokens and contrast rules, so pages can share the same primitives without duplicating bespoke gradients/styles. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Adopt the standardized theme primitives for the unified Market Intel + AI Sentiment page (page shell, section spacing, consistent card wrappers/typography) and remove any one-off styling that causes mismatched visual treatment versus the rest of the site. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Ensure the coming-soon placeholder page uses the standardized theme primitives (page shell and typography) for consistent look-and-feel with other BottomNav destinations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CommunityGovernancePage.tsx",
+          "operation": "modify",
+          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
+          "operation": "modify",
+          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "modify",
+          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "modify",
+          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Replace Community Voting page content with a single bold coming-soon message.",
+      "acceptanceCriteria": [
+        "The /community-voting page displays only the bold text \"Voting session will coming soon\" and no other voting content, metrics, proposals, or buttons.",
+        "User-facing text matches exactly: \"Voting session will coming soon\"."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Remove all existing voting/proposals UI and render only a single bold message with the exact text: \"Voting session will coming soon\". Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

@@ -1,2 +1,3 @@
-# rbs-official-v2-5-institutional-defi-hub
-Exported from Caffeine project: RBS Official V2.5 Institutional DeFi Hub
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

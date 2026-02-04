@@ -1,0 +1,92 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-combine-ai-sentiment-and-market-intelligence-into-a-single-unified-page-route-so-users-access-both-from-one-place-no-separate-ai-sentiment-page-experience-update-navigation-accordingly-so-there-is-only-one-entry-point-for-the-combined-section",
+      "featureTitle": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
+      "files": [
+        "frontend/src/components/BottomNav.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-fix-market-intel-unlock-lock-behavior-using-passcode-b2420075112009p-so-that-a-ai-sentiment-content-remains-accessible-without-unlocking-and-b-trading-signals-and-any-market-intelligence-computation-results-remain-inaccessible-until-unlocked-re-locking-must-reliably-remove-access-and-prevent-signals-from-displaying-again-until-re-unlocked",
+      "featureTitle": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-and-standardize-the-visual-theme-across-all-site-sections-pages-so-the-interlink-id-inspired-styling-is-applied-consistently-typography-spacing-contrast-card-styles-backgrounds-and-any-sections-still-using-mismatched-older-styles-are-updated-to-match-the-rest-of-the-site",
+      "featureTitle": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
+      "files": [
+        "frontend/src/index.css",
+        "frontend/src/pages/CommunityVotingPage.tsx",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-community-voting-page-to-remove-all-existing-voting-proposals-ui-and-replace-it-with-a-single-bold-placeholder-message-voting-session-will-coming-soon",
+      "featureTitle": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
+      "files": [
+        "frontend/src/pages/CommunityVotingPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
