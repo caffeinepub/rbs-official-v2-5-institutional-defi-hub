@@ -6,8 +6,6 @@ import { Footer } from './components/Footer';
 import { BottomNav } from './components/BottomNav';
 import HomePage from './pages/HomePage';
 import MarketIntelPage from './pages/MarketIntelPage';
-import AdvancedAnalyticsPage from './pages/AdvancedAnalyticsPage';
-import LivePricePage from './pages/LivePricePage';
 import CommunityVotingPage from './pages/CommunityVotingPage';
 import AcquisitionPage from './pages/AcquisitionPage';
 import WhitepaperPage from './pages/WhitepaperPage';
@@ -22,6 +20,8 @@ import CommunityHighlightsPage from './pages/CommunityHighlightsPage';
 import SecurityTransparencyPage from './pages/SecurityTransparencyPage';
 import TestimonialsPage from './pages/TestimonialsPage';
 import InsightsPage from './pages/InsightsPage';
+import MarketPulsePage from './pages/MarketPulsePage';
+import AlertsCenterPage from './pages/AlertsCenterPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,24 +62,6 @@ const marketIntelRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/market-intel',
   component: MarketIntelPage,
-});
-
-const advancedAnalyticsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/advanced-analytics',
-  component: AdvancedAnalyticsPage,
-});
-
-const aiSentimentRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/ai-sentiment',
-  component: MarketIntelPage,
-});
-
-const livePriceRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/live-price',
-  component: LivePricePage,
 });
 
 const communityVotingRoute = createRoute({
@@ -166,12 +148,21 @@ const securityTransparencyRoute = createRoute({
   component: SecurityTransparencyPage,
 });
 
+const marketPulseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/market-pulse',
+  component: MarketPulsePage,
+});
+
+const alertsCenterRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/alerts-center',
+  component: AlertsCenterPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   marketIntelRoute,
-  advancedAnalyticsRoute,
-  aiSentimentRoute,
-  livePriceRoute,
   communityVotingRoute,
   acquisitionRoute,
   testimonialsRoute,
@@ -186,6 +177,8 @@ const routeTree = rootRoute.addChildren([
   ecosystemGrowthRoute,
   communityHighlightsRoute,
   securityTransparencyRoute,
+  marketPulseRoute,
+  alertsCenterRoute,
 ]);
 
 const router = createRouter({ routeTree });

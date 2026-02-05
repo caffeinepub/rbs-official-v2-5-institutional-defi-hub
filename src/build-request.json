@@ -1,92 +1,186 @@
 {
   "kind": "build_request",
-  "title": "Unify AI Sentiment + Market Intel, fix passcode lock/unlock gating, and replace Voting page with coming-soon",
-  "priority": "high",
+  "title": "Unify Market Intel gating (AI Sentiment always visible), remove Live Price/Analytics, redesign key sections, add stronger animations, expand Whitepaper + FAQ, and add new real-time oriented pages",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Combine AI sentiment and market Intel in only one"
-        ]
-      },
-      "acceptanceCriteria": [
-        "There is one primary route/page for the combined experience (Market Intel + AI Sentiment).",
-        "Bottom navigation no longer presents AI Sentiment as a separate destination from Market Intel (either removed or redirected to the unified page).",
-        "No blank/placeholder AI sentiment page is reachable (current AISentimentPage is not exposed as an empty page)."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
+      "text": "Fix Market Intel access gating so that AI Sentiment content is always visible without any unlock, while Market Intelligence signals + market data remain fully hidden and do not fetch/compute until the user successfully unlocks with the passcode. Keep both AI Sentiment and the gated signals inside the same Market Intel page/section.",
       "target": "both",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "fix code unlock and lock B2420075112009P and make sure that signal providing required unlock while the content of AI sentiment must remain open"
+          "AI Sentiment content = always visible inside Market Intel (no unlock required)",
+          "Trading signals + market data = hidden until passcode unlock, then fully functional",
+          "Signals must not load or compute at all before unlock",
+          "fix market intel and the AI sentiment content must already unlocked in market intel section and the signal must work after unlock hope you understand it"
         ]
       },
       "acceptanceCriteria": [
-        "When the user is locked (no Market Intel access), the unified page still renders AI Sentiment content normally.",
-        "When locked, Market Intel signal UI is not shown and signal data is not fetched/computed (no standard or binary signal queries execute while locked).",
-        "Entering passcode \"B2420075112009P\" unlocks Market Intel and enables selecting assets/timeframes and viewing signals.",
-        "Locking (with passcode) reliably revokes access, clears any previously displayed signal results, and returns the Market Intel area to the locked state without requiring a refresh.",
-        "After locking, attempting to refresh or change assets/timeframes does not show any signals unless unlocked again."
+        "When logged out or not unlocked, the Market Intel page still renders an AI Sentiment section with visible content.",
+        "Before unlock, no React Query requests for ['marketIntelligence', ...] or ['binarySignal', ...] execute and no market fetch is attempted.",
+        "After unlock, selecting an asset/timeframe triggers signals to load and render reliably for both Standard and Binary modes."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Correct backend Market Intel unlock semantics to be per-user and consistent with the frontend: (1) unlock must require the passcode every time, (2) lock must require the passcode, (3) checkMarketIntelAccess must reflect the user's current unlocked state (not merely that a principal once unlocked), and (4) remove any global shared unlock flag behavior that allows one user's action to affect another user.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Signals must not load or compute at all before unlock",
+          "passcode unlock/lock UI",
+          "Signals + market data fully gated behind passcode B2420075112009P"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Unlocking Market Intel for one principal does not unlock it for any other principal.",
+        "checkMarketIntelAccess returns true only when the caller is currently unlocked (and false immediately after lock).",
+        "Locking requires the passcode and immediately prevents any subsequent gated reads until the user unlocks again with the passcode.",
+        "The passcode remains exactly: B2420075112009P."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
+      "text": "Update the Market Intel frontend lock/unlock flow to match the required behavior: show AI Sentiment regardless of lock state; show a gated 'Signals Locked' panel with passcode input when locked; add a manual 'Lock Market Intel' control when unlocked that requires passcode confirmation; on lock, clear selected asset/timeframe state and clear cached Market Intel/Binary query data so signals cannot remain visible from cache.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "fix every other sections theme fix them more better"
+          "AI Sentiment content = always visible inside Market Intel (no unlock required)",
+          "Signals must not load or compute at all before unlock",
+          "remove live price and analytics section"
         ]
       },
       "acceptanceCriteria": [
-        "All major pages reachable from BottomNav use consistent theme primitives (background treatment, card styling, headings/body typography, and readable contrast in light/dark).",
-        "No page has noticeably broken readability (e.g., low-contrast text on similar background) compared to the unified theme.",
-        "Spacing and component styling feel consistent across pages (cards, buttons, section headers)."
+        "When locked, the page shows AI Sentiment plus an unlock panel, and does not show any signal cards/indicator results.",
+        "When unlocked, the user can lock via a passcode confirmation dialog and the UI clears prior signal results.",
+        "After relock, revisiting the page does not show prior signals unless unlocked again."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
+      "text": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "in vote section remove every content in it and write bold that voting session will coming soon"
+          "remove live price and analytics section"
         ]
       },
       "acceptanceCriteria": [
-        "The /community-voting page displays only the bold text \"Voting session will coming soon\" and no other voting content, metrics, proposals, or buttons.",
-        "User-facing text matches exactly: \"Voting session will coming soon\"."
+        "BottomNav no longer displays 'Live Price' or 'Analytics'.",
+        "Navigating to /live-price or /advanced-analytics is not possible via in-app navigation and the routes are not registered in App routing."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Fix all sections above design",
+          "Insight Testimonials Security Highlights Ecosystem"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Insights, Testimonials, Security, Community Highlights, and Ecosystem pages share consistent background treatment, typography scale, and card styling.",
+        "No page has low-contrast text (readability issues) against its background.",
+        "Section headers and spacing patterns are consistent across these pages."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "More noticeable motions"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Major page sections reveal with noticeable but readable animations (not just subtle fades).",
+        "At least one reusable smoky left↔right transition effect is applied consistently across multiple pages/sections."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Expand the Whitepaper content by increasing length/coverage: add additional chapters and/or deepen existing chapters with more structured subsections, ensuring the chapter navigation remains accurate and scroll-based active tracking still works correctly.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "increase length of whitepaper"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Whitepaper has noticeably more content (additional sections/chapters and deeper coverage).",
+        "Chapter sidebar navigation still scrolls to the correct sections and the active chapter updates while scrolling."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "more questions in FAQ"
+        ]
+      },
+      "acceptanceCriteria": [
+        "FAQ includes additional Q/A entries beyond the current set.",
+        "Collapsible expand/collapse behavior remains functional and visually consistent."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add more other features and sections",
+          "new sections on you own best live real time"
+        ]
+      },
+      "acceptanceCriteria": [
+        "At least two new pages or major sections are added and are reachable from navigation.",
+        "New sections are consistent with the existing theme and use noticeable motion design.",
+        "New sections do not add back Live Price or Advanced Analytics pages."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not modified).",
-    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/*."
+    "Backend must remain a single Motoko actor in backend/main.mo; only add migration.mo changes if state schema changes require it.",
+    "Do not modify files under frontend/src/components/ui (Shadcn) or any frontend immutablePaths listed in SYSTEM_CONTEXT.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Do not add third-party authentication providers (only Internet Identity is supported).",
-    "Do not add real-time sockets/chat or push notifications.",
-    "Do not introduce external databases or non-Motoko backend services.",
-    "Do not change the passcode value (must remain exactly \"B2420075112009P\")."
+    "No third-party authentication providers beyond Internet Identity.",
+    "No WebSocket or real-time chat features.",
+    "No external database integrations."
   ],
   "imageRequirements": {
     "required": [],

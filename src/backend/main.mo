@@ -8,12 +8,9 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
-import List "mo:core/List";
-import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import Migration "migration";
 
-// Specify the data migration function in with-clause
 (with migration = Migration.run)
 actor {
   include MixinStorage();
@@ -102,9 +99,7 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   let submissions = Map.empty<Nat, FormSubmission>();
   let timers = Map.empty<Text, TimerState>();
-
   let marketIntelAccess = Map.empty<Principal, Int>();
-  var isMarketIntelUnlocked : Bool = false; // Track unlock state
   let marketIntelligenceStore = Map.empty<Nat, MarketIntelligence>();
 
   let testimonialsStore = Map.empty<Nat, Text>();
@@ -121,7 +116,6 @@ actor {
 
   var currentId = 0;
   var nextMIId = 1;
-
   var lastEconomyUpdate : Int = 0;
 
   let maxSubmissions = 5000;
@@ -244,83 +238,55 @@ actor {
 
   // Market Intel Access Control
   func hasMarketIntelAccess(caller : Principal) : Bool {
-    switch (marketIntelAccess.get(caller)) {
-      case (null) { false };
-      case (?_) { true };
-    };
+    marketIntelAccess.containsKey(caller);
   };
 
   // Checks if the caller has access to the full Market Intelligence suite
   func hasFullMarketIntelAccess(caller : Principal) : Bool {
-    hasMarketIntelAccess(caller) and isMarketIntelUnlocked;
-  };
-
-  // Checks if the caller has access to AI Sentiment only
-  func hasAISentimentAccess(caller : Principal) : Bool {
-    true; 
+    hasMarketIntelAccess(caller);
   };
 
   public shared ({ caller }) func grantMarketIntelAccess(password : Text) : async Bool {
-    // Require authenticated user (not anonymous/guest)
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only authenticated users can request Market Intel access");
     };
-    
-    switch (marketIntelAccess.get(caller)) {
-      case (?_) {
-        if (password != marketIntelPassword) {
-          return false;
-        };
-        isMarketIntelUnlocked := not isMarketIntelUnlocked;
-        return isMarketIntelUnlocked;
-      };
-      case (null) {
-        if (password != marketIntelPassword) {
-          return false;
-        };
-        marketIntelAccess.add(caller, Time.now());
-        isMarketIntelUnlocked := true;
-        return true;
-      };
+
+    if (password != marketIntelPassword) {
+      return false;
     };
+
+    marketIntelAccess.add(caller, Time.now());
+    true;
   };
 
   public shared ({ caller }) func revokeMarketIntelAccessWithPassword(password : Text) : async Bool {
-    // Require authenticated user (not anonymous/guest)
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only authenticated users can revoke Market Intel access");
     };
-    
+
+    if (password != marketIntelPassword) {
+      return false;
+    };
+
     switch (marketIntelAccess.get(caller)) {
       case (?_) {
-        if (password != marketIntelPassword) {
-          return false;
-        };
-        isMarketIntelUnlocked := not isMarketIntelUnlocked;
-        return not isMarketIntelUnlocked;
+        marketIntelAccess.remove(caller);
+        true;
       };
-      case (null) {
-        return false;
-      };
+      case (null) { false };
     };
   };
 
   public query ({ caller }) func checkMarketIntelAccess() : async Bool {
-    // Require authenticated user (not anonymous/guest)
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only authenticated users can check Market Intel access");
     };
-    
     hasMarketIntelAccess(caller);
   };
 
-  public query ({ caller }) func checkMarketIntelUnlockStatus() : async Bool {
-    // Require authenticated user (not anonymous/guest)
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can check Market Intel unlock status");
-    };
-    
-    isMarketIntelUnlocked;
+  // AI Sentiment Access is always enabled for all users
+  public query ({ caller }) func hasAISentimentAccess() : async Bool {
+    true;
   };
 
   public shared ({ caller }) func submitForm(name : Text, country : Text, walletAddress : Text, rbsAmount : Float, isPresale : Bool) : async Nat {
@@ -607,7 +573,9 @@ actor {
   // Public read access for content records (intentional for public website content)
   public query func getRecords(recordType : Text) : async [Text] {
     switch (recordType) {
-      case ("testimonial") { testimonialsStore.values().toArray() };
+      case ("testimonial") {
+        testimonialsStore.values().toArray();
+      };
       case ("insight") { insightsStore.values().toArray() };
       case ("faq") { faqStore.values().toArray() };
       case ("governance") { governanceStore.values().toArray() };
@@ -674,5 +642,53 @@ actor {
     };
 
     submissions.clear();
+  };
+
+  // Utility functions for demonstration. In production, handle these responsibly.
+  public query ({ caller }) func getAllUsers() : async [(Principal, UserProfile)] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can view all users");
+    };
+    userProfiles.toArray();
+  };
+
+  public query ({ caller }) func getAllTimers() : async [(Text, TimerState)] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can view all timers");
+    };
+    timers.toArray();
+  };
+
+  public query func getCurrentId() : async Nat { currentId };
+  public query func getRecordCounts() : async {
+    testimonials : Nat;
+    insights : Nat;
+    faqs : Nat;
+    governance : Nat;
+    ecosystem : Nat;
+    whitepaper : Nat;
+    roadmap : Nat;
+    about : Nat;
+    community : Nat;
+    security : Nat;
+    contact : Nat;
+  } {
+    {
+      testimonials = testimonialsStore.size();
+      insights = insightsStore.size();
+      faqs = faqStore.size();
+      governance = governanceStore.size();
+      ecosystem = ecosystemStore.size();
+      whitepaper = whitepaperStore.size();
+      roadmap = roadmapStore.size();
+      about = aboutStore.size();
+      community = communityStore.size();
+      security = securityStore.size();
+      contact = contactStore.size();
+    };
+  };
+
+  public query func getTimerStates() : async [(Text, TimerState)] {
+    timers.toArray();
   };
 };

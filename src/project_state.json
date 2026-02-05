@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "Project is shifting toward a multi-page, professional crypto-token website experience (Interlink-ID-inspired theme) while preserving existing core sections and functionality, with a unified real-time analytics hub that combines Market Intelligence + AI Sentiment, passcode-gated signal access, and improved section theming/UX consistency across the site.",
+  "projectStateVersion": 12,
+  "summary": "RBS Official V2.5 “Institutional DeFi Hub” is a React + TypeScript single-page website deployed with an Internet Computer (ICP) Motoko backend canister. The frontend provides a marketing/info site (home, tokenomics, roadmap, whitepaper, governance, ecosystem, security, testimonials, insights, etc.), an Acquisition Portal for presale/airdrop registrations (submitted to the canister), and a passcode-gated “Unified Analytics Platform” that fetches real-time market data from external APIs (CoinGecko + exchangerate.host) to compute technical indicators and trading signals (standard + binary modes). Authentication is handled via Internet Identity; backend enforces role-based permissions (admin/user/guest), form submission access, and market-intel access grants per principal.",
   "existing_features": [
     {
       "id": "IF-1",
@@ -245,34 +245,42 @@
       "version": 1
     },
     {
-      "id": "feature-combine-ai-sentiment-and-market-intelligence-into-a-single-unified-page-route-so-users-access-both-from-one-place-no-separate-ai-sentiment-page-experience-update-navigation-accordingly-so-there-is-only-one-entry-point-for-the-combined-section",
-      "title": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-market-intel-unlock-lock-behavior-using-passcode-b2420075112009p-so-that-a-ai-sentiment-content-remains-accessible-without-unlocking-and-b-trading-signals-and-any-market-intelligence-computation-results-remain-inaccessible-until-unlocked-re-locking-must-reliably-remove-access-and-prevent-signals-from-displaying-again-until-re-unlocked",
-      "title": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-and-standardize-the-visual-theme-across-all-site-sections-pages-so-the-interlink-id-inspired-styling-is-applied-consistently-typography-spacing-contrast-card-styles-backgrounds-and-any-sections-still-using-mismatched-older-styles-are-updated-to-match-the-rest-of-the-site",
-      "title": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-community-voting-page-to-remove-all-existing-voting-proposals-ui-and-replace-it-with-a-single-bold-placeholder-message-voting-session-will-coming-soon",
-      "title": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
+      "id": "feature-remove-the-live-price-and-advanced-analytics-pages-sections-from-the-app-delete-their-routes-from-the-router-remove-their-navigation-entries-from-bottomnav-and-ensure-there-are-no-dead-links-to-live-price-or-advanced-analytics-anywhere-in-the-ui",
+      "title": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
       "reqIds": [
         "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-and-modernize-the-visual-design-consistency-theme-spacing-typography-contrast-readability-for-these-sections-pages-insights-testimonials-security-highlights-and-ecosystem-ensure-they-all-match-a-single-coherent-site-theme-and-are-visually-consistent-with-each-other-and-with-the-rest-of-the-site",
+      "title": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-more-noticeable-motion-design-across-the-site-parallax-ambient-movement-stronger-section-reveal-animations-and-smoky-left-to-right-right-to-left-transitions-while-keeping-content-readable-and-not-harming-usability",
+      "title": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-more-faq-questions-with-expandable-answers-and-ensure-the-faq-styling-remains-consistent-with-the-unified-theme-and-improved-readability",
+      "title": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-new-non-aura-sections-features-implementer-chosen-that-strengthen-the-site-as-a-professional-real-time-oriented-platform-and-integrate-them-into-navigation-and-the-unified-theme-these-additions-must-not-reintroduce-live-price-or-advanced-analytics-as-separate-pages",
+      "title": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+      "reqIds": [
+        "REQ-9"
       ],
       "version": 1
     }
@@ -280,26 +288,106 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Combine AI Sentiment and Market Intelligence into one unified analytics hub with separate areas in the same section/page",
+      "summary": "Fix Market Intel so signals load reliably (real-time) and only after passcode unlock; AI Sentiment content should remain visible without unlock within the same Market Intel section.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Fix Market Intel lock/unlock flow using passcode B2420075112009P; require unlock to view/compute trading signals while AI Sentiment content remains accessible without unlock",
+      "summary": "Unify/finish Interlink-ID-inspired theme across all remaining sections and improve readability; add additional site-wide animations (including smoky left-to-right/right-to-left effects).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Update Voting section to remove current content and replace with bold placeholder text: \"Voting session will coming soon\"",
+      "summary": "Remove Live Price and Advanced Analytics sections/pages from the website.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Apply and standardize the new theme across all remaining sections (fix sections where theme didn’t change) and improve overall design consistency",
+      "summary": "Increase Whitepaper length/coverage and add more FAQ questions with toggle answers.",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add additional non-“aura farming” new sections/features across the site (beyond existing pages) while keeping current sections and functionality intact; include improved navigation/service links and richer content.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Fix/modernize visual design consistency for Insights, Testimonials, Security, Highlights, and Ecosystem sections (readability/visibility issues).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Upgrade site-wide motion design to more noticeable animations (parallax/ambient motion + left↔right smoky transitions) across pages.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add new multi-page sections/features (non-aura) chosen by implementer to improve completeness and professionalism while keeping existing functionality intact.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Update Market Intel passcode to B2420075112009P and ensure lock/unlock flow requires passcode on every unlock and every re-lock; include a working manual re-lock button.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Enhance Market Intel to cover 20 assets total (top 10 crypto + top 10 forex including XAU, XAG and major FX pairs) and add Binary Trading mode alongside standard trading, both gated behind passcode.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Unify Market Intel + AI Sentiment into one Market Intel section with separate sub-areas/tabs: AI Sentiment always visible without passcode; trading signals/market data hidden and must not fetch/compute until unlocked.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Remove Developer Audits/Developer Tools section(s) from the site and navigation (keep other sections/features intact).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Fix Market Intel access gating so that AI Sentiment content is always visible without any unlock, while Market Intelligence signals + market data remain fully hidden and do not fetch/compute until the user successfully unlocks with the passcode. Keep both AI Sentiment and the gated signals inside the same Market Intel page/section.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Correct backend Market Intel unlock semantics to be per-user and consistent with the frontend: (1) unlock must require the passcode every time, (2) lock must require the passcode, (3) checkMarketIntelAccess must reflect the user's current unlocked state (not merely that a principal once unlocked), and (4) remove any global shared unlock flag behavior that allows one user's action to affect another user.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Update the Market Intel frontend lock/unlock flow to match the required behavior: show AI Sentiment regardless of lock state; show a gated 'Signals Locked' panel with passcode input when locked; add a manual 'Lock Market Intel' control when unlocked that requires passcode confirmation; on lock, clear selected asset/timeframe state and clear cached Market Intel/Binary query data so signals cannot remain visible from cache.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Expand the Whitepaper content by increasing length/coverage: add additional chapters and/or deepen existing chapters with more structured subsections, ensuring the chapter navigation remains accurate and scroll-based active tracking still works correctly.",
+      "reqIds": [
+        "REQ-7"
+      ],
       "status": "pending"
     }
   ],
@@ -312,7 +400,9 @@
     "Market intelligence “live” analytics are computed client-side; the backend mainly provides access gating and also includes a separate admin-only MarketIntelligence store that is not used by the live UI.",
     "ICP management-style HTTP outcall helper exists (GET/POST + transform) with fixed cycle budgeting; response headers are stripped in transform.",
     "A blob-storage subsystem exists for gateway authorization and dead-blob pruning, plus a cashier refill/top-up flow using cycles.",
-    "Access gating requirement: Market Intelligence signal generation/display must be blocked unless passcode B2420075112009P is verified; AI Sentiment panel remains publicly visible within the same Analytics hub."
+    "Market Intel gating requirement: AI Sentiment content must always be visible without passcode; trading signals/market data must be hidden and must not fetch/compute until passcode unlock; after lock/re-lock, passcode must be required again for access.",
+    "Market Intel expansion requirement: support both crypto and forex asset universes (20 total) and include both standard and binary trading modes; protected market data/signals must not fetch/compute until passcode unlock, while AI Sentiment remains publicly visible within the same section.",
+    "Market Intel access flow requirement: passcode must be required on every unlock and every manual re-lock; provide an explicit re-lock control in the UI."
   ],
   "known_issues": [
     "Hard-coded secrets: market intel password is embedded in backend (marketIntelPassword) and referenced in frontend copy; admin token is passed via URL hash parameter (though cleared) and used to initialize access control.",
@@ -324,13 +414,14 @@
     "Indicator/signal generation intentionally uses randomness/seeded math; results are not fully deterministic and may change frequently (seed uses Date.now slicing).",
     "Backend constant maxSubmissions is defined but not enforced; submissions can grow unbounded until memory limits.",
     "Role initialization requires calling _initializeAccessControlWithSecret before other role-checked calls; direct callers who skip initialization can hit traps like \"User is not registered\".",
-    "Market Intel lock/unlock behavior and passcode gating are still unreliable; signals can appear without proper unlock or fail to lock again.",
-    "Theme redesign is inconsistently applied across sections; some pages/components remain with old styling, causing readability/visibility issues.",
-    "Voting section content needs to be replaced with a \"coming soon\" placeholder per latest requirement."
+    "Market Intel currently not working properly (fails to load / does not provide correct signals) and passcode lock/unlock behavior is not correctly enforced (signals should require unlock while AI Sentiment remains open).",
+    "Some sections still have inconsistent theme/styling; content visibility/readability issues remain.",
+    "Some sections (Insights/Testimonials/Security/Highlights/Ecosystem) have design/visibility/readability problems; components are not clearly visible or consistent with the chosen theme.",
+    "Market Intel passcode value and lock/unlock behavior are inconsistent across iterations (needs update to B2420075112009P and enforce passcode on every unlock and re-lock)."
   ],
   "isFixRequest": true,
   "gameProjectType": "none",
   "projectName": "RBS Official V2.5 Institutional DeFi Hub",
-  "clarification_mode": "instant",
+  "clarification_mode": "pro",
   "clarification_rounds": 0
 }

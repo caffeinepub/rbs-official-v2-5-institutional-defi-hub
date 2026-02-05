@@ -1,69 +1,130 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T03:43:53.805Z",
+  "generatedAt": "2026-02-04T04:09:28.633Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 9,
+    "implemented": 5,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
-        "status": "implemented",
+        "summary": "Fix Market Intel access gating so that AI Sentiment content is always visible without any unlock, while Market Intelligence signals + market data remain fully hidden and do not fetch/compute until the user successfully unlocks with the passcode. Keep both AI Sentiment and the gated signals inside the same Market Intel page/section.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/pages/AISentimentPage.tsx"
+          "frontend/src/pages/MarketIntelPage.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ],
-        "matchedFiles": [
-          "frontend/src/components/BottomNav.tsx"
-        ]
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/MarketIntelPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/MarketIntelPage.tsx"
-        ]
+        "summary": "Correct backend Market Intel unlock semantics to be per-user and consistent with the frontend: (1) unlock must require the passcode every time, (2) lock must require the passcode, (3) checkMarketIntelAccess must reflect the user's current unlocked state (not merely that a principal once unlocked), and (4) remove any global shared unlock flag behavior that allows one user's action to affect another user.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
-        "status": "implemented",
+        "summary": "Update the Market Intel frontend lock/unlock flow to match the required behavior: show AI Sentiment regardless of lock state; show a gated 'Signals Locked' panel with passcode input when locked; add a manual 'Lock Market Intel' control when unlocked that requires passcode confirmation; on lock, clear selected asset/timeframe state and clear cached Market Intel/Binary query data so signals cannot remain visible from cache.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/index.css",
           "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/pages/CommunityVotingPage.tsx",
-          "frontend/src/pages/CommunityGovernancePage.tsx",
-          "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "frontend/src/pages/LivePricePage.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/pages/CommunityVotingPage.tsx"
-        ]
+        "matchedFiles": []
       },
       {
         "id": "REQ-4",
-        "summary": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
+        "summary": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/CommunityVotingPage.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/src/pages/LivePricePage.tsx",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/CommunityVotingPage.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/src/pages/LivePricePage.tsx",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/InsightsPage.tsx",
+          "frontend/src/pages/TestimonialsPage.tsx",
+          "frontend/src/pages/SecurityTransparencyPage.tsx",
+          "frontend/src/pages/CommunityHighlightsPage.tsx",
+          "frontend/src/pages/EcosystemGrowthPage.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/SmokySectionTransition.tsx",
+          "frontend/src/hooks/useParallax.ts",
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/SmokySectionTransition.tsx",
+          "frontend/src/hooks/useParallax.ts"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Expand the Whitepaper content by increasing length/coverage: add additional chapters and/or deepen existing chapters with more structured subsections, ensuring the chapter navigation remains accurate and scroll-based active tracking still works correctly.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/pages/WhitepaperPage.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/FAQPage.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-9",
+        "summary": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/MarketPulsePage.tsx",
+          "frontend/src/pages/AlertsCenterPage.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/MarketPulsePage.tsx",
+          "frontend/src/pages/AlertsCenterPage.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/src/index.css"
         ]
       }
     ]
@@ -72,27 +133,22 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
-    "build-template/Dockerfile",
-    "build-template/LICENSE",
-    "build-template/README.md",
-    "build-template/deploy.sh",
-    "build-template/icp.yaml",
-    "build-template/src/backend/canister.yaml",
-    "build-template/src/frontend/canister.yaml",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
     "frontend/src/components/BottomNav.tsx",
+    "frontend/src/components/SmokySectionTransition.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useParallax.ts",
     "frontend/src/index.css",
-    "frontend/src/pages/CommunityVotingPage.tsx",
-    "frontend/src/pages/MarketIntelPage.tsx",
+    "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+    "frontend/src/pages/AlertsCenterPage.tsx",
+    "frontend/src/pages/LivePricePage.tsx",
+    "frontend/src/pages/MarketPulsePage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

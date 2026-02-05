@@ -8,8 +8,8 @@ export function BottomNav() {
   const navItems = [
     { path: '/', emoji: '🏠', label: 'Home' },
     { path: '/market-intel', emoji: '📊', label: 'Market Intel' },
-    { path: '/advanced-analytics', emoji: '📈', label: 'Analytics' },
-    { path: '/live-price', emoji: '💹', label: 'Live Price' },
+    { path: '/market-pulse', emoji: '💓', label: 'Market Pulse' },
+    { path: '/alerts-center', emoji: '🔔', label: 'Alerts' },
     { path: '/tokenomics', emoji: '💰', label: 'Tokenomics' },
     { path: '/roadmap', emoji: '🗺️', label: 'Roadmap' },
     { path: '/acquisition', emoji: '🚀', label: 'Acquisition' },

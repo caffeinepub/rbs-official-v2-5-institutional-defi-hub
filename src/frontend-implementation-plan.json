@@ -1,115 +1,224 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Unified Market Intel + AI Sentiment page, corrected lock gating, consistent Interlink-ID theme, and Voting coming-soon placeholder",
+  "title": "Market Intel gating unification, route cleanup, unified theme + motion redesign, and new real-time pages",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Unify Market Intel and AI Sentiment into one primary page/route and update navigation so there is only one entry point.",
+      "summary": "Make AI Sentiment always visible inside Market Intel while keeping signals + market data fully gated and non-fetching until unlock.",
       "acceptanceCriteria": [
-        "There is one primary route/page for the combined experience (Market Intel + AI Sentiment).",
-        "Bottom navigation no longer presents AI Sentiment as a separate destination from Market Intel (either removed or redirected to the unified page).",
-        "No blank/placeholder AI sentiment page is reachable (current AISentimentPage is not exposed as an empty page)."
+        "When logged out or not unlocked, the Market Intel page still renders an AI Sentiment section with visible content.",
+        "Before unlock, no React Query requests for ['marketIntelligence', ...] or ['binarySignal', ...] execute and no market fetch is attempted.",
+        "After unlock, selecting an asset/timeframe triggers signals to load and render reliably for both Standard and Binary modes."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/components/BottomNav.tsx",
-          "operation": "modify",
-          "description": "Remove the separate bottom-nav item for \"/ai-sentiment\" so users have a single navigation entry point into the unified Market Intel + AI Sentiment section. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Update routing so \"/market-intel\" remains the single primary unified route, and the \"/ai-sentiment\" route no longer exposes a separate page experience (wire it to a redirect-only page component). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/AISentimentPage.tsx",
-          "operation": "modify",
-          "description": "Replace the empty placeholder with a redirect-only implementation that navigates users from \"/ai-sentiment\" to the unified \"/market-intel\" route (no standalone AI sentiment page UI). Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Fix passcode lock/unlock gating so AI Sentiment stays accessible when locked, while Market Intel signals/computation remain inaccessible and cleared upon re-lock.",
-      "acceptanceCriteria": [
-        "When the user is locked (no Market Intel access), the unified page still renders AI Sentiment content normally.",
-        "When locked, Market Intel signal UI is not shown and signal data is not fetched/computed (no standard or binary signal queries execute while locked).",
-        "Entering passcode \"B2420075112009P\" unlocks Market Intel and enables selecting assets/timeframes and viewing signals.",
-        "Locking (with passcode) reliably revokes access, clears any previously displayed signal results, and returns the Market Intel area to the locked state without requiring a refresh.",
-        "After locking, attempting to refresh or change assets/timeframes does not show any signals unless unlocked again."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add frontend-side gating support to Market Intel React Query hooks so Market Intel signal queries can be disabled when locked (e.g., accept an explicit enabled flag and ensure query execution is suppressed while locked). Verify the component's usage instructions before implementing."
-        },
         {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Refactor the unified page layout so AI Sentiment content always renders regardless of lock state, while the Market Intel section is passcode-gated. Ensure Market Intel selectors/signal cards are not rendered when locked, and ensure Market Intel queries are disabled unless unlocked. On re-lock, clear local Market Intel UI state (selected asset/timeframe/mode) and clear any cached signal query results via React Query to prevent signals from reappearing until re-unlocked. Verify the component's usage instructions before implementing."
+          "description": "Restructure the page so AI Sentiment renders regardless of lock state, while the Market Intelligence Signals area is replaced with a locked panel when not unlocked. Ensure gated queries and any market-data computation only run when unlocked (e.g., keep React Query enabled flags tied to unlock state and avoid any pre-unlock refetch triggers). Use shadcn-ui components (e.g., Tabs, Alert, Dialog, Input, Button) to keep interaction patterns consistent; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Harden client-side gating by ensuring market intelligence and binary signal queries cannot execute until explicitly unlocked (including avoiding accidental background refetches when locked). Keep query keys consistent with existing usage so cache clearing remains effective."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Standardize Interlink-ID-inspired theme primitives across major pages for consistent typography, spacing, contrast, and card/background styling.",
+      "summary": "Update Market Intel lock/unlock UI/UX to show AI Sentiment always, provide locked panel unlock, add passcode-confirmed lock action, and clear state + cached results on lock.",
       "acceptanceCriteria": [
-        "All major pages reachable from BottomNav use consistent theme primitives (background treatment, card styling, headings/body typography, and readable contrast in light/dark).",
-        "No page has noticeably broken readability (e.g., low-contrast text on similar background) compared to the unified theme.",
-        "Spacing and component styling feel consistent across pages (cards, buttons, section headers)."
+        "When locked, the page shows AI Sentiment plus an unlock panel, and does not show any signal cards/indicator results.",
+        "When unlocked, the user can lock via a passcode confirmation dialog and the UI clears prior signal results.",
+        "After relock, revisiting the page does not show prior signals unless unlocked again."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Introduce/standardize reusable theme utility classes (e.g., consistent page shell background, section spacing, and card wrappers) that align with the existing Interlink-ID tokens and contrast rules, so pages can share the same primitives without duplicating bespoke gradients/styles. Verify the component's usage instructions before implementing."
-        },
-        {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Adopt the standardized theme primitives for the unified Market Intel + AI Sentiment page (page shell, section spacing, consistent card wrappers/typography) and remove any one-off styling that causes mismatched visual treatment versus the rest of the site. Verify the component's usage instructions before implementing."
+          "description": "Replace the current full-page locked screen with an in-page 'Signals Locked' panel (passcode input + unlock action) while keeping AI Sentiment visible above it. When unlocked, add a prominent 'Lock Market Intel' control that opens a passcode confirmation dialog; on successful lock, clear selected asset/timeframe and trading mode dependent UI state, and ensure signal result sections are not rendered. Use shadcn-ui Dialog/Input/Button for the lock confirmation flow; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Ensure the coming-soon placeholder page uses the standardized theme primitives (page shell and typography) for consistent look-and-feel with other BottomNav destinations. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CommunityGovernancePage.tsx",
-          "operation": "modify",
-          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "operation": "modify",
-          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "operation": "modify",
-          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/LivePricePage.tsx",
-          "operation": "modify",
-          "description": "Update layout wrappers/typography/card usage to match the standardized Interlink-ID theme primitives so it no longer appears visually inconsistent with other sections. Verify the component's usage instructions before implementing."
+          "description": "Ensure React Query cache clearing/invalidation integrates cleanly with the lock/unlock mutations and access-check query so that a lock immediately prevents any gated reads and does not allow stale cached signal results to appear."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Replace Community Voting page content with a single bold coming-soon message.",
+      "summary": "Remove Live Price and Advanced Analytics from routing and navigation with no dead links.",
       "acceptanceCriteria": [
-        "The /community-voting page displays only the bold text \"Voting session will coming soon\" and no other voting content, metrics, proposals, or buttons.",
-        "User-facing text matches exactly: \"Voting session will coming soon\"."
+        "BottomNav no longer displays 'Live Price' or 'Analytics'.",
+        "Navigating to /live-price or /advanced-analytics is not possible via in-app navigation and the routes are not registered in App routing."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Remove all existing voting/proposals UI and render only a single bold message with the exact text: \"Voting session will coming soon\". Verify the component's usage instructions before implementing."
+          "description": "Remove imports and route registrations for the Live Price and Advanced Analytics pages so /live-price and /advanced-analytics are no longer part of the router tree."
+        },
+        {
+          "path": "frontend/src/components/BottomNav.tsx",
+          "operation": "modify",
+          "description": "Remove BottomNav items that navigate to /live-price and /advanced-analytics and confirm no other nav item labels or paths reference these removed routes."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "delete",
+          "description": "Delete the Live Price page implementation file to prevent accidental future re-linking."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "delete",
+          "description": "Delete the Advanced Analytics page implementation file to prevent accidental future re-linking."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Unify theme, spacing, typography, and readability across Insights, Testimonials, Security, Highlights, and Ecosystem.",
+      "acceptanceCriteria": [
+        "Insights, Testimonials, Security, Community Highlights, and Ecosystem pages share consistent background treatment, typography scale, and card styling.",
+        "No page has low-contrast text (readability issues) against its background.",
+        "Section headers and spacing patterns are consistent across these pages."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/InsightsPage.tsx",
+          "operation": "modify",
+          "description": "Modernize to match the app-wide theme (consistent page shell/background, typography scale, section spacing, and card treatments). Replace any divergent font system usage with the unified theme utilities already used across the site."
+        },
+        {
+          "path": "frontend/src/pages/TestimonialsPage.tsx",
+          "operation": "modify",
+          "description": "Align page layout, section spacing, and card styling with the unified theme while preserving existing content structure. Continue using shadcn-ui Carousel for the testimonial slider; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/SecurityTransparencyPage.tsx",
+          "operation": "modify",
+          "description": "Normalize backgrounds, card borders, and typography to match the same unified theme as other pages and ensure all text maintains strong contrast/readability."
+        },
+        {
+          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
+          "operation": "modify",
+          "description": "Update styling to use the same page shell, header patterns, and card styling as other modernized pages (consistent spacing, borders, and readable contrast). Continue using shadcn-ui Badge where present; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
+          "operation": "modify",
+          "description": "Bring the Ecosystem page in line with the unified theme (header hierarchy, section rhythm, and card patterns) so it visually matches Insights/Testimonials/Security/Highlights."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add or adjust shared theme utilities (page-shell variants, consistent section header spacing, and card defaults) to support the unified look across the specified pages without introducing new global stylesheet entry points."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add stronger site-wide motion design including parallax/ambient movement, noticeable reveals, and reusable smoky L↔R transitions.",
+      "acceptanceCriteria": [
+        "Major page sections reveal with noticeable but readable animations (not just subtle fades).",
+        "At least one reusable smoky left↔right transition effect is applied consistently across multiple pages/sections."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Introduce a reusable smoky left-to-right/right-to-left transition utility (e.g., via pseudo-elements + keyframes) and strengthen section reveal animations while respecting prefers-reduced-motion."
+        },
+        {
+          "path": "frontend/src/components/SmokySectionTransition.tsx",
+          "operation": "create",
+          "description": "Create a reusable wrapper component that applies the smoky transition effect and a stronger reveal animation to sections. Use this component across multiple pages to ensure consistency; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useParallax.ts",
+          "operation": "create",
+          "description": "Add a small hook to provide safe parallax/ambient movement values (scroll-based or pointer-based) with reduced-motion safeguards for use by multiple pages."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Apply the new motion system (stronger section reveals and at least one smoky transition between major sections) while keeping text readable and avoiding usability regressions."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Apply noticeable section reveals and the reusable smoky transition effect across AI Sentiment and Signals areas (and/or between major sub-sections) while ensuring locked-state UX remains clear. Use shadcn-ui components as already present; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Expand Whitepaper with additional chapters/coverage while keeping chapter navigation and scroll-based active tracking correct.",
+      "acceptanceCriteria": [
+        "Whitepaper has noticeably more content (additional sections/chapters and deeper coverage).",
+        "Chapter sidebar navigation still scrolls to the correct sections and the active chapter updates while scrolling."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/WhitepaperPage.tsx",
+          "operation": "modify",
+          "description": "Add new chapters and deepen content with structured subsections. Update the CHAPTERS list and ensure each new chapter has a matching section ref so IntersectionObserver tracking and sidebar navigation remain accurate. Continue using shadcn-ui ScrollArea/Button for the sidebar navigation; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add more FAQ entries with expandable answers and maintain consistent styling/readability.",
+      "acceptanceCriteria": [
+        "FAQ includes additional Q/A entries beyond the current set.",
+        "Collapsible expand/collapse behavior remains functional and visually consistent."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/FAQPage.tsx",
+          "operation": "modify",
+          "description": "Expand the FAQ dataset with additional English Q/A entries, keeping answers well-structured and readable. Preserve and refine existing collapsible styling to match the unified theme. Continue using shadcn-ui Collapsible; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "If needed, adjust shared typography/spacing utilities used by FAQ items so the expanded content remains readable and consistent with the unified theme."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Add at least two new real-time oriented pages/major sections (not Live Price/Advanced Analytics) and integrate them into navigation, theme, and motion system.",
+      "acceptanceCriteria": [
+        "At least two new pages or major sections are added and are reachable from navigation.",
+        "New sections are consistent with the existing theme and use noticeable motion design.",
+        "New sections do not add back Live Price or Advanced Analytics pages."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "operation": "create",
+          "description": "Create a new 'Market Pulse' page focused on real-time-oriented updates such as market narrative snapshots, sentiment pulses, macro event cards, and a lightweight data feed presentation (without being a Live Price page). Apply the unified theme and reusable smoky transition/reveal motion; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "create",
+          "description": "Create a new 'Alerts Center' page for professional, real-time-oriented workflows (e.g., watchlist-style reminders, local alert rules UI, and status panels) implemented client-side without WebSockets/chat and without reintroducing Live Price/Analytics. Apply the unified theme and reusable smoky transition/reveal motion; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register routes for the new pages (e.g., /market-pulse and /alerts-center) in the TanStack Router tree and ensure they render inside the existing RootLayout."
+        },
+        {
+          "path": "frontend/src/components/BottomNav.tsx",
+          "operation": "modify",
+          "description": "Add navigation entries for the new real-time oriented pages and ensure ordering remains usable without reintroducing Live Price or Advanced Analytics entries."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add any minimal shared styling utilities needed by the new pages to stay consistent with the unified theme and strengthened motion design."
         }
       ]
     }

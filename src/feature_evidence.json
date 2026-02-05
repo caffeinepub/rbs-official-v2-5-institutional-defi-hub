@@ -2,76 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-combine-ai-sentiment-and-market-intelligence-into-a-single-unified-page-route-so-users-access-both-from-one-place-no-separate-ai-sentiment-page-experience-update-navigation-accordingly-so-there-is-only-one-entry-point-for-the-combined-section",
-      "featureTitle": "Combine AI Sentiment and Market Intelligence into a single unified page/route so users access both from one place (no separate AI Sentiment page experience). Update navigation accordingly so there is only one entry point for the combined section.",
+      "featureId": "feature-remove-the-live-price-and-advanced-analytics-pages-sections-from-the-app-delete-their-routes-from-the-router-remove-their-navigation-entries-from-bottomnav-and-ensure-there-are-no-dead-links-to-live-price-or-advanced-analytics-anywhere-in-the-ui",
+      "featureTitle": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
       "files": [
-        "frontend/src/components/BottomNav.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-market-intel-unlock-lock-behavior-using-passcode-b2420075112009p-so-that-a-ai-sentiment-content-remains-accessible-without-unlocking-and-b-trading-signals-and-any-market-intelligence-computation-results-remain-inaccessible-until-unlocked-re-locking-must-reliably-remove-access-and-prevent-signals-from-displaying-again-until-re-unlocked",
-      "featureTitle": "Fix Market Intel unlock/lock behavior using passcode \"B2420075112009P\" so that (a) AI Sentiment content remains accessible without unlocking, and (b) trading signals and any market-intelligence computation/results remain inaccessible until unlocked; re-locking must reliably remove access and prevent signals from displaying again until re-unlocked.",
-      "files": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/MarketIntelPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-improve-and-standardize-the-visual-theme-across-all-site-sections-pages-so-the-interlink-id-inspired-styling-is-applied-consistently-typography-spacing-contrast-card-styles-backgrounds-and-any-sections-still-using-mismatched-older-styles-are-updated-to-match-the-rest-of-the-site",
-      "featureTitle": "Improve and standardize the visual theme across all site sections/pages so the Interlink-ID-inspired styling is applied consistently (typography, spacing, contrast, card styles, backgrounds) and any sections still using mismatched/older styles are updated to match the rest of the site.",
-      "files": [
-        "frontend/src/index.css",
-        "frontend/src/pages/CommunityVotingPage.tsx",
-        "frontend/src/pages/MarketIntelPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-community-voting-page-to-remove-all-existing-voting-proposals-ui-and-replace-it-with-a-single-bold-placeholder-message-voting-session-will-coming-soon",
-      "featureTitle": "Update the Community Voting page to remove all existing voting/proposals UI and replace it with a single bold placeholder message: \"Voting session will coming soon\".",
-      "files": [
-        "frontend/src/pages/CommunityVotingPage.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+        "frontend/src/pages/LivePricePage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -85,6 +22,96 @@
       ],
       "testIds": [
         "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-fix-and-modernize-the-visual-design-consistency-theme-spacing-typography-contrast-readability-for-these-sections-pages-insights-testimonials-security-highlights-and-ecosystem-ensure-they-all-match-a-single-coherent-site-theme-and-are-visually-consistent-with-each-other-and-with-the-rest-of-the-site",
+      "featureTitle": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+      "files": [
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-more-noticeable-motion-design-across-the-site-parallax-ambient-movement-stronger-section-reveal-animations-and-smoky-left-to-right-right-to-left-transitions-while-keeping-content-readable-and-not-harming-usability",
+      "featureTitle": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
+      "files": [
+        "frontend/src/components/SmokySectionTransition.tsx",
+        "frontend/src/hooks/useParallax.ts",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-more-faq-questions-with-expandable-answers-and-ensure-the-faq-styling-remains-consistent-with-the-unified-theme-and-improved-readability",
+      "featureTitle": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
+      "files": [
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-new-non-aura-sections-features-implementer-chosen-that-strengthen-the-site-as-a-professional-real-time-oriented-platform-and-integrate-them-into-navigation-and-the-unified-theme-these-additions-must-not-reintroduce-live-price-or-advanced-analytics-as-separate-pages",
+      "featureTitle": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/AlertsCenterPage.tsx",
+        "frontend/src/pages/MarketPulsePage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
       ],
       "confidence": "high"
     }

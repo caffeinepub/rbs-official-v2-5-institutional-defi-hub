@@ -68,14 +68,14 @@ export const FormSubmission = IDL.Record({
   'rbsAmount' : IDL.Float64,
   'timestamp' : IDL.Int,
 });
-export const UserProfile = IDL.Record({
-  'name' : IDL.Text,
-  'email' : IDL.Opt(IDL.Text),
-});
 export const TimerState = IDL.Record({
   'endTime' : IDL.Int,
   'lastUpdate' : IDL.Int,
   'isUnlocked' : IDL.Bool,
+});
+export const UserProfile = IDL.Record({
+  'name' : IDL.Text,
+  'email' : IDL.Opt(IDL.Text),
 });
 export const http_header = IDL.Record({
   'value' : IDL.Text,
@@ -126,7 +126,6 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
-  'checkMarketIntelUnlockStatus' : IDL.Func([], [IDL.Bool], ['query']),
   'clearAllRecords' : IDL.Func([], [], []),
   'createRecord' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
   'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
@@ -151,8 +150,19 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllSubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+  'getAllTimers' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, TimerState))],
+      ['query'],
+    ),
+  'getAllUsers' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile))],
+      ['query'],
+    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCurrentId' : IDL.Func([], [IDL.Nat], ['query']),
   'getFormSubmission' : IDL.Func(
       [IDL.Nat],
       [IDL.Opt(FormSubmission)],
@@ -181,6 +191,25 @@ export const idlService = IDL.Service({
   'getMarketIntelligenceCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
   'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+  'getRecordCounts' : IDL.Func(
+      [],
+      [
+        IDL.Record({
+          'roadmap' : IDL.Nat,
+          'insights' : IDL.Nat,
+          'contact' : IDL.Nat,
+          'about' : IDL.Nat,
+          'faqs' : IDL.Nat,
+          'community' : IDL.Nat,
+          'ecosystem' : IDL.Nat,
+          'security' : IDL.Nat,
+          'whitepaper' : IDL.Nat,
+          'testimonials' : IDL.Nat,
+          'governance' : IDL.Nat,
+        }),
+      ],
+      ['query'],
+    ),
   'getRecords' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
   'getSubmissionsByCountry' : IDL.Func(
       [IDL.Text],
@@ -194,12 +223,18 @@ export const idlService = IDL.Service({
     ),
   'getSubmissionsCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getTimerState' : IDL.Func([TimerType], [IDL.Opt(TimerState)], ['query']),
+  'getTimerStates' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, TimerState))],
+      ['query'],
+    ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'massDeleteAllSubmissions' : IDL.Func([], [], []),
   'massPopulateRecords' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),
@@ -285,14 +320,14 @@ export const idlFactory = ({ IDL }) => {
     'rbsAmount' : IDL.Float64,
     'timestamp' : IDL.Int,
   });
-  const UserProfile = IDL.Record({
-    'name' : IDL.Text,
-    'email' : IDL.Opt(IDL.Text),
-  });
   const TimerState = IDL.Record({
     'endTime' : IDL.Int,
     'lastUpdate' : IDL.Int,
     'isUnlocked' : IDL.Bool,
+  });
+  const UserProfile = IDL.Record({
+    'name' : IDL.Text,
+    'email' : IDL.Opt(IDL.Text),
   });
   const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
   const http_request_result = IDL.Record({
@@ -340,7 +375,6 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
-    'checkMarketIntelUnlockStatus' : IDL.Func([], [IDL.Bool], ['query']),
     'clearAllRecords' : IDL.Func([], [], []),
     'createRecord' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
     'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
@@ -365,8 +399,19 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllSubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+    'getAllTimers' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, TimerState))],
+        ['query'],
+      ),
+    'getAllUsers' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile))],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCurrentId' : IDL.Func([], [IDL.Nat], ['query']),
     'getFormSubmission' : IDL.Func(
         [IDL.Nat],
         [IDL.Opt(FormSubmission)],
@@ -395,6 +440,25 @@ export const idlFactory = ({ IDL }) => {
     'getMarketIntelligenceCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
     'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+    'getRecordCounts' : IDL.Func(
+        [],
+        [
+          IDL.Record({
+            'roadmap' : IDL.Nat,
+            'insights' : IDL.Nat,
+            'contact' : IDL.Nat,
+            'about' : IDL.Nat,
+            'faqs' : IDL.Nat,
+            'community' : IDL.Nat,
+            'ecosystem' : IDL.Nat,
+            'security' : IDL.Nat,
+            'whitepaper' : IDL.Nat,
+            'testimonials' : IDL.Nat,
+            'governance' : IDL.Nat,
+          }),
+        ],
+        ['query'],
+      ),
     'getRecords' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
     'getSubmissionsByCountry' : IDL.Func(
         [IDL.Text],
@@ -408,12 +472,18 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getSubmissionsCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getTimerState' : IDL.Func([TimerType], [IDL.Opt(TimerState)], ['query']),
+    'getTimerStates' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, TimerState))],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'massDeleteAllSubmissions' : IDL.Func([], [], []),
     'massPopulateRecords' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),

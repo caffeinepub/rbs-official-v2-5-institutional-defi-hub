@@ -86,7 +86,6 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     checkMarketIntelAccess(): Promise<boolean>;
-    checkMarketIntelUnlockStatus(): Promise<boolean>;
     clearAllRecords(): Promise<void>;
     createRecord(recordType: string, content: string): Promise<bigint>;
     deleteMarketIntelligence(id: bigint): Promise<void>;
@@ -97,8 +96,11 @@ export interface backendInterface {
     getAirdropRemainingTime(): Promise<bigint>;
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllSubmissions(): Promise<Array<FormSubmission>>;
+    getAllTimers(): Promise<Array<[string, TimerState]>>;
+    getAllUsers(): Promise<Array<[Principal, UserProfile]>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getCurrentId(): Promise<bigint>;
     getFormSubmission(id: bigint): Promise<FormSubmission | null>;
     getMarketIntelligence(id: bigint): Promise<MarketIntelligence | null>;
     getMarketIntelligenceByAsset(asset: string): Promise<Array<MarketIntelligence>>;
@@ -107,13 +109,28 @@ export interface backendInterface {
     getMarketIntelligenceCount(): Promise<bigint>;
     getMySubmissions(): Promise<Array<FormSubmission>>;
     getPresaleRemainingTime(): Promise<bigint>;
+    getRecordCounts(): Promise<{
+        roadmap: bigint;
+        insights: bigint;
+        contact: bigint;
+        about: bigint;
+        faqs: bigint;
+        community: bigint;
+        ecosystem: bigint;
+        security: bigint;
+        whitepaper: bigint;
+        testimonials: bigint;
+        governance: bigint;
+    }>;
     getRecords(recordType: string): Promise<Array<string>>;
     getSubmissionsByCountry(country: string): Promise<Array<FormSubmission>>;
     getSubmissionsByType(isPresale: boolean): Promise<Array<FormSubmission>>;
     getSubmissionsCount(): Promise<bigint>;
     getTimerState(timerType: TimerType): Promise<TimerState | null>;
+    getTimerStates(): Promise<Array<[string, TimerState]>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     grantMarketIntelAccess(password: string): Promise<boolean>;
+    hasAISentimentAccess(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     massDeleteAllSubmissions(): Promise<void>;
     massPopulateRecords(recordType: string, contents: Array<string>): Promise<void>;
