@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { FormSubmission, MarketIntelligence } from '../backend';
+import type { FormSubmission, MarketIntelligence, Alert } from '../backend';
 import { SignalConfidence, IndicatorType } from '../backend';
 
 export function useSubmitForm() {
@@ -100,6 +100,8 @@ export function useRevokeMarketIntelAccessWithPassword() {
     onSuccess: (revoked) => {
       if (revoked) {
         queryClient.invalidateQueries({ queryKey: ['marketIntelAccess'] });
+        queryClient.removeQueries({ queryKey: ['marketIntelligence'] });
+        queryClient.removeQueries({ queryKey: ['binarySignal'] });
       }
     },
   });
@@ -127,18 +129,16 @@ export function useCheckMarketIntelAccess() {
   });
 }
 
-// Real-time market data fetching with external APIs and enhanced error handling
 async function fetchRealTimeMarketData(asset: string, timeframe: string): Promise<{
   price: number;
   change24h: number;
   volume: number;
   high24h: number;
   low24h: number;
-}> {
+} | null> {
   const isCrypto = !asset.includes('/');
   
   if (isCrypto) {
-    // Fetch crypto data from CoinGecko API with retry logic
     const coinMap: Record<string, string> = {
       'BTC': 'bitcoin',
       'ETH': 'ethereum',
@@ -183,10 +183,9 @@ async function fetchRealTimeMarketData(asset: string, timeframe: string): Promis
       };
     } catch (error) {
       console.error('CoinGecko API error:', error);
-      throw error;
+      return null;
     }
   } else {
-    // Fetch forex data from exchangerate.host API with retry logic
     const [base, quote] = asset.split('/');
     
     try {
@@ -211,20 +210,23 @@ async function fetchRealTimeMarketData(asset: string, timeframe: string): Promis
       const data = await response.json();
       const rate = data.rates[quote];
       
-      // For forex, simulate 24h change and volume based on typical forex volatility
-      const volatility = 0.5 + Math.random() * 1.5; // 0.5% to 2%
+      if (!rate) {
+        return null;
+      }
+      
+      const volatility = 0.5 + Math.random() * 1.5;
       const change24h = (Math.random() - 0.5) * volatility;
       
       return {
         price: rate,
         change24h,
-        volume: 1000000000 + Math.random() * 5000000000, // Typical forex volume
+        volume: 1000000000 + Math.random() * 5000000000,
         high24h: rate * (1 + Math.abs(change24h) / 200),
         low24h: rate * (1 - Math.abs(change24h) / 200),
       };
     } catch (error) {
       console.error('ExchangeRate API error:', error);
-      throw error;
+      return null;
     }
   }
 }
@@ -247,7 +249,6 @@ export function useFetchMarketIntelligence(asset: string, timeframe: string, isU
       let retryCount = 0;
       const maxRetries = 3;
       
-      // Retry logic with exponential backoff
       while (retryCount < maxRetries) {
         try {
           marketData = await fetchRealTimeMarketData(asset, timeframe);
@@ -258,12 +259,10 @@ export function useFetchMarketIntelligence(asset: string, timeframe: string, isU
             console.error('Max retries reached for market data fetch');
             break;
           }
-          // Exponential backoff: 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
         }
       }
       
-      // Generate technical indicators based on real market data
       const indicators = generateAdvancedTechnicalIndicators(
         asset, 
         timeframe, 
@@ -273,7 +272,6 @@ export function useFetchMarketIntelligence(asset: string, timeframe: string, isU
       const overallSignal = calculateOverallSignalWithWeights(indicators);
       const historicalAccuracy = calculateHistoricalAccuracy(indicators, overallSignal);
 
-      // Return with id and timestamp to match MarketIntelligence type
       return {
         id: BigInt(Date.now()),
         asset,
@@ -281,7 +279,7 @@ export function useFetchMarketIntelligence(asset: string, timeframe: string, isU
         indicators,
         overallSignal,
         historicalAccuracy,
-        timestamp: BigInt(Date.now()) * BigInt(1000000), // Convert to nanoseconds
+        timestamp: BigInt(Date.now()) * BigInt(1000000),
       };
     },
     enabled: !!actor && !isFetching && !!asset && !!timeframe && isUnlocked,
@@ -316,7 +314,6 @@ export function useFetchBinarySignal(asset: string, timeframe: string, isUnlocke
       let retryCount = 0;
       const maxRetries = 3;
       
-      // Retry logic with exponential backoff
       while (retryCount < maxRetries) {
         try {
           marketData = await fetchRealTimeMarketData(asset, timeframe);
@@ -327,12 +324,10 @@ export function useFetchBinarySignal(asset: string, timeframe: string, isUnlocke
             console.error('Max retries reached for binary signal fetch');
             break;
           }
-          // Exponential backoff: 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
         }
       }
       
-      // Generate binary signal based on market data
       const binarySignal = generateBinarySignal(asset, timeframe, marketData);
       
       return binarySignal;
@@ -356,39 +351,34 @@ function generateBinarySignal(
   confidence: number;
   winProbability: number;
 } {
-  const seed = hashCode(asset + timeframe + Date.now().toString().slice(0, -4));
+  const roundedTime = Math.floor(Date.now() / 60000) * 60000;
+  const seed = hashCode(asset + timeframe + roundedTime.toString());
   const seededRandom = (index: number) => {
     const x = Math.sin(seed + index) * 10000;
     return x - Math.floor(x);
   };
 
-  // Use real market data if available
   const priceInfluence = marketData ? (marketData.change24h / 100) : 0;
   const volatilityInfluence = marketData 
     ? ((marketData.high24h - marketData.low24h) / marketData.price) 
     : 0.02;
 
-  // Calculate win probability based on market conditions
   let winProbability = 0.5 + (seededRandom(1) - 0.5) * 0.3;
   
-  // Adjust based on price trend
   if (priceInfluence > 0.02) {
     winProbability += 0.15;
   } else if (priceInfluence < -0.02) {
     winProbability -= 0.15;
   }
   
-  // Adjust based on volatility
   if (volatilityInfluence > 0.03) {
     winProbability += 0.05;
   }
   
-  // Clamp between 0.35 and 0.85
   winProbability = Math.max(0.35, Math.min(0.85, winProbability));
   
   const prediction: 'WIN' | 'LOSS' = winProbability > 0.5 ? 'WIN' : 'LOSS';
   
-  // Calculate confidence based on how far from 0.5
   const confidence = 0.65 + Math.abs(winProbability - 0.5) * 0.7;
   
   return {
@@ -415,19 +405,18 @@ function generateAdvancedTechnicalIndicators(
     signal: SignalConfidence;
   }> = [];
 
-  const seed = hashCode(asset + timeframe + Date.now().toString().slice(0, -4));
+  const roundedTime = Math.floor(Date.now() / 60000) * 60000;
+  const seed = hashCode(asset + timeframe + roundedTime.toString());
   const seededRandom = (index: number) => {
     const x = Math.sin(seed + index) * 10000;
     return x - Math.floor(x);
   };
 
-  // Use real market data if available to influence indicators
   const priceInfluence = marketData ? (marketData.change24h / 100) : 0;
   const volatilityInfluence = marketData 
     ? ((marketData.high24h - marketData.low24h) / marketData.price) 
     : 0.02;
 
-  // RSI - Relative Strength Index
   const rsiBase = 50 + (seededRandom(1) - 0.5) * 40 + (priceInfluence * 20);
   const rsiValue = Math.max(0, Math.min(100, rsiBase));
   indicators.push({
@@ -440,7 +429,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // MACD - Moving Average Convergence Divergence
   const macdHistogram = (seededRandom(2) - 0.5) * 8 + (priceInfluence * 3);
   const macdValue = parseFloat(macdHistogram.toFixed(3));
   indicators.push({
@@ -453,7 +441,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // Bollinger Bands
   const bbPosition = seededRandom(3) + (volatilityInfluence * 2);
   const bbValue = parseFloat(Math.max(0, Math.min(1, bbPosition)).toFixed(3));
   const bbSqueeze = volatilityInfluence < 0.015;
@@ -468,7 +455,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // VWAP - Volume Weighted Average Price
   const vwapRatio = 0.97 + seededRandom(5) * 0.06 + (priceInfluence * 0.01);
   const vwapValue = parseFloat(vwapRatio.toFixed(4));
   indicators.push({
@@ -481,7 +467,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // Moving Averages
   const maDifference = (seededRandom(6) - 0.5) * 5 + (priceInfluence * 2);
   const maValue = parseFloat(maDifference.toFixed(2));
   indicators.push({
@@ -494,7 +479,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // Fair Value Gap (FVG)
   const fvgStrength = seededRandom(7) * 100;
   const fvgValue = parseFloat(fvgStrength.toFixed(1));
   indicators.push({
@@ -507,7 +491,6 @@ function generateAdvancedTechnicalIndicators(
             SignalConfidence.neutral,
   });
 
-  // Order Blocks
   const obStrength = seededRandom(8) * 100;
   const obValue = parseFloat(obStrength.toFixed(1));
   indicators.push({
@@ -603,4 +586,68 @@ function hashCode(str: string): number {
     hash = hash & hash;
   }
   return Math.abs(hash);
+}
+
+export function useGetAlerts() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Alert[]>({
+    queryKey: ['alerts'],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        return await actor.getAlerts();
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error);
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 10000,
+  });
+}
+
+export function useAddAlert() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ title, message }: { title: string; message: string }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.addAlert(title, message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+}
+
+export function useMarkAlertAsRead() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (alertId: bigint) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.markAlertAsRead(alertId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+}
+
+export function useDeleteAlert() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (alertId: bigint) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.deleteAlert(alertId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
 }

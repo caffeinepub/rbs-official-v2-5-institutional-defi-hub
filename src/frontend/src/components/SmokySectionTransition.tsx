@@ -9,12 +9,20 @@ interface SmokySectionTransitionProps {
 export function SmokySectionTransition({ children, delay = 0, className = '' }: SmokySectionTransitionProps) {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (prefersReducedMotion) {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+          timeoutRef.current = setTimeout(() => setIsVisible(true), delay);
         }
       },
       { threshold: 0.1 }
@@ -24,7 +32,12 @@ export function SmokySectionTransition({ children, delay = 0, className = '' }: 
       observer.observe(sectionRef.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [delay]);
 
   return (

@@ -49,6 +49,13 @@ export const TechnicalIndicator = IDL.Record({
   'indicatorType' : IndicatorType,
   'signal' : SignalConfidence,
 });
+export const Alert = IDL.Record({
+  'id' : IDL.Nat,
+  'title' : IDL.Text,
+  'read' : IDL.Bool,
+  'message' : IDL.Text,
+  'timestamp' : IDL.Int,
+});
 export const MarketIntelligence = IDL.Record({
   'id' : IDL.Nat,
   'historicalAccuracy' : IDL.Float64,
@@ -124,10 +131,13 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addAlert' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
+  'clearAlerts' : IDL.Func([], [], []),
   'clearAllRecords' : IDL.Func([], [], []),
   'createRecord' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+  'deleteAlert' : IDL.Func([IDL.Nat], [], []),
   'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
   'deleteRecord' : IDL.Func([IDL.Text, IDL.Nat], [], []),
   'deleteSubmission' : IDL.Func([IDL.Nat], [], []),
@@ -144,6 +154,8 @@ export const idlService = IDL.Service({
       [],
     ),
   'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+  'getAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
+  'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
   'getAllMarketIntelligence' : IDL.Func(
       [],
       [IDL.Vec(MarketIntelligence)],
@@ -236,6 +248,7 @@ export const idlService = IDL.Service({
   'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'markAlertAsRead' : IDL.Func([IDL.Nat], [], []),
   'massDeleteAllSubmissions' : IDL.Func([], [], []),
   'massPopulateRecords' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),
   'revokeMarketIntelAccessWithPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
@@ -300,6 +313,13 @@ export const idlFactory = ({ IDL }) => {
     'value' : IDL.Float64,
     'indicatorType' : IndicatorType,
     'signal' : SignalConfidence,
+  });
+  const Alert = IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'read' : IDL.Bool,
+    'message' : IDL.Text,
+    'timestamp' : IDL.Int,
   });
   const MarketIntelligence = IDL.Record({
     'id' : IDL.Nat,
@@ -373,10 +393,13 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addAlert' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
+    'clearAlerts' : IDL.Func([], [], []),
     'clearAllRecords' : IDL.Func([], [], []),
     'createRecord' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+    'deleteAlert' : IDL.Func([IDL.Nat], [], []),
     'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
     'deleteRecord' : IDL.Func([IDL.Text, IDL.Nat], [], []),
     'deleteSubmission' : IDL.Func([IDL.Nat], [], []),
@@ -393,6 +416,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+    'getAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
+    'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
     'getAllMarketIntelligence' : IDL.Func(
         [],
         [IDL.Vec(MarketIntelligence)],
@@ -485,6 +510,7 @@ export const idlFactory = ({ IDL }) => {
     'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'markAlertAsRead' : IDL.Func([IDL.Nat], [], []),
     'massDeleteAllSubmissions' : IDL.Func([], [], []),
     'massPopulateRecords' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),
     'revokeMarketIntelAccessWithPassword' : IDL.Func(

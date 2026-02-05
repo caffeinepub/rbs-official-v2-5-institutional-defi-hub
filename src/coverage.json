@@ -1,95 +1,79 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T04:09:28.633Z",
+  "generatedAt": "2026-02-05T06:01:27.649Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 9,
-    "implemented": 5,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix Market Intel access gating so that AI Sentiment content is always visible without any unlock, while Market Intelligence signals + market data remain fully hidden and do not fetch/compute until the user successfully unlocks with the passcode. Keep both AI Sentiment and the gated signals inside the same Market Intel page/section.",
-        "status": "missing",
+        "summary": "Fix React Query client duplication by ensuring the app uses a single QueryClientProvider instance so caching, refetching, and invalidation behave consistently across all pages (including Market Intel and real-time sections).",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/App.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/App.tsx"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Correct backend Market Intel unlock semantics to be per-user and consistent with the frontend: (1) unlock must require the passcode every time, (2) lock must require the passcode, (3) checkMarketIntelAccess must reflect the user's current unlocked state (not merely that a principal once unlocked), and (4) remove any global shared unlock flag behavior that allows one user's action to affect another user.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Fix UI animation/transition behavior that causes content to disappear when users click or interact with page content (e.g., cards/sections becoming opacity-0 or translating away after state changes). Update animation patterns so interactive content remains visible and readable during and after clicks, while keeping motion effects where they do not hide content.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/SmokySectionTransition.tsx",
+          "frontend/src/pages/WhitepaperPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/SmokySectionTransition.tsx"
+        ]
       },
       {
         "id": "REQ-3",
-        "summary": "Update the Market Intel frontend lock/unlock flow to match the required behavior: show AI Sentiment regardless of lock state; show a gated 'Signals Locked' panel with passcode input when locked; add a manual 'Lock Market Intel' control when unlocked that requires passcode confirmation; on lock, clear selected asset/timeframe state and clear cached Market Intel/Binary query data so signals cannot remain visible from cache.",
-        "status": "missing",
+        "summary": "Stabilize Market Intel unlock + data loading so Market Intel reliably loads after unlock and does not frequently show 'Failed to load market data' due to avoidable client-side issues. Improve error reporting so failures distinguish between access/auth problems vs external market API failures.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts"
+        ]
       },
       {
         "id": "REQ-4",
-        "summary": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
+        "summary": "Improve Market Intel 'accuracy' and consistency by removing or clearly isolating simulated/randomized market inputs used in real-time calculations (especially forex 24h change/volume simulation and Date.now-seeded randomness in indicator/signal generation). Ensure signals are stable for the same asset/timeframe over a short window and are derived from fetched market data wherever possible.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/pages/LivePricePage.tsx",
-          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/MarketIntelPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/pages/LivePricePage.tsx",
-          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-5",
-        "summary": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+        "summary": "Make Alerts Center 'work properly' by making alerts persistent per authenticated user: add backend storage and CRUD endpoints for alerts, and update the frontend Alerts Center page to use React Query hooks backed by the canister so alerts do not reset on refresh and behave consistently across sessions/devices for the same Internet Identity.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/InsightsPage.tsx",
-          "frontend/src/pages/TestimonialsPage.tsx",
-          "frontend/src/pages/SecurityTransparencyPage.tsx",
-          "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "frontend/src/pages/EcosystemGrowthPage.tsx",
-          "frontend/src/index.css"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AlertsCenterPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/index.css"
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-6",
-        "summary": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/SmokySectionTransition.tsx",
-          "frontend/src/hooks/useParallax.ts",
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/pages/MarketIntelPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/SmokySectionTransition.tsx",
-          "frontend/src/hooks/useParallax.ts"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Expand the Whitepaper content by increasing length/coverage: add additional chapters and/or deepen existing chapters with more structured subsections, ensuring the chapter navigation remains accurate and scroll-based active tracking still works correctly.",
+        "summary": "Expand the Whitepaper with more topics/chapters and deeper content while preserving the existing chapter navigation UX. Add additional chapters beyond the current list and ensure each new chapter has complete English content (headings, paragraphs, and any supporting bullet lists) consistent with the site’s institutional DeFi tone.",
         "status": "missing",
         "plannedFiles": [
           "frontend/src/pages/WhitepaperPage.tsx"
@@ -97,34 +81,42 @@
         "matchedFiles": []
       },
       {
-        "id": "REQ-8",
-        "summary": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
+        "id": "REQ-7",
+        "summary": "Apply and complete the intended visual theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages so these sections feel fully updated and aligned (typography, spacing, card styling, background treatment, hover states, and motion behavior). Do not remove existing content; restyle and enhance cohesively.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/FAQPage.tsx",
-          "frontend/src/index.css"
+          "frontend/src/index.css",
+          "frontend/src/pages/InsightsPage.tsx",
+          "frontend/src/pages/TestimonialsPage.tsx",
+          "frontend/src/pages/SecurityTransparencyPage.tsx",
+          "frontend/src/pages/CommunityHighlightsPage.tsx",
+          "frontend/src/pages/EcosystemGrowthPage.tsx"
         ],
         "matchedFiles": [
           "frontend/src/index.css"
         ]
       },
       {
+        "id": "REQ-8",
+        "summary": "Add additional new content sections (at developer discretion) to enrich the site experience without breaking existing navigation or functionality. New sections must be English-only, match the existing product domain (institutional DeFi hub / market intel / community), and be integrated into existing pages (do not require new backend services).",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/pages/InsightsPage.tsx",
+          "frontend/src/pages/EcosystemGrowthPage.tsx"
+        ],
+        "matchedFiles": []
+      },
+      {
         "id": "REQ-9",
-        "summary": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+        "summary": "Audit and fix site-wide real-time and live-update behaviors (Market Pulse, AI sentiment simulations, Market Intel refresh intervals, timers, and any periodic UI updates) to ensure intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker, disappearing content, or excessive network calls.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/pages/MarketIntelPage.tsx",
           "frontend/src/pages/MarketPulsePage.tsx",
-          "frontend/src/pages/AlertsCenterPage.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/SmokySectionTransition.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/MarketPulsePage.tsx",
-          "frontend/src/pages/AlertsCenterPage.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/SmokySectionTransition.tsx"
         ]
       }
     ]
@@ -133,22 +125,18 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/BottomNav.tsx",
     "frontend/src/components/SmokySectionTransition.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useParallax.ts",
+    "frontend/src/hooks/useQueries.ts",
     "frontend/src/index.css",
-    "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-    "frontend/src/pages/AlertsCenterPage.tsx",
-    "frontend/src/pages/LivePricePage.tsx",
-    "frontend/src/pages/MarketPulsePage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

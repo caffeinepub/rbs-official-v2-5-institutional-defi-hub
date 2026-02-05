@@ -1,5 +1,4 @@
 import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet } from '@tanstack/react-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { Footer } from './components/Footer';
@@ -22,16 +21,6 @@ import TestimonialsPage from './pages/TestimonialsPage';
 import InsightsPage from './pages/InsightsPage';
 import MarketPulsePage from './pages/MarketPulsePage';
 import AlertsCenterPage from './pages/AlertsCenterPage';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 3,
-      staleTime: 30000,
-    },
-  },
-});
 
 function RootLayout() {
   return (
@@ -190,9 +179,5 @@ declare module '@tanstack/react-router' {
 }
 
 export default function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
+  return <RouterProvider router={router} />;
 }

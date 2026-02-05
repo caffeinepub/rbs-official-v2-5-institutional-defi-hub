@@ -54,6 +54,13 @@ export interface MarketIntelligence {
     indicators: Array<TechnicalIndicator>;
     timestamp: bigint;
 }
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    message: string;
+    timestamp: bigint;
+}
 export interface UserProfile {
     name: string;
     email?: string;
@@ -84,16 +91,21 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    addAlert(title: string, message: string): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     checkMarketIntelAccess(): Promise<boolean>;
+    clearAlerts(): Promise<void>;
     clearAllRecords(): Promise<void>;
     createRecord(recordType: string, content: string): Promise<bigint>;
+    deleteAlert(alertId: bigint): Promise<void>;
     deleteMarketIntelligence(id: bigint): Promise<void>;
     deleteRecord(recordType: string, id: bigint): Promise<void>;
     deleteSubmission(id: bigint): Promise<void>;
     deleteTimer(timerType: TimerType): Promise<void>;
     generateMarketIntel(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<bigint>;
     getAirdropRemainingTime(): Promise<bigint>;
+    getAlertCount(): Promise<bigint>;
+    getAlerts(): Promise<Array<Alert>>;
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllSubmissions(): Promise<Array<FormSubmission>>;
     getAllTimers(): Promise<Array<[string, TimerState]>>;
@@ -132,6 +144,7 @@ export interface backendInterface {
     grantMarketIntelAccess(password: string): Promise<boolean>;
     hasAISentimentAccess(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    markAlertAsRead(alertId: bigint): Promise<void>;
     massDeleteAllSubmissions(): Promise<void>;
     massPopulateRecords(recordType: string, contents: Array<string>): Promise<void>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;

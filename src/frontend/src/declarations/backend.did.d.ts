@@ -10,6 +10,13 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface Alert {
+  'id' : bigint,
+  'title' : string,
+  'read' : boolean,
+  'message' : string,
+  'timestamp' : bigint,
+}
 export interface FormSubmission {
   'id' : bigint,
   'country' : string,
@@ -100,10 +107,13 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addAlert' : ActorMethod<[string, string], bigint>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'checkMarketIntelAccess' : ActorMethod<[], boolean>,
+  'clearAlerts' : ActorMethod<[], undefined>,
   'clearAllRecords' : ActorMethod<[], undefined>,
   'createRecord' : ActorMethod<[string, string], bigint>,
+  'deleteAlert' : ActorMethod<[bigint], undefined>,
   'deleteMarketIntelligence' : ActorMethod<[bigint], undefined>,
   'deleteRecord' : ActorMethod<[string, bigint], undefined>,
   'deleteSubmission' : ActorMethod<[bigint], undefined>,
@@ -113,6 +123,8 @@ export interface _SERVICE {
     bigint
   >,
   'getAirdropRemainingTime' : ActorMethod<[], bigint>,
+  'getAlertCount' : ActorMethod<[], bigint>,
+  'getAlerts' : ActorMethod<[], Array<Alert>>,
   'getAllMarketIntelligence' : ActorMethod<[], Array<MarketIntelligence>>,
   'getAllSubmissions' : ActorMethod<[], Array<FormSubmission>>,
   'getAllTimers' : ActorMethod<[], Array<[string, TimerState]>>,
@@ -163,6 +175,7 @@ export interface _SERVICE {
   'grantMarketIntelAccess' : ActorMethod<[string], boolean>,
   'hasAISentimentAccess' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'markAlertAsRead' : ActorMethod<[bigint], undefined>,
   'massDeleteAllSubmissions' : ActorMethod<[], undefined>,
   'massPopulateRecords' : ActorMethod<[string, Array<string>], undefined>,
   'revokeMarketIntelAccessWithPassword' : ActorMethod<[string], boolean>,

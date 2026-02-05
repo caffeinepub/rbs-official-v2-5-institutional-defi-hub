@@ -1,224 +1,212 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Market Intel gating unification, route cleanup, unified theme + motion redesign, and new real-time pages",
+  "title": "Stabilize live UX, Market Intel reliability, Alerts persistence wiring, and site-wide content/theme consistency",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Make AI Sentiment always visible inside Market Intel while keeping signals + market data fully gated and non-fetching until unlock.",
+      "summary": "Ensure the app uses a single React Query QueryClientProvider so caching and invalidation are consistent across routes.",
       "acceptanceCriteria": [
-        "When logged out or not unlocked, the Market Intel page still renders an AI Sentiment section with visible content.",
-        "Before unlock, no React Query requests for ['marketIntelligence', ...] or ['binarySignal', ...] execute and no market fetch is attempted.",
-        "After unlock, selecting an asset/timeframe triggers signals to load and render reliably for both Standard and Binary modes."
+        "The app has exactly one active QueryClientProvider at runtime (no nested providers).",
+        "React Query cache keys (e.g., ['marketIntelligence'], ['binarySignal'], ['marketIntelAccess']) are shared consistently across routes and do not reset unexpectedly when navigating."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Restructure the page so AI Sentiment renders regardless of lock state, while the Market Intelligence Signals area is replaced with a locked panel when not unlocked. Ensure gated queries and any market-data computation only run when unlocked (e.g., keep React Query enabled flags tied to unlock state and avoid any pre-unlock refetch triggers). Use shadcn-ui components (e.g., Tabs, Alert, Dialog, Input, Button) to keep interaction patterns consistent; verify the component's usage instructions before implementing."
+          "description": "Remove the extra QueryClient/QueryClientProvider wrapper from App so React Query is provided only once (via the existing provider in main), eliminating duplicated clients and inconsistent caching across routes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Fix animation/transition patterns that hide interactive content after clicks, and ensure reduced-motion users don’t encounter hide-then-reveal behavior for core content.",
+      "acceptanceCriteria": [
+        "Clicking/tapping content cards, buttons, tabs, and navigation items does not cause the clicked section/card to become invisible (opacity: 0) or collapse unexpectedly.",
+        "Whitepaper chapter navigation does not cause the target section to render hidden after clicking a chapter (no blank content caused by transition state).",
+        "Motion respects reduced-motion preferences (no mandatory hide-then-reveal for core content)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Update animation delay utility classes so they do not set persistent opacity:0; keep delays without forcing content to remain hidden after state changes or re-renders. Also refine reduced-motion overrides to avoid any hide-then-reveal patterns for primary content."
         },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/SmokySectionTransition.tsx",
           "operation": "modify",
-          "description": "Harden client-side gating by ensuring market intelligence and binary signal queries cannot execute until explicitly unlocked (including avoiding accidental background refetches when locked). Keep query keys consistent with existing usage so cache clearing remains effective."
+          "description": "Harden the transition wrapper so it cannot leave children hidden after interactions: ensure pending timeouts are cleared on unmount, and respect reduced-motion by rendering content visible immediately when the user prefers reduced motion."
+        },
+        {
+          "path": "frontend/src/pages/WhitepaperPage.tsx",
+          "operation": "modify",
+          "description": "Adjust chapter-section visibility logic so clicking a chapter never lands on a still-hidden (opacity-0/translated) section; ensure clicked/target section is marked visible immediately and remains readable after navigation."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Update Market Intel lock/unlock UI/UX to show AI Sentiment always, provide locked panel unlock, add passcode-confirmed lock action, and clear state + cached results on lock.",
+      "summary": "Stabilize Market Intel unlock and data loading to reduce avoidable client-side failures and provide clearer error reporting for access vs external API issues.",
       "acceptanceCriteria": [
-        "When locked, the page shows AI Sentiment plus an unlock panel, and does not show any signal cards/indicator results.",
-        "When unlocked, the user can lock via a passcode confirmation dialog and the UI clears prior signal results.",
-        "After relock, revisiting the page does not show prior signals unless unlocked again."
+        "After entering a valid passcode and unlocking, selecting an asset and timeframe triggers a successful fetch attempt and renders results when external APIs respond successfully.",
+        "If external APIs fail/rate-limit, the UI displays a clear error state that indicates the cause (API failure) and provides a working retry action.",
+        "Unlock/lock actions do not leave the Market Intel page stuck in an incorrect locked/unlocked state due to stale cache."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
-          "operation": "modify",
-          "description": "Replace the current full-page locked screen with an in-page 'Signals Locked' panel (passcode input + unlock action) while keeping AI Sentiment visible above it. When unlocked, add a prominent 'Lock Market Intel' control that opens a passcode confirmation dialog; on successful lock, clear selected asset/timeframe and trading mode dependent UI state, and ensure signal result sections are not rendered. Use shadcn-ui Dialog/Input/Button for the lock confirmation flow; verify the component's usage instructions before implementing."
-        },
-        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Ensure React Query cache clearing/invalidation integrates cleanly with the lock/unlock mutations and access-check query so that a lock immediately prevents any gated reads and does not allow stale cached signal results to appear."
+          "description": "Improve Market Intel query robustness: add structured client-side error classification (access/auth vs external market API failure vs timeout), ensure retries are reasonable, and return errors with user-actionable metadata for the UI."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Update Market Intel UI to display distinct error states for access/auth problems versus external API failures, and present a reliable retry action that re-attempts the correct query without leaving stale locked/unlocked UI state."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Remove Live Price and Advanced Analytics from routing and navigation with no dead links.",
+      "summary": "Remove/isolated simulated randomness from Market Intel calculations and make signals stable over short windows using fetched market data wherever possible.",
       "acceptanceCriteria": [
-        "BottomNav no longer displays 'Live Price' or 'Analytics'.",
-        "Navigating to /live-price or /advanced-analytics is not possible via in-app navigation and the routes are not registered in App routing."
+        "Market Intel signals (standard + binary) do not change on every refresh solely due to randomness when the underlying fetched market data is unchanged or nearly unchanged.",
+        "Forex market metrics displayed/used in calculations are not generated from pure randomness; if the upstream API cannot provide a metric, it is either omitted from calculations or clearly marked as unavailable in the UI.",
+        "Indicator generation does not rely on Date.now-based seeding for its core values."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Remove imports and route registrations for the Live Price and Advanced Analytics pages so /live-price and /advanced-analytics are no longer part of the router tree."
+          "description": "Refactor Market Intel computation to remove Math.random and Date.now-based seeding: derive indicator/binary-signal inputs deterministically from fetched market data (with rounding/windowing for short-window stability), and treat unavailable forex metrics as unavailable rather than simulated."
         },
         {
-          "path": "frontend/src/components/BottomNav.tsx",
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Remove BottomNav items that navigate to /live-price and /advanced-analytics and confirm no other nav item labels or paths reference these removed routes."
-        },
-        {
-          "path": "frontend/src/pages/LivePricePage.tsx",
-          "operation": "delete",
-          "description": "Delete the Live Price page implementation file to prevent accidental future re-linking."
-        },
-        {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "operation": "delete",
-          "description": "Delete the Advanced Analytics page implementation file to prevent accidental future re-linking."
+          "description": "Update Market Intel presentation to clearly indicate when certain forex metrics are unavailable and excluded from calculations, and ensure displayed signals remain stable when upstream market data is unchanged."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Unify theme, spacing, typography, and readability across Insights, Testimonials, Security, Highlights, and Ecosystem.",
+      "summary": "Update Alerts Center frontend to use canister-backed alerts via React Query so alerts persist across refreshes and are scoped to the authenticated user.",
       "acceptanceCriteria": [
-        "Insights, Testimonials, Security, Community Highlights, and Ecosystem pages share consistent background treatment, typography scale, and card styling.",
-        "No page has low-contrast text (readability issues) against its background.",
-        "Section headers and spacing patterns are consistent across these pages."
+        "Creating an alert persists it; after a full page refresh, the alert list remains unchanged.",
+        "Toggling status and deleting an alert persists and is reflected after refresh.",
+        "Alerts are scoped to the authenticated principal (a different Internet Identity does not see another user’s alerts).",
+        "UI shows a clear empty state when no alerts exist, and shows loading/error states while fetching/saving."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/InsightsPage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Modernize to match the app-wide theme (consistent page shell/background, typography scale, section spacing, and card treatments). Replace any divergent font system usage with the unified theme utilities already used across the site."
+          "description": "Add React Query hooks for Alerts Center backed by the existing backend actor capabilities (fetch list, create, delete, and status/read updates) and ensure cache invalidation keeps alerts consistent across refreshes and navigation."
         },
         {
-          "path": "frontend/src/pages/TestimonialsPage.tsx",
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
           "operation": "modify",
-          "description": "Align page layout, section spacing, and card styling with the unified theme while preserving existing content structure. Continue using shadcn-ui Carousel for the testimonial slider; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/SecurityTransparencyPage.tsx",
-          "operation": "modify",
-          "description": "Normalize backgrounds, card borders, and typography to match the same unified theme as other pages and ensure all text maintains strong contrast/readability."
-        },
-        {
-          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "operation": "modify",
-          "description": "Update styling to use the same page shell, header patterns, and card styling as other modernized pages (consistent spacing, borders, and readable contrast). Continue using shadcn-ui Badge where present; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
-          "operation": "modify",
-          "description": "Bring the Ecosystem page in line with the unified theme (header hierarchy, section rhythm, and card patterns) so it visually matches Insights/Testimonials/Security/Highlights."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add or adjust shared theme utilities (page-shell variants, consistent section header spacing, and card defaults) to support the unified look across the specified pages without introducing new global stylesheet entry points."
+          "description": "Replace client-only alerts state with React Query + actor-backed persistence: implement loading/error/empty states, wire create/delete/status actions to mutations with optimistic UX, and guard interactions behind Internet Identity authentication so alerts are per-user."
         }
       ]
     },
     {
       "id": "REQ-6",
-      "summary": "Add stronger site-wide motion design including parallax/ambient movement, noticeable reveals, and reusable smoky L↔R transitions.",
+      "summary": "Expand the Whitepaper with multiple new chapters and deeper institutional DeFi content while preserving chapter navigation UX and correct active-chapter tracking.",
       "acceptanceCriteria": [
-        "Major page sections reveal with noticeable but readable animations (not just subtle fades).",
-        "At least one reusable smoky left↔right transition effect is applied consistently across multiple pages/sections."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Introduce a reusable smoky left-to-right/right-to-left transition utility (e.g., via pseudo-elements + keyframes) and strengthen section reveal animations while respecting prefers-reduced-motion."
-        },
-        {
-          "path": "frontend/src/components/SmokySectionTransition.tsx",
-          "operation": "create",
-          "description": "Create a reusable wrapper component that applies the smoky transition effect and a stronger reveal animation to sections. Use this component across multiple pages to ensure consistency; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useParallax.ts",
-          "operation": "create",
-          "description": "Add a small hook to provide safe parallax/ambient movement values (scroll-based or pointer-based) with reduced-motion safeguards for use by multiple pages."
-        },
-        {
-          "path": "frontend/src/pages/HomePage.tsx",
-          "operation": "modify",
-          "description": "Apply the new motion system (stronger section reveals and at least one smoky transition between major sections) while keeping text readable and avoiding usability regressions."
-        },
-        {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
-          "operation": "modify",
-          "description": "Apply noticeable section reveals and the reusable smoky transition effect across AI Sentiment and Signals areas (and/or between major sub-sections) while ensuring locked-state UX remains clear. Use shadcn-ui components as already present; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Expand Whitepaper with additional chapters/coverage while keeping chapter navigation and scroll-based active tracking correct.",
-      "acceptanceCriteria": [
-        "Whitepaper has noticeably more content (additional sections/chapters and deeper coverage).",
-        "Chapter sidebar navigation still scrolls to the correct sections and the active chapter updates while scrolling."
+        "Whitepaper chapter list includes multiple new chapters (not just minor edits to existing ones).",
+        "Clicking each chapter scrolls to a visible section with content (no blank/hidden sections).",
+        "The active chapter highlight updates correctly while scrolling through both existing and new chapters."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/WhitepaperPage.tsx",
           "operation": "modify",
-          "description": "Add new chapters and deepen content with structured subsections. Update the CHAPTERS list and ensure each new chapter has a matching section ref so IntersectionObserver tracking and sidebar navigation remain accurate. Continue using shadcn-ui ScrollArea/Button for the sidebar navigation; verify the component's usage instructions before implementing."
+          "description": "Add multiple new whitepaper chapters and full English content sections (headings, paragraphs, bullet lists) in an institutional DeFi tone, while keeping the current sidebar navigation UX and ensuring active-chapter highlighting works for all chapters."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Apply cohesive theme consistency across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages without removing existing content.",
+      "acceptanceCriteria": [
+        "Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth share a consistent design language (background, card style, headings, and buttons).",
+        "No page appears visually 'older' or mismatched compared to the others (consistent use of the same core layout primitives and styling tokens)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add/adjust shared institutional styling utilities (layout spacing, consistent card wrappers, hover states, and motion defaults) to be reused by the listed pages, ensuring consistent typography and background treatment."
+        },
+        {
+          "path": "frontend/src/pages/InsightsPage.tsx",
+          "operation": "modify",
+          "description": "Align Insights page styling (section spacing, card styling, hover states, typography) to the shared institutional theme utilities without removing existing content."
+        },
+        {
+          "path": "frontend/src/pages/TestimonialsPage.tsx",
+          "operation": "modify",
+          "description": "Align Testimonials page styling (carousel card styling, stats cards, headings, spacing, hover/motion behavior) to the shared institutional theme utilities without removing existing content."
+        },
+        {
+          "path": "frontend/src/pages/SecurityTransparencyPage.tsx",
+          "operation": "modify",
+          "description": "Align Security/Transparency page styling (measure cards, metric cards, risk framework rows, CTA buttons) to the shared institutional theme utilities without removing existing content."
+        },
+        {
+          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
+          "operation": "modify",
+          "description": "Align Community Highlights page styling (stats, achievements, featured members, initiatives, CTA) to the shared institutional theme utilities without removing existing content."
+        },
+        {
+          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
+          "operation": "modify",
+          "description": "Align Ecosystem Growth page styling (top cards, growth initiatives block, metrics/get involved cards) to the shared institutional theme utilities without removing existing content."
         }
       ]
     },
     {
       "id": "REQ-8",
-      "summary": "Add more FAQ entries with expandable answers and maintain consistent styling/readability.",
+      "summary": "Add at least two new English content sections to enrich the experience, integrated into existing pages and consistent with the institutional DeFi hub domain.",
       "acceptanceCriteria": [
-        "FAQ includes additional Q/A entries beyond the current set.",
-        "Collapsible expand/collapse behavior remains functional and visually consistent."
+        "At least 2 new, clearly labeled sections are added to appropriate existing pages (e.g., Insights/Testimonials/Security/Ecosystem/Home) without removing current sections.",
+        "New sections follow the same styling system and do not introduce broken links or empty routes."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/FAQPage.tsx",
+          "path": "frontend/src/pages/InsightsPage.tsx",
           "operation": "modify",
-          "description": "Expand the FAQ dataset with additional English Q/A entries, keeping answers well-structured and readable. Preserve and refine existing collapsible styling to match the unified theme. Continue using shadcn-ui Collapsible; verify the component's usage instructions before implementing."
+          "description": "Add a new, clearly labeled institutional DeFi content section (e.g., methodology/research standards or market structure briefing) integrated into the existing Insights page layout and using the shared styling system."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
           "operation": "modify",
-          "description": "If needed, adjust shared typography/spacing utilities used by FAQ items so the expanded content remains readable and consistent with the unified theme."
+          "description": "Add a new, clearly labeled ecosystem-focused content section (e.g., integration pipeline, partner due-diligence framework, or developer enablement overview) integrated into the existing Ecosystem Growth page and using the shared styling system."
         }
       ]
     },
     {
       "id": "REQ-9",
-      "summary": "Add at least two new real-time oriented pages/major sections (not Live Price/Advanced Analytics) and integrate them into navigation, theme, and motion system.",
+      "summary": "Audit and fix site-wide polling/interval live-update behaviors to prevent duplicate intervals, UI flicker/disappearance, and excessive network calls.",
       "acceptanceCriteria": [
-        "At least two new pages or major sections are added and are reachable from navigation.",
-        "New sections are consistent with the existing theme and use noticeable motion design.",
-        "New sections do not add back Live Price or Advanced Analytics pages."
+        "Periodic updates do not create duplicate intervals after navigation or re-renders.",
+        "Real-time sections show stable UI (no flicker/disappear) during refresh cycles.",
+        "Network requests for auto-refresh do not multiply unexpectedly over time."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Remove avoidable duplicate fetch triggers (e.g., manual refetch effects that duplicate React Query’s key-based fetching) and ensure refresh behavior does not multiply network calls over time while maintaining stable UI during auto-refresh cycles."
+        },
+        {
           "path": "frontend/src/pages/MarketPulsePage.tsx",
-          "operation": "create",
-          "description": "Create a new 'Market Pulse' page focused on real-time-oriented updates such as market narrative snapshots, sentiment pulses, macro event cards, and a lightweight data feed presentation (without being a Live Price page). Apply the unified theme and reusable smoky transition/reveal motion; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
-          "operation": "create",
-          "description": "Create a new 'Alerts Center' page for professional, real-time-oriented workflows (e.g., watchlist-style reminders, local alert rules UI, and status panels) implemented client-side without WebSockets/chat and without reintroducing Live Price/Analytics. Apply the unified theme and reusable smoky transition/reveal motion; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Register routes for the new pages (e.g., /market-pulse and /alerts-center) in the TanStack Router tree and ensure they render inside the existing RootLayout."
+          "description": "Harden the simulated live-update loop to guarantee a single interval per mount, reduce flicker-inducing state churn where possible, and ensure the UI remains stable during periodic updates."
         },
         {
-          "path": "frontend/src/components/BottomNav.tsx",
+          "path": "frontend/src/components/SmokySectionTransition.tsx",
           "operation": "modify",
-          "description": "Add navigation entries for the new real-time oriented pages and ensure ordering remains usable without reintroducing Live Price or Advanced Analytics entries."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add any minimal shared styling utilities needed by the new pages to stay consistent with the unified theme and strengthened motion design."
+          "description": "Ensure live-update-driven re-renders cannot cause transition wrappers to re-hide content; keep visibility state stable once revealed and prevent delayed timeouts from toggling visibility unexpectedly."
         }
       ]
     }

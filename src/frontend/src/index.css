@@ -584,32 +584,26 @@
     
     .animation-delay-200 {
         animation-delay: 0.2s;
-        opacity: 0;
     }
     
     .animation-delay-300 {
         animation-delay: 0.3s;
-        opacity: 0;
     }
     
     .animation-delay-400 {
         animation-delay: 0.4s;
-        opacity: 0;
     }
     
     .animation-delay-600 {
         animation-delay: 0.6s;
-        opacity: 0;
     }
     
     .animation-delay-700 {
         animation-delay: 0.7s;
-        opacity: 0;
     }
     
     .animation-delay-800 {
         animation-delay: 0.8s;
-        opacity: 0;
     }
     
     /* Smoky Section Transition */
@@ -857,6 +851,16 @@
         
         .smoky-section-wrapper::before {
             animation: none;
+        }
+        
+        .smoky-section-hidden {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .smoky-section-visible {
+            opacity: 1;
+            transform: translateX(0);
         }
     }
     

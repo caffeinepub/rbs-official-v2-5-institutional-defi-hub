@@ -4,6 +4,7 @@ import Text "mo:core/Text";
 import Iter "mo:core/Iter";
 import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
+import Array "mo:core/Array";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
@@ -95,6 +96,14 @@ actor {
     #broadcast;
   };
 
+  public type Alert = {
+    id : Nat;
+    title : Text;
+    message : Text;
+    timestamp : Int;
+    read : Bool;
+  };
+
   // State Variables
   let userProfiles = Map.empty<Principal, UserProfile>();
   let submissions = Map.empty<Nat, FormSubmission>();
@@ -117,15 +126,117 @@ actor {
   var currentId = 0;
   var nextMIId = 1;
   var lastEconomyUpdate : Int = 0;
+  var lastAlertId = 0;
 
   let maxSubmissions = 5000;
   let marketIntelPassword : Text = "B2420075112009P";
   let presaleEndTime : Int = 1_789_434_800_000_000_000;
   let airdropEndTime : Int = 2_252_772_800_000_000_000;
 
+  let alertsStore = Map.empty<Principal, [Alert]>();
+
   // Transformation Method (required for HTTP calls)
   public query func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
     OutCall.transform(input);
+  };
+
+  // Alerts
+  public shared ({ caller }) func addAlert(title : Text, message : Text) : async Nat {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can add alerts");
+    };
+
+    let alertId = lastAlertId + 1;
+    lastAlertId += 1;
+
+    let alert : Alert = {
+      id = alertId;
+      title;
+      message;
+      timestamp = Time.now();
+      read = false;
+    };
+
+    var existingAlerts = switch (alertsStore.get(caller)) {
+      case (null) { [] };
+      case (?alerts) { alerts };
+    };
+
+    existingAlerts := existingAlerts.concat([alert]);
+    alertsStore.add(caller, existingAlerts);
+
+    alertId;
+  };
+
+  public query ({ caller }) func getAlerts() : async [Alert] {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can view alerts");
+    };
+
+    switch (alertsStore.get(caller)) {
+      case (null) { [] };
+      case (?alerts) { alerts };
+    };
+  };
+
+  public shared ({ caller }) func markAlertAsRead(alertId : Nat) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can mark alerts as read");
+    };
+
+    let alerts = switch (alertsStore.get(caller)) {
+      case (null) { [] };
+      case (?alerts) { alerts };
+    };
+
+    let updatedAlerts = Array.tabulate(
+      alerts.size(),
+      func(i) {
+        let alert = alerts[i];
+        {
+          id = alert.id;
+          title = alert.title;
+          message = alert.message;
+          timestamp = alert.timestamp;
+          read = if (alert.id == alertId) { true } else { alert.read };
+        };
+      },
+    );
+
+    alertsStore.add(caller, updatedAlerts);
+  };
+
+  public shared ({ caller }) func deleteAlert(alertId : Nat) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can delete alerts");
+    };
+
+    let alerts = switch (alertsStore.get(caller)) {
+      case (null) { [] };
+      case (?alerts) { alerts };
+    };
+
+    let filteredAlerts = alerts.filter(func(alert) { alert.id != alertId });
+    alertsStore.add(caller, filteredAlerts);
+  };
+
+  public shared ({ caller }) func clearAlerts() : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can clear alerts");
+    };
+
+    alertsStore.remove(caller);
+  };
+
+  public query ({ caller }) func getAlertCount() : async Nat {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can view alert count");
+    };
+
+    switch (alertsStore.get(caller)) {
+      case (null) { 0 };
+      case (?alerts) { alerts.size() };
+    };
   };
 
   // User Profile Management (Required by frontend)

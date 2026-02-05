@@ -143,6 +143,13 @@ export interface MarketIntelligence {
     indicators: Array<TechnicalIndicator>;
     timestamp: bigint;
 }
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    message: string;
+    timestamp: bigint;
+}
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
@@ -184,16 +191,21 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    addAlert(title: string, message: string): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     checkMarketIntelAccess(): Promise<boolean>;
+    clearAlerts(): Promise<void>;
     clearAllRecords(): Promise<void>;
     createRecord(recordType: string, content: string): Promise<bigint>;
+    deleteAlert(alertId: bigint): Promise<void>;
     deleteMarketIntelligence(id: bigint): Promise<void>;
     deleteRecord(recordType: string, id: bigint): Promise<void>;
     deleteSubmission(id: bigint): Promise<void>;
     deleteTimer(timerType: TimerType): Promise<void>;
     generateMarketIntel(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<bigint>;
     getAirdropRemainingTime(): Promise<bigint>;
+    getAlertCount(): Promise<bigint>;
+    getAlerts(): Promise<Array<Alert>>;
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllSubmissions(): Promise<Array<FormSubmission>>;
     getAllTimers(): Promise<Array<[string, TimerState]>>;
@@ -232,6 +244,7 @@ export interface backendInterface {
     grantMarketIntelAccess(password: string): Promise<boolean>;
     hasAISentimentAccess(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    markAlertAsRead(alertId: bigint): Promise<void>;
     massDeleteAllSubmissions(): Promise<void>;
     massPopulateRecords(recordType: string, contents: Array<string>): Promise<void>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
@@ -344,6 +357,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async addAlert(arg0: string, arg1: string): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addAlert(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addAlert(arg0, arg1);
+            return result;
+        }
+    }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
         if (this.processError) {
             try {
@@ -372,6 +399,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async clearAlerts(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearAlerts();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearAlerts();
+            return result;
+        }
+    }
     async clearAllRecords(): Promise<void> {
         if (this.processError) {
             try {
@@ -397,6 +438,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.createRecord(arg0, arg1);
+            return result;
+        }
+    }
+    async deleteAlert(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteAlert(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteAlert(arg0);
             return result;
         }
     }
@@ -481,6 +536,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAirdropRemainingTime();
+            return result;
+        }
+    }
+    async getAlertCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAlertCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAlertCount();
+            return result;
+        }
+    }
+    async getAlerts(): Promise<Array<Alert>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAlerts();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAlerts();
             return result;
         }
     }
@@ -857,6 +940,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async markAlertAsRead(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markAlertAsRead(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markAlertAsRead(arg0);
             return result;
         }
     }

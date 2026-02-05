@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 12,
-  "summary": "RBS Official V2.5 “Institutional DeFi Hub” is a React + TypeScript single-page website deployed with an Internet Computer (ICP) Motoko backend canister. The frontend provides a marketing/info site (home, tokenomics, roadmap, whitepaper, governance, ecosystem, security, testimonials, insights, etc.), an Acquisition Portal for presale/airdrop registrations (submitted to the canister), and a passcode-gated “Unified Analytics Platform” that fetches real-time market data from external APIs (CoinGecko + exchangerate.host) to compute technical indicators and trading signals (standard + binary modes). Authentication is handled via Internet Identity; backend enforces role-based permissions (admin/user/guest), form submission access, and market-intel access grants per principal.",
+  "projectStateVersion": 3,
+  "summary": "RBS Official V2.5 “Institutional DeFi Hub” is a React + TypeScript single-page website backed by an Internet Computer (ICP) Motoko canister. The frontend delivers a themed, content-heavy marketing/site experience (Home, About, Tokenomics, Roadmap, Whitepaper, FAQ, Insights, Testimonials, Security, Ecosystem, etc.), plus interactive utilities: an authenticated Acquisition Portal for presale/airdrop registrations stored in the canister, and a passcode-gated Market Intel dashboard that fetches real-time crypto/forex data from external APIs (CoinGecko + exchangerate.host) and computes trading indicators/signals (standard + binary). Internet Identity is used for authentication; the backend enforces role-based access control and per-principal Market Intel access grants.",
   "existing_features": [
     {
       "id": "IF-1",
@@ -10,18 +10,18 @@
         "II login",
         "AuthClient integration"
       ],
-      "description": "Provides a React context (InternetIdentityProvider) that initializes DFINITY AuthClient, loads/persists identity, supports login/logout, and exposes status flags for UI logic.",
+      "description": "Provides an InternetIdentityProvider context that initializes DFINITY AuthClient, loads any stored delegation identity, supports login/logout, and exposes detailed status flags (initializing/logging-in/success/error) for UI control.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-2",
-      "title": "ICP canister actor creation and caching per identity",
+      "title": "ICP canister actor creation per identity with access-control initialization",
       "synonyms": [
-        "useActor hook",
+        "useActor",
         "actor initialization"
       ],
-      "description": "Creates an anonymous or authenticated backend actor depending on Internet Identity state, caches it via React Query, and initializes backend access control using a secret parameter from the URL hash/session.",
+      "description": "Creates an anonymous or authenticated backend actor depending on Internet Identity state, and for authenticated users calls the backend authorization bootstrap method using a secret extracted from the URL hash/session.",
       "reqIds": [],
       "version": 1
     },
@@ -32,253 +32,303 @@
         "RBAC",
         "authorization"
       ],
-      "description": "Implements AccessControl with roles (#admin/#user/#guest), admin-only role assignment, permission checks, and a bootstrap flow where the first caller providing the correct env token becomes admin; others become users.",
+      "description": "Implements AccessControl with roles (#admin/#user/#guest), admin-only role assignment, and a bootstrap flow where the first valid initializer can become admin (based on an env token plus a user-provided token); others default to user.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-4",
-      "title": "Market Intelligence access gating (grant/revoke/check)",
+      "title": "Market Intel access gating (grant/revoke/check) by passcode",
       "synonyms": [
-        "passcode lock",
-        "restricted analytics access"
+        "Market Intel lock",
+        "passcode gating"
       ],
-      "description": "Backend stores per-principal access grants for Market Intel. Authenticated users can grant or revoke access by providing the configured password; access checks gate protected endpoints and the frontend unlock flow.",
+      "description": "Backend stores per-principal Market Intel access grants; authenticated users can grant or revoke access by providing the configured passcode, and can query whether they currently have access.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-5",
-      "title": "Real-time market data fetching from external APIs (crypto + forex) with retries/timeouts",
+      "title": "React Query hooks for backend mutations and queries",
       "synonyms": [
-        "CoinGecko integration",
-        "ExchangeRate integration"
+        "useQueries",
+        "backend hooks"
       ],
-      "description": "Frontend fetches crypto market data via CoinGecko and forex rates via exchangerate.host with AbortController timeouts, retry logic, and exponential backoff; auto-refresh via React Query intervals.",
+      "description": "Provides typed hooks for form submission, admin submission listing/filtering/count, Market Intel access grant/revoke/check, and Market Intel/Binary signal fetching with query-key based caching and invalidation.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-6",
-      "title": "Standard trading signal generation with advanced technical indicators",
+      "title": "Acquisition Portal (presale/airdrop) registration submission",
       "synonyms": [
-        "technical analysis",
-        "overall signal"
+        "presale registration",
+        "airdrop registration"
       ],
-      "description": "Generates RSI, MACD, Bollinger Bands, VWAP, Moving Average, Fair Value Gap, and Order Blocks signals; computes a weighted overall signal and a derived historical accuracy score for display.",
+      "description": "Frontend AcquisitionPage collects registration data, validates inputs, submits to actor.submitForm, and redirects users to WhatsApp with a prefilled confirmation message upon success.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-7",
-      "title": "Binary trading signal generation (WIN/LOSS) with probability and confidence",
+      "title": "Backend storage and management of form submissions",
       "synonyms": [
-        "binary options mode",
-        "win probability"
+        "FormSubmission store",
+        "admin submissions API"
       ],
-      "description": "Computes a binary prediction (WIN/LOSS) with confidence and winProbability, influenced by fetched price trend/volatility and seeded randomness; displayed in a dedicated Binary Trading UI mode.",
+      "description": "Stores FormSubmission records keyed by id and includes APIs to create, read with access control (own/admin), update/delete (own/admin), admin list/filter (by type/country), and admin submission counts and mass-delete.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-8",
-      "title": "Acquisition Portal with presale/airdrop countdown locks and form submission",
+      "title": "Presale/airdrop timer queries and admin timer management",
       "synonyms": [
-        "presale registration",
-        "airdrop registration"
+        "countdown timers",
+        "timer state"
       ],
-      "description": "Provides separate presale and airdrop registration forms with date-based countdown timers, progress visualization, validation, backend submission via actor.submitForm, and WhatsApp redirection for confirmation.",
+      "description": "Exposes public queries for remaining time to presale/airdrop endpoints, plus admin-only APIs to toggle, update, and reset timer states stored in a timers map.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-9",
-      "title": "Backend form submission storage and management",
+      "title": "Real-time market data fetching (crypto + forex) with timeouts and retry/backoff",
       "synonyms": [
-        "registration storage",
-        "submission CRUD"
+        "CoinGecko integration",
+        "ExchangeRate integration"
       ],
-      "description": "Backend stores FormSubmission records with timestamps and submittedBy principal; supports create, read (own/admin), update/delete (own/admin), admin listing/filtering by type/country, and admin submission counts plus mass delete.",
+      "description": "Client-side fetches crypto data via CoinGecko and forex rates via exchangerate.host using AbortController timeouts, retry loops with exponential backoff, and React Query auto-refresh intervals.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-10",
-      "title": "Backend timer endpoints for presale/airdrop plus admin-controlled timer state",
+      "title": "Technical indicator generation and weighted overall signal computation",
       "synonyms": [
-        "timer state management",
-        "unlock toggles"
+        "standard trading signal",
+        "technical analysis"
       ],
-      "description": "Exposes public remaining-time queries for presale/airdrop end times and admin-only APIs to toggle/update/delete timer states stored in a timers map.",
+      "description": "Generates RSI, MACD, Bollinger Bands, VWAP, Moving Average, Fair Value Gap (FVG), and Order Blocks signals; computes an overall weighted signal and a derived historical accuracy score.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-11",
-      "title": "Unified Analytics Platform page (MarketIntelPage) with passcode unlock/lock UI",
+      "title": "Binary trading signal generation (WIN/LOSS) with probability and confidence",
       "synonyms": [
-        "Market Intel UI",
-        "analytics dashboard"
+        "binary mode",
+        "win probability"
       ],
-      "description": "Frontend page that verifies access via backend, provides passcode unlock/lock flows (including revoke confirmation dialog), asset/timeframe selectors, refresh controls, loading/error states, and indicator/signal visualizations.",
+      "description": "Computes a binary prediction (WIN/LOSS) with confidence and winProbability, influenced by market trend and volatility (when available) plus seeded randomness.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-12",
-      "title": "Live price dashboard with auto-refresh and heat map",
+      "title": "Market Intel dashboard UI with unlock/lock flow and cache clearing",
       "synonyms": [
-        "LivePricePage",
-        "price overview"
+        "Unified Analytics Platform",
+        "MarketIntelPage"
       ],
-      "description": "Displays a live-updating list of assets with simulated price/24h change updates and a heat-map style summary grid.",
+      "description": "Implements a passcode unlock flow and a passcode-confirmed lock dialog; when locking it clears selected asset/timeframe state and removes cached React Query results for Market Intel and binary signals.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-13",
-      "title": "Advanced analytics dashboard (portfolio/risk/correlation/performance tabs)",
+      "title": "AI Sentiment section with simulated live updates",
       "synonyms": [
-        "AdvancedAnalyticsPage",
-        "portfolio analytics"
+        "sentiment analytics",
+        "social metrics"
       ],
-      "description": "Provides a multi-panel analytics UI with portfolio value, volatility, Sharpe ratio, max drawdown, correlation matrix progress bars, and time-window performance tabs (currently static sample data).",
+      "description": "MarketIntelPage includes an AI Sentiment Analysis section with simulated overall sentiment, score, news impact, and per-platform social metrics that update on an interval.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-14",
-      "title": "Tokenomics visualization and breakdown",
+      "title": "Market Pulse page (simulated real-time narrative, sentiment pulse, macro events, live feed)",
       "synonyms": [
-        "TokenomicsPage",
-        "distribution chart"
+        "MarketPulsePage",
+        "market overview"
       ],
-      "description": "Interactive pie chart (recharts) showing token allocation percentages, total supply display, hover-highlighted allocation cards, and explanatory sections for deflationary model and utility.",
+      "description": "Provides a presentation-style market dashboard with auto-updating sentiment/narrative cards, macro event cards, and a live data feed, using smoky transitions and parallax for motion design.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-15",
-      "title": "Whitepaper page with chapter navigation and scroll-based active section tracking",
+      "title": "Alerts Center UI (local alert CRUD + status toggling)",
       "synonyms": [
-        "WhitepaperPage",
-        "chapter sidebar"
+        "alerts manager",
+        "watchlist alerts"
       ],
-      "description": "Renders structured whitepaper content with a sticky chapter sidebar, scroll-to-section navigation, and IntersectionObserver logic to highlight the active chapter and animate section visibility.",
+      "description": "Provides a client-side alerts management page allowing users to create, toggle (active/paused), and delete alerts with dialogs, badges, and toast feedback (no backend persistence).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-16",
-      "title": "Community governance and voting pages (UI)",
+      "title": "Whitepaper page with chapter navigation and scroll-based active tracking",
       "synonyms": [
-        "GovernancePage",
-        "CommunityVotingPage"
+        "WhitepaperPage",
+        "chapter sidebar"
       ],
-      "description": "Governance explainer page plus a community voting UI with proposals, vote tallies, quorum badges, and client-side vote tracking with toasts (simulated “on-chain” recording in UI messaging).",
+      "description": "Renders a multi-chapter whitepaper with a sticky sidebar; uses IntersectionObserver to track visible sections and update the active chapter, and supports smooth scrolling to chapters.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-17",
-      "title": "Contact page with mailto-based messaging and direct channel links",
+      "title": "Tokenomics visualization with interactive distribution pie chart",
       "synonyms": [
-        "ContactPage",
-        "support channels"
+        "TokenomicsPage",
+        "Recharts pie"
       ],
-      "description": "Implements a validated contact form that opens the user’s email client via a mailto link and provides Telegram/WhatsApp direct links, with UX feedback via toasts.",
+      "description": "Displays fixed supply and allocation breakdown using a Recharts PieChart with hover highlighting, tooltips/legend, and explanatory sections for deflationary mechanics and utility.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-18",
-      "title": "Site-wide navigation, layout, theme, and notifications",
+      "title": "FAQ page with collapsible Q&A items",
       "synonyms": [
-        "BottomNav",
-        "ThemeProvider layout"
+        "FAQPage",
+        "accordion FAQ"
       ],
-      "description": "Provides root layout with next-themes ThemeProvider, footer, scrollable bottom navigation (TanStack Router navigation), and global toaster notifications.",
+      "description": "Implements an interactive FAQ list using collapsible components with open/close state and styled content cards.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-19",
-      "title": "Backend HTTP outcall helper (GET/POST) with transform",
+      "title": "Contact page with mailto-based messaging and channel links",
       "synonyms": [
-        "http_request wrapper",
-        "outcall.mo"
+        "ContactPage",
+        "support links"
       ],
-      "description": "Provides reusable functions for canister HTTP requests with cycle budgeting, user-agent/idempotency headers, and a transform function that strips response headers.",
+      "description": "Validates a contact form and opens the user’s email client via mailto; also provides Telegram/WhatsApp links and toast feedback for user actions.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-20",
-      "title": "Backend blob storage operations via Caffeine storage mixin",
+      "title": "Site-wide layout, navigation, theme, and notifications",
       "synonyms": [
-        "storage gateway authorization",
-        "dead blob pruning"
+        "BottomNav",
+        "ThemeProvider layout"
       ],
-      "description": "Includes functions to update authorized gateway principals from a cashier canister, check blob liveness, list/prune dead blobs with authorization checks, trigger GC, and refill cashier/top-up via cycles.",
+      "description": "Provides shared layout with next-themes ThemeProvider, footer, horizontally scrollable bottom navigation (TanStack Router navigation), and a global toaster notification system.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-21",
-      "title": "Backend generic content record stores with admin CRUD and public reads",
+      "title": "Unified visual design system with motion utilities",
       "synonyms": [
-        "content CMS maps",
-        "records API"
+        "Interlink-ID theme",
+        "smoky transitions"
       ],
-      "description": "Implements per-type content stores (testimonials/insights/faq/governance/ecosystem/whitepaper/roadmap/about/community/security/contact) with admin create/update/delete/mass-populate/clear and public getRecords read access.",
+      "description": "Defines a gold-accented, high-contrast theme with extensive Tailwind/CSS utilities and animations, including SmokySectionTransition reveal effects and parallax hooks that respect reduced-motion preferences.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-22",
-      "title": "Backend user profile management",
+      "title": "Backend public content record stores with admin CRUD",
       "synonyms": [
-        "UserProfile API"
+        "content CMS",
+        "records API"
       ],
-      "description": "Authenticated users can save and query their own UserProfile; admins can query arbitrary profiles; includes access checks for privacy.",
+      "description": "Implements multiple content stores (testimonials, insights, FAQ, governance, ecosystem, whitepaper, roadmap, about, community, security, contact) with admin-only create/update/delete/mass-populate/clear and public read access via getRecords.",
       "reqIds": [],
       "version": 1
     },
     {
-      "id": "feature-remove-the-live-price-and-advanced-analytics-pages-sections-from-the-app-delete-their-routes-from-the-router-remove-their-navigation-entries-from-bottomnav-and-ensure-there-are-no-dead-links-to-live-price-or-advanced-analytics-anywhere-in-the-ui",
-      "title": "Remove the Live Price and Advanced Analytics pages/sections from the app: delete their routes from the router, remove their navigation entries from BottomNav, and ensure there are no dead links to /live-price or /advanced-analytics anywhere in the UI.",
+      "id": "IF-23",
+      "title": "Backend blob-storage maintenance endpoints (Caffeine storage mixin)",
+      "synonyms": [
+        "gateway authorization",
+        "dead blob pruning"
+      ],
+      "description": "Includes endpoints to refresh authorized gateway principals from a cashier canister, list dead blobs to prune, confirm deletions, trigger GC, and refill/top-up cycles via the cashier principal.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-24",
+      "title": "Backend HTTP outcall helper (GET/POST) with transform function",
+      "synonyms": [
+        "http_request wrapper",
+        "outcall.mo"
+      ],
+      "description": "Provides reusable HTTP GET/POST functions with cycle budgeting, default headers (User-Agent, Idempotency-Key for POST), and a transform that strips response headers.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-25",
+      "title": "Canister upgrade migration hook",
+      "synonyms": [
+        "state migration",
+        "Migration.run"
+      ],
+      "description": "Uses a migration module to map old actor state to new actor state during upgrades, including removal of deprecated fields and preservation of key maps and counters.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-react-query-client-duplication-by-ensuring-the-app-uses-a-single-queryclientprovider-instance-so-caching-refetching-and-invalidation-behave-consistently-across-all-pages-including-market-intel-and-real-time-sections",
+      "title": "Fix React Query client duplication by ensuring the app uses a single QueryClientProvider instance so caching, refetching, and invalidation behave consistently across all pages (including Market Intel and real-time sections).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-ui-animation-transition-behavior-that-causes-content-to-disappear-when-users-click-or-interact-with-page-content-e-g-cards-sections-becoming-opacity-0-or-translating-away-after-state-changes-update-animation-patterns-so-interactive-content-remains-visible-and-readable-during-and-after-clicks-while-keeping-motion-effects-where-they-do-not-hide-content",
+      "title": "Fix UI animation/transition behavior that causes content to disappear when users click or interact with page content (e.g., cards/sections becoming opacity-0 or translating away after state changes). Update animation patterns so interactive content remains visible and readable during and after clicks, while keeping motion effects where they do not hide content.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-stabilize-market-intel-unlock-data-loading-so-market-intel-reliably-loads-after-unlock-and-does-not-frequently-show-failed-to-load-market-data-due-to-avoidable-client-side-issues-improve-error-reporting-so-failures-distinguish-between-access-auth-problems-vs-external-market-api-failures",
+      "title": "Stabilize Market Intel unlock + data loading so Market Intel reliably loads after unlock and does not frequently show 'Failed to load market data' due to avoidable client-side issues. Improve error reporting so failures distinguish between access/auth problems vs external market API failures.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-market-intel-accuracy-and-consistency-by-removing-or-clearly-isolating-simulated-randomized-market-inputs-used-in-real-time-calculations-especially-forex-24h-change-volume-simulation-and-date-now-seeded-randomness-in-indicator-signal-generation-ensure-signals-are-stable-for-the-same-asset-timeframe-over-a-short-window-and-are-derived-from-fetched-market-data-wherever-possible",
+      "title": "Improve Market Intel 'accuracy' and consistency by removing or clearly isolating simulated/randomized market inputs used in real-time calculations (especially forex 24h change/volume simulation and Date.now-seeded randomness in indicator/signal generation). Ensure signals are stable for the same asset/timeframe over a short window and are derived from fetched market data wherever possible.",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-and-modernize-the-visual-design-consistency-theme-spacing-typography-contrast-readability-for-these-sections-pages-insights-testimonials-security-highlights-and-ecosystem-ensure-they-all-match-a-single-coherent-site-theme-and-are-visually-consistent-with-each-other-and-with-the-rest-of-the-site",
-      "title": "Fix and modernize the visual design consistency (theme, spacing, typography, contrast/readability) for these sections/pages: Insights, Testimonials, Security, Highlights, and Ecosystem. Ensure they all match a single coherent site theme and are visually consistent with each other and with the rest of the site.",
+      "id": "feature-make-alerts-center-work-properly-by-making-alerts-persistent-per-authenticated-user-add-backend-storage-and-crud-endpoints-for-alerts-and-update-the-frontend-alerts-center-page-to-use-react-query-hooks-backed-by-the-canister-so-alerts-do-not-reset-on-refresh-and-behave-consistently-across-sessions-devices-for-the-same-internet-identity",
+      "title": "Make Alerts Center 'work properly' by making alerts persistent per authenticated user: add backend storage and CRUD endpoints for alerts, and update the frontend Alerts Center page to use React Query hooks backed by the canister so alerts do not reset on refresh and behave consistently across sessions/devices for the same Internet Identity.",
       "reqIds": [
         "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-more-noticeable-motion-design-across-the-site-parallax-ambient-movement-stronger-section-reveal-animations-and-smoky-left-to-right-right-to-left-transitions-while-keeping-content-readable-and-not-harming-usability",
-      "title": "Add more noticeable motion design across the site (parallax/ambient movement, stronger section reveal animations, and smoky left-to-right/right-to-left transitions) while keeping content readable and not harming usability.",
+      "id": "feature-apply-and-complete-the-intended-visual-theme-consistency-updates-across-insights-testimonials-security-transparency-community-highlights-and-ecosystem-growth-pages-so-these-sections-feel-fully-updated-and-aligned-typography-spacing-card-styling-background-treatment-hover-states-and-motion-behavior-do-not-remove-existing-content-restyle-and-enhance-cohesively",
+      "title": "Apply and complete the intended visual theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages so these sections feel fully updated and aligned (typography, spacing, card styling, background treatment, hover states, and motion behavior). Do not remove existing content; restyle and enhance cohesively.",
       "reqIds": [
-        "REQ-6"
+        "REQ-7"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-more-faq-questions-with-expandable-answers-and-ensure-the-faq-styling-remains-consistent-with-the-unified-theme-and-improved-readability",
-      "title": "Add more FAQ questions (with expandable answers) and ensure the FAQ styling remains consistent with the unified theme and improved readability.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-new-non-aura-sections-features-implementer-chosen-that-strengthen-the-site-as-a-professional-real-time-oriented-platform-and-integrate-them-into-navigation-and-the-unified-theme-these-additions-must-not-reintroduce-live-price-or-advanced-analytics-as-separate-pages",
-      "title": "Add new non-aura sections/features (implementer-chosen) that strengthen the site as a professional, real-time oriented platform, and integrate them into navigation and the unified theme. These additions must not reintroduce Live Price or Advanced Analytics as separate pages.",
+      "id": "feature-audit-and-fix-site-wide-real-time-and-live-update-behaviors-market-pulse-ai-sentiment-simulations-market-intel-refresh-intervals-timers-and-any-periodic-ui-updates-to-ensure-intervals-timeouts-are-cleaned-up-loading-states-are-correct-and-updates-do-not-cause-ui-flicker-disappearing-content-or-excessive-network-calls",
+      "title": "Audit and fix site-wide real-time and live-update behaviors (Market Pulse, AI sentiment simulations, Market Intel refresh intervals, timers, and any periodic UI updates) to ensure intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker, disappearing content, or excessive network calls.",
       "reqIds": [
         "REQ-9"
       ],
@@ -288,140 +338,88 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix Market Intel so signals load reliably (real-time) and only after passcode unlock; AI Sentiment content should remain visible without unlock within the same Market Intel section.",
+      "summary": "Fix Market Intel reliability and accuracy: resolve 'failed to load market intelligence data' issues, ensure correct signals (standard + binary where applicable), and stabilize real-time data fetching/unlock flow.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Unify/finish Interlink-ID-inspired theme across all remaining sections and improve readability; add additional site-wide animations (including smoky left-to-right/right-to-left effects).",
+      "summary": "Fix animation regressions causing content/components to disappear on click; adjust interaction/animation patterns so UI remains visible and readable while keeping motion effects.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Remove Live Price and Advanced Analytics sections/pages from the website.",
+      "summary": "Make Alerts Center work properly (reliability/UX fixes). Ensure alert CRUD/toggling behaves correctly and does not break due to theme/animation/state issues.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Increase Whitepaper length/coverage and add more FAQ questions with toggle answers.",
+      "summary": "Expand Whitepaper content with more topics/chapters; increase depth and coverage while keeping site readable and styled consistently with the chosen theme.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Apply/complete theme redesign for Insights, Testimonials, Security, Highlights, and Ecosystem sections (currently not updated/inconsistent).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-6",
-      "summary": "Add additional non-“aura farming” new sections/features across the site (beyond existing pages) while keeping current sections and functionality intact; include improved navigation/service links and richer content.",
+      "summary": "Add additional new sections/features (at assistant discretion) while keeping existing sections/functions intact; ensure new sections fit the unified theme and navigation.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-7",
-      "summary": "Fix/modernize visual design consistency for Insights, Testimonials, Security, Highlights, and Ecosystem sections (readability/visibility issues).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Upgrade site-wide motion design to more noticeable animations (parallax/ambient motion + left↔right smoky transitions) across pages.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Add new multi-page sections/features (non-aura) chosen by implementer to improve completeness and professionalism while keeping existing functionality intact.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Update Market Intel passcode to B2420075112009P and ensure lock/unlock flow requires passcode on every unlock and every re-lock; include a working manual re-lock button.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Enhance Market Intel to cover 20 assets total (top 10 crypto + top 10 forex including XAU, XAG and major FX pairs) and add Binary Trading mode alongside standard trading, both gated behind passcode.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "Unify Market Intel + AI Sentiment into one Market Intel section with separate sub-areas/tabs: AI Sentiment always visible without passcode; trading signals/market data hidden and must not fetch/compute until unlocked.",
+      "summary": "Audit and fix all real-time dependent features across the site (data loading, refresh, error handling) and resolve minor bugs/regressions site-wide.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-13",
-      "summary": "Remove Developer Audits/Developer Tools section(s) from the site and navigation (keep other sections/features intact).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Fix Market Intel access gating so that AI Sentiment content is always visible without any unlock, while Market Intelligence signals + market data remain fully hidden and do not fetch/compute until the user successfully unlocks with the passcode. Keep both AI Sentiment and the gated signals inside the same Market Intel page/section.",
+      "summary": "Expand the Whitepaper with more topics/chapters and deeper content while preserving the existing chapter navigation UX. Add additional chapters beyond the current list and ensure each new chapter has complete English content (headings, paragraphs, and any supporting bullet lists) consistent with the site’s institutional DeFi tone.",
       "reqIds": [
-        "REQ-1"
+        "REQ-6"
       ],
       "status": "pending"
     },
     {
       "id": "AR-15",
-      "summary": "Correct backend Market Intel unlock semantics to be per-user and consistent with the frontend: (1) unlock must require the passcode every time, (2) lock must require the passcode, (3) checkMarketIntelAccess must reflect the user's current unlocked state (not merely that a principal once unlocked), and (4) remove any global shared unlock flag behavior that allows one user's action to affect another user.",
+      "summary": "Add additional new content sections (at developer discretion) to enrich the site experience without breaking existing navigation or functionality. New sections must be English-only, match the existing product domain (institutional DeFi hub / market intel / community), and be integrated into existing pages (do not require new backend services).",
       "reqIds": [
-        "REQ-2"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Update the Market Intel frontend lock/unlock flow to match the required behavior: show AI Sentiment regardless of lock state; show a gated 'Signals Locked' panel with passcode input when locked; add a manual 'Lock Market Intel' control when unlocked that requires passcode confirmation; on lock, clear selected asset/timeframe state and clear cached Market Intel/Binary query data so signals cannot remain visible from cache.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-20",
-      "summary": "Expand the Whitepaper content by increasing length/coverage: add additional chapters and/or deepen existing chapters with more structured subsections, ensuring the chapter navigation remains accurate and scroll-based active tracking still works correctly.",
-      "reqIds": [
-        "REQ-7"
+        "REQ-8"
       ],
       "status": "pending"
     }
   ],
   "architectural_notes": [
-    "Frontend is a SPA using TanStack Router for routing and TanStack React Query for server/cache state management; toasts via sonner; UI styled with TailwindCSS and shadcn/ui components.",
-    "Internet Identity integration is encapsulated in a React context provider; identity persistence is handled via AuthClient local storage.",
-    "Backend is a Motoko actor using an in-memory state model with mo:core Map structures; permissions enforced via a custom AccessControl module (admin/user/guest).",
-    "Motoko uses a mixin pattern (include MixinAuthorization, include blob-storage/Mixin) to compose features into the main canister.",
-    "Admin bootstrap uses an environment variable (CAFFEINE_ADMIN_TOKEN) combined with a user-provided secret; first matching caller becomes admin, subsequent principals become users.",
-    "Market intelligence “live” analytics are computed client-side; the backend mainly provides access gating and also includes a separate admin-only MarketIntelligence store that is not used by the live UI.",
-    "ICP management-style HTTP outcall helper exists (GET/POST + transform) with fixed cycle budgeting; response headers are stripped in transform.",
-    "A blob-storage subsystem exists for gateway authorization and dead-blob pruning, plus a cashier refill/top-up flow using cycles.",
-    "Market Intel gating requirement: AI Sentiment content must always be visible without passcode; trading signals/market data must be hidden and must not fetch/compute until passcode unlock; after lock/re-lock, passcode must be required again for access.",
-    "Market Intel expansion requirement: support both crypto and forex asset universes (20 total) and include both standard and binary trading modes; protected market data/signals must not fetch/compute until passcode unlock, while AI Sentiment remains publicly visible within the same section.",
-    "Market Intel access flow requirement: passcode must be required on every unlock and every manual re-lock; provide an explicit re-lock control in the UI."
+    "Frontend is a SPA built with TanStack Router for routing and TanStack React Query for server-state caching/invalidation; UI uses TailwindCSS + shadcn/ui and toast notifications via sonner.",
+    "Authentication is encapsulated in an InternetIdentityProvider (DFINITY AuthClient) and consumed by a useActor hook that creates an authenticated/anonymous canister actor per identity.",
+    "Backend is a Motoko canister composed via mixins (authorization + blob-storage) and uses mo:core Map-based in-memory stores for submissions, access grants, and content records.",
+    "Role-based access control (admin/user/guest) is implemented in a custom AccessControl module; initial admin bootstrap depends on an environment token plus a user-provided secret.",
+    "Market Intel computations (market data fetch + indicators/signals) are performed client-side; the canister mainly gates access and optionally stores admin-created MarketIntelligence records.",
+    "Frontend motion system uses IntersectionObserver-powered section reveals (SmokySectionTransition) and parallax hooks (scroll + pointer) that respect prefers-reduced-motion.",
+    "The canister is configured with a migration hook (with migration = Migration.run) to reshape persisted state across upgrades.",
+    "Backend includes an ICP HTTP outcall helper with a transform function (strips headers) and fixed cycle budgeting, plus a Caffeine blob-storage maintenance interface (dead-blob pruning, gateway principal refresh, cashier top-up)."
   ],
   "known_issues": [
-    "Hard-coded secrets: market intel password is embedded in backend (marketIntelPassword) and referenced in frontend copy; admin token is passed via URL hash parameter (though cleared) and used to initialize access control.",
-    "Most backend state is not declared as stable and there are no preupgrade/postupgrade hooks shown; data (submissions, access grants, records, etc.) may be lost on canister upgrade.",
-    "Storage module environment variable name appears misspelled: \"CAFFFEINE_STORAGE_CASHIER_PRINCIPAL\" (triple “F”), which is easy to misconfigure.",
-    "Storage.refillCashier uses Nat.sub(currentBalance, reservedCycles) without guarding when reservedCycles > currentBalance; can trap on low-cycle canisters.",
-    "Frontend has nested QueryClientProviders (one in main.tsx and another in App.tsx), creating redundant React Query clients/caches and potential confusion.",
-    "Real-time market data relies on public external APIs without API keys; CoinGecko can rate-limit/timeout. Forex 24h change/volume is partially simulated with randomness (not real market data).",
-    "Indicator/signal generation intentionally uses randomness/seeded math; results are not fully deterministic and may change frequently (seed uses Date.now slicing).",
-    "Backend constant maxSubmissions is defined but not enforced; submissions can grow unbounded until memory limits.",
-    "Role initialization requires calling _initializeAccessControlWithSecret before other role-checked calls; direct callers who skip initialization can hit traps like \"User is not registered\".",
-    "Market Intel currently not working properly (fails to load / does not provide correct signals) and passcode lock/unlock behavior is not correctly enforced (signals should require unlock while AI Sentiment remains open).",
-    "Some sections still have inconsistent theme/styling; content visibility/readability issues remain.",
-    "Some sections (Insights/Testimonials/Security/Highlights/Ecosystem) have design/visibility/readability problems; components are not clearly visible or consistent with the chosen theme.",
-    "Market Intel passcode value and lock/unlock behavior are inconsistent across iterations (needs update to B2420075112009P and enforce passcode on every unlock and re-lock)."
+    "Nested React Query providers: frontend/src/main.tsx and frontend/src/App.tsx both create QueryClientProvider instances, leading to duplicated caches/clients and potentially confusing behavior.",
+    "Market Intel page currently returns a full-screen “Restricted Access” view when locked, so the “AI Sentiment always accessible” content is not actually visible unless unlocked (despite UI copy suggesting otherwise).",
+    "Market Intel access grants are stored per principal and persist until explicitly revoked; returning users may remain unlocked without re-entering the passcode, depending on desired security semantics.",
+    "Real-time market fetching relies on unauthenticated public APIs; CoinGecko/exchangerate.host may rate-limit or fail, impacting Market Intel reliability.",
+    "Forex 24h change/volume are simulated with randomness (not real market data), which can mislead users and makes results non-verifiable.",
+    "Indicator/signal generation intentionally mixes seeded randomness and Date.now-based seeding, producing non-deterministic outputs across refreshes.",
+    "AccessControl.getUserRole traps for non-anonymous principals that have not called initialization; callers bypassing the initialization flow can hit “User is not registered” traps.",
+    "Some React Query hooks (e.g., admin submissions queries) may execute with an anonymous actor and receive backend traps/Unauthorized errors if used without proper gating in UI.",
+    "Backend contains sensitive secrets/config in code/flow: marketIntelPassword is hard-coded in the canister; admin bootstrap secret is read from URL hash/session (even though it is cleared from the address bar).",
+    "Blob-storage config env var appears typo-prone: CAFFFEINE_STORAGE_CASHIER_PRINCIPAL (triple “F”); misconfiguration will trap at runtime."
   ],
   "isFixRequest": true,
   "gameProjectType": "none",
   "projectName": "RBS Official V2.5 Institutional DeFi Hub",
-  "clarification_mode": "pro",
+  "clarification_mode": "instant",
   "clarification_rounds": 0
 }

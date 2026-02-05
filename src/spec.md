@@ -1,17 +1,17 @@
 # Specification
 
 ## Summary
-**Goal:** Make AI Sentiment always visible within Market Intel while keeping signals/market data fully passcode-gated per user, remove Live Price/Advanced Analytics, unify and modernize key page designs, strengthen motion/animations, expand Whitepaper + FAQ, and add new real-time oriented pages/sections.
+**Goal:** Stabilize live-update behaviors and Market Intel reliability/accuracy, fix animation-driven disappearing content, persist Alerts per user, and expand/refresh site content with consistent theming.
 
 **Planned changes:**
-- Adjust Market Intel page gating so AI Sentiment is always shown, while signals + market data stay hidden and do not fetch/compute until passcode unlock.
-- Fix backend unlock/lock semantics to be per-user: require passcode every time for unlock and lock, ensure access checks reflect current caller state, and remove any global/shared unlock behavior.
-- Update Market Intel UI flow: show a “Signals Locked” panel when locked; add a passcode-confirmed “Lock Market Intel” action when unlocked; clear selected asset/timeframe and clear cached gated query data on lock.
-- Remove Live Price and Advanced Analytics routes and all navigation/deep links to `/live-price` and `/advanced-analytics`.
-- Modernize and unify design consistency (theme, spacing, typography, contrast) across Insights, Testimonials, Security, Highlights, and Ecosystem.
-- Add more noticeable motion design across the site, including stronger section reveal animations and a reusable smoky left↔right transition used across multiple sections.
-- Expand the Whitepaper with additional chapters and/or deeper subsections while keeping chapter navigation and scroll-based active tracking accurate.
-- Add more FAQ entries with expandable answers, keeping styling consistent and readable.
-- Add at least two new real-time oriented pages or major sections (implementer-chosen), integrated into navigation and the unified theme, without reintroducing Live Price or Advanced Analytics as separate pages.
+- Ensure the app uses a single React Query `QueryClientProvider` so cache/refetch/invalidation is consistent across all routes (including Market Intel and real-time sections).
+- Fix animation/transition patterns that hide content after interaction so clicked/targeted content stays visible (including Whitepaper chapter navigation) while respecting reduced-motion preferences.
+- Stabilize Market Intel unlock + data loading flows; improve client-side handling so successful API responses render reliably and error states clearly distinguish access/auth vs external API failures with retry.
+- Improve Market Intel calculation consistency by removing or isolating simulated/randomized inputs; ensure signals don’t change purely due to randomness when fetched data is unchanged and avoid `Date.now`-seeded indicator values.
+- Add backend alert persistence (single Motoko canister) with CRUD endpoints; update the frontend Alerts Center to use React Query against the canister so alerts persist across refresh/sessions and are scoped per Internet Identity principal.
+- Expand the Whitepaper by adding multiple new chapters with complete English content while preserving chapter navigation behavior, scrolling visibility, and active-chapter highlighting.
+- Apply cohesive theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages (typography, spacing, cards, backgrounds, hovers, and motion) without removing content.
+- Add at least two new English-only content sections integrated into existing pages to enrich the experience without adding new backend services.
+- Audit and fix site-wide polling/interval live-update behaviors to prevent duplicate timers, UI flicker/disappearing content during refresh, incorrect loading states, and multiplying network calls.
 
-**User-visible outcome:** Users can view AI Sentiment in Market Intel without unlocking, unlock/lock signals securely per user via passcode (with no pre-unlock fetching), navigate a cleaner app without Live Price/Analytics, see a more consistent modern design with stronger animations, read an expanded Whitepaper and FAQ, and access new real-time oriented pages/sections from navigation.
+**User-visible outcome:** The app’s live sections and Market Intel behave more reliably and consistently, interactive content no longer disappears due to animations, alerts persist per logged-in user across refresh/devices, the whitepaper includes more chapters, and key pages look and feel consistently updated with additional on-site content.
