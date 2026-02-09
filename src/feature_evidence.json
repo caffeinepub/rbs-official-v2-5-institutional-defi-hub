@@ -2,10 +2,15 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-react-query-client-duplication-by-ensuring-the-app-uses-a-single-queryclientprovider-instance-so-caching-refetching-and-invalidation-behave-consistently-across-all-pages-including-market-intel-and-real-time-sections",
-      "featureTitle": "Fix React Query client duplication by ensuring the app uses a single QueryClientProvider instance so caching, refetching, and invalidation behave consistently across all pages (including Market Intel and real-time sections).",
+      "featureId": "feature-apply-a-cohesive-modern-visual-redesign-across-the-entire-site-figma-inspired-improving-typography-spacing-color-system-and-component-styling-so-the-site-no-longer-looks-ugly-while-keeping-all-existing-pages-routes-functional",
+      "featureTitle": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
       "files": [
-        "frontend/src/App.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Footer.tsx",
+        "frontend/src/components/Header.tsx",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -23,11 +28,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-ui-animation-transition-behavior-that-causes-content-to-disappear-when-users-click-or-interact-with-page-content-e-g-cards-sections-becoming-opacity-0-or-translating-away-after-state-changes-update-animation-patterns-so-interactive-content-remains-visible-and-readable-during-and-after-clicks-while-keeping-motion-effects-where-they-do-not-hide-content",
-      "featureTitle": "Fix UI animation/transition behavior that causes content to disappear when users click or interact with page content (e.g., cards/sections becoming opacity-0 or translating away after state changes). Update animation patterns so interactive content remains visible and readable during and after clicks, while keeping motion effects where they do not hide content.",
+      "featureId": "feature-fix-all-telegram-and-whatsapp-redirects-so-every-telegram-whatsapp-button-link-consistently-opens-the-correct-url-in-a-new-tab-window-using-the-centralized-constants-in-frontend-src-constants-sociallinks-ts",
+      "featureTitle": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
       "files": [
-        "frontend/src/components/SmokySectionTransition.tsx",
-        "frontend/src/index.css"
+        "frontend/src/components/Footer.tsx",
+        "frontend/src/components/Header.tsx",
+        "frontend/src/pages/ContactPage.tsx",
+        "frontend/src/utils/whatsapp.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -45,10 +52,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-stabilize-market-intel-unlock-data-loading-so-market-intel-reliably-loads-after-unlock-and-does-not-frequently-show-failed-to-load-market-data-due-to-avoidable-client-side-issues-improve-error-reporting-so-failures-distinguish-between-access-auth-problems-vs-external-market-api-failures",
-      "featureTitle": "Stabilize Market Intel unlock + data loading so Market Intel reliably loads after unlock and does not frequently show 'Failed to load market data' due to avoidable client-side issues. Improve error reporting so failures distinguish between access/auth problems vs external market API failures.",
+      "featureId": "feature-ensure-both-primary-registration-forms-presale-and-airdrop-submit-successfully-and-reliably-including-correct-backend-submission-clear-success-error-toasts-correct-whatsapp-redirect-after-successful-submission-and-proper-disabled-loading-states",
+      "featureTitle": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/RegistrationForms.tsx",
+        "frontend/src/utils/whatsapp.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -66,10 +74,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-market-intel-accuracy-and-consistency-by-removing-or-clearly-isolating-simulated-randomized-market-inputs-used-in-real-time-calculations-especially-forex-24h-change-volume-simulation-and-date-now-seeded-randomness-in-indicator-signal-generation-ensure-signals-are-stable-for-the-same-asset-timeframe-over-a-short-window-and-are-derived-from-fetched-market-data-wherever-possible",
-      "featureTitle": "Improve Market Intel 'accuracy' and consistency by removing or clearly isolating simulated/randomized market inputs used in real-time calculations (especially forex 24h change/volume simulation and Date.now-seeded randomness in indicator/signal generation). Ensure signals are stable for the same asset/timeframe over a short window and are derived from fetched market data wherever possible.",
+      "featureId": "feature-implement-timer-based-locking-behavior-for-presale-and-airdrop-forms-according-to-the-roadmap-timers-forms-must-be-locked-unlocked-strictly-based-on-the-backend-timer-values-presale-airdrop-remaining-time-and-must-not-allow-submission-while-locked",
+      "featureTitle": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/RegistrationForms.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -87,10 +95,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-make-alerts-center-work-properly-by-making-alerts-persistent-per-authenticated-user-add-backend-storage-and-crud-endpoints-for-alerts-and-update-the-frontend-alerts-center-page-to-use-react-query-hooks-backed-by-the-canister-so-alerts-do-not-reset-on-refresh-and-behave-consistently-across-sessions-devices-for-the-same-internet-identity",
-      "featureTitle": "Make Alerts Center 'work properly' by making alerts persistent per authenticated user: add backend storage and CRUD endpoints for alerts, and update the frontend Alerts Center page to use React Query hooks backed by the canister so alerts do not reset on refresh and behave consistently across sessions/devices for the same Internet Identity.",
+      "featureId": "feature-add-submission-logging-visibility-that-reflects-the-timer-context-after-a-successful-presale-airdrop-submission-the-user-can-see-a-simple-log-entry-showing-what-was-submitted-and-when-timestamp-and-it-remains-consistent-with-backend-stored-submission-records",
+      "featureTitle": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/MySubmissions.tsx",
+        "frontend/src/pages/AcquisitionPage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -108,10 +117,34 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-apply-and-complete-the-intended-visual-theme-consistency-updates-across-insights-testimonials-security-transparency-community-highlights-and-ecosystem-growth-pages-so-these-sections-feel-fully-updated-and-aligned-typography-spacing-card-styling-background-treatment-hover-states-and-motion-behavior-do-not-remove-existing-content-restyle-and-enhance-cohesively",
-      "featureTitle": "Apply and complete the intended visual theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages so these sections feel fully updated and aligned (typography, spacing, card styling, background treatment, hover states, and motion behavior). Do not remove existing content; restyle and enhance cohesively.",
+      "featureId": "feature-fix-all-other-form-submissions-across-the-site-so-they-behave-correctly-with-clear-validation-and-user-feedback-success-error-and-do-not-silently-fail",
+      "featureTitle": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
       "files": [
-        "frontend/src/index.css"
+        "frontend/src/pages/ContactPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-working-search-box-that-allows-users-to-search-site-content-pages-and-navigate-to-relevant-results-multipage-routing",
+      "featureTitle": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
+      "files": [
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Header.tsx",
+        "frontend/src/components/SiteSearch.tsx",
+        "frontend/src/components/searchIndex.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -129,10 +162,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-audit-and-fix-site-wide-real-time-and-live-update-behaviors-market-pulse-ai-sentiment-simulations-market-intel-refresh-intervals-timers-and-any-periodic-ui-updates-to-ensure-intervals-timeouts-are-cleaned-up-loading-states-are-correct-and-updates-do-not-cause-ui-flicker-disappearing-content-or-excessive-network-calls",
-      "featureTitle": "Audit and fix site-wide real-time and live-update behaviors (Market Pulse, AI sentiment simulations, Market Intel refresh intervals, timers, and any periodic UI updates) to ensure intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker, disappearing content, or excessive network calls.",
+      "featureId": "feature-keep-the-site-as-a-multipage-application-existing-router-based-navigation-while-improving-usability-navigation-clarity-consistent-page-shells-headers-footers-as-part-of-the-redesign",
+      "featureTitle": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
       "files": [
-        "frontend/src/components/SmokySectionTransition.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/Header.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -145,7 +179,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-9"
+        "REQ-8"
       ],
       "confidence": "high"
     }

@@ -1,8 +1,10 @@
 import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet } from '@tanstack/react-router';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
+import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { BottomNav } from './components/BottomNav';
+import { ScrollToTop } from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import MarketIntelPage from './pages/MarketIntelPage';
 import CommunityVotingPage from './pages/CommunityVotingPage';
@@ -21,16 +23,19 @@ import TestimonialsPage from './pages/TestimonialsPage';
 import InsightsPage from './pages/InsightsPage';
 import MarketPulsePage from './pages/MarketPulsePage';
 import AlertsCenterPage from './pages/AlertsCenterPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function RootLayout() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <div className="min-h-screen bg-background text-foreground">
-        <main>
+        <Header />
+        <main className="pt-20">
           <Outlet />
         </main>
         <Footer />
         <BottomNav />
+        <ScrollToTop />
         <Toaster />
       </div>
     </ThemeProvider>
@@ -39,6 +44,7 @@ function RootLayout() {
 
 const rootRoute = createRootRoute({
   component: RootLayout,
+  notFoundComponent: NotFoundPage,
 });
 
 const homeRoute = createRoute({

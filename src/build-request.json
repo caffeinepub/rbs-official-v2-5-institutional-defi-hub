@@ -1,183 +1,188 @@
 {
   "kind": "build_request",
-  "title": "Stabilize real-time features, fix animation disappearance, improve Market Intel accuracy, persist Alerts, and expand content/theme consistency",
-  "priority": "high",
+  "title": "Redesign site UI and fix social redirects, forms, timers, and search",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix React Query client duplication by ensuring the app uses a single QueryClientProvider instance so caching, refetching, and invalidation behave consistently across all pages (including Market Intel and real-time sections).",
+      "text": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "fix everything which is in real time fix all minor bugs"
+          "The design was still too ugly do whatever you want to do with it ... just make it better use figma and more for it"
         ]
       },
       "acceptanceCriteria": [
-        "The app has exactly one active QueryClientProvider at runtime (no nested providers).",
-        "React Query cache keys (e.g., ['marketIntelligence'], ['binarySignal'], ['marketIntelAccess']) are shared consistently across routes and do not reset unexpectedly when navigating."
+        "All existing routes render without layout breakage on mobile and desktop.",
+        "A single consistent design system is applied (type scale, spacing rhythm, card/button/input styles, and section backgrounds).",
+        "Animations (if any) respect reduced-motion preferences and do not introduce continuous heavy effects."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix UI animation/transition behavior that causes content to disappear when users click or interact with page content (e.g., cards/sections becoming opacity-0 or translating away after state changes). Update animation patterns so interactive content remains visible and readable during and after clicks, while keeping motion effects where they do not hide content.",
+      "text": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "when I click on any content it disappears due to animations so fix it"
+          "fix all its functionality redirection to WhatsApp telegram"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking/tapping content cards, buttons, tabs, and navigation items does not cause the clicked section/card to become invisible (opacity: 0) or collapse unexpectedly.",
-        "Whitepaper chapter navigation does not cause the target section to render hidden after clicking a chapter (no blank content caused by transition state).",
-        "Motion respects reduced-motion preferences (no mandatory hide-then-reveal for core content)."
+        "All UI links that claim to open Telegram open https://t.me/Rsuperior.",
+        "All UI links that claim to open WhatsApp channel open https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P.",
+        "All UI flows that claim to open WhatsApp direct message open https://wa.me/923294238997 (with optional encoded message querystring when applicable).",
+        "No hardcoded Telegram/WhatsApp URLs remain outside frontend/src/constants/socialLinks.ts."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Stabilize Market Intel unlock + data loading so Market Intel reliably loads after unlock and does not frequently show 'Failed to load market data' due to avoidable client-side issues. Improve error reporting so failures distinguish between access/auth problems vs external market API failures.",
-      "target": "frontend",
+      "text": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "market intel is not working properly so fix it and accurate"
+          "make sure both forms work properly"
         ]
       },
       "acceptanceCriteria": [
-        "After entering a valid passcode and unlocking, selecting an asset and timeframe triggers a successful fetch attempt and renders results when external APIs respond successfully.",
-        "If external APIs fail/rate-limit, the UI displays a clear error state that indicates the cause (API failure) and provides a working retry action.",
-        "Unlock/lock actions do not leave the Market Intel page stuck in an incorrect locked/unlocked state due to stale cache."
+        "Submitting Presale/Airdrop with valid data calls the backend submitForm successfully and shows a success toast.",
+        "Submitting invalid data does not call the backend and shows a validation error.",
+        "While submission is in progress, the active form is disabled and shows an in-progress UI state.",
+        "After successful submission, WhatsApp opens with a correctly encoded, prefilled message that matches the submitted values.",
+        "If the popup is blocked, the UI provides a clear fallback (e.g., a visible link/button) that the user can click to open WhatsApp manually."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Improve Market Intel 'accuracy' and consistency by removing or clearly isolating simulated/randomized market inputs used in real-time calculations (especially forex 24h change/volume simulation and Date.now-seeded randomness in indicator/signal generation). Ensure signals are stable for the same asset/timeframe over a short window and are derived from fetched market data wherever possible.",
-      "target": "frontend",
+      "text": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "market intel is not working properly so fix it and accurate"
+          "logged with the timer locked with the timer according to roadmap"
         ]
       },
       "acceptanceCriteria": [
-        "Market Intel signals (standard + binary) do not change on every refresh solely due to randomness when the underlying fetched market data is unchanged or nearly unchanged.",
-        "Forex market metrics displayed/used in calculations are not generated from pure randomness; if the upstream API cannot provide a metric, it is either omitted from calculations or clearly marked as unavailable in the UI.",
-        "Indicator generation does not rely on Date.now-based seeding for its core values."
+        "When remaining time is 0 (or otherwise indicates lock), the corresponding form is visibly locked and cannot be submitted (UI prevents submit; backend rejects if attempted).",
+        "When remaining time is greater than 0 and the form is intended to be available, the form is usable and can be submitted.",
+        "The UI countdown updates smoothly and matches the latest backend remaining-time queries.",
+        "Locked-state messaging is clear and in English."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Make Alerts Center 'work properly' by making alerts persistent per authenticated user: add backend storage and CRUD endpoints for alerts, and update the frontend Alerts Center page to use React Query hooks backed by the canister so alerts do not reset on refresh and behave consistently across sessions/devices for the same Internet Identity.",
+      "text": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "make alerts to work properly"
+          "logged with the timer"
         ]
       },
       "acceptanceCriteria": [
-        "Creating an alert persists it; after a full page refresh, the alert list remains unchanged.",
-        "Toggling status and deleting an alert persists and is reflected after refresh.",
-        "Alerts are scoped to the authenticated principal (a different Internet Identity does not see another user’s alerts).",
-        "UI shows a clear empty state when no alerts exist, and shows loading/error states while fetching/saving."
+        "After submitting a form, the UI displays an entry in a \"My Submissions\" area (or equivalent) that includes: form type (Presale/Airdrop), submitted timestamp, and key submitted fields.",
+        "The log is fetched from backend getMySubmissions and updates automatically after successful submission.",
+        "No other user’s submissions are visible to a non-admin user."
       ]
     },
     {
       "id": "REQ-6",
-      "text": "Expand the Whitepaper with more topics/chapters and deeper content while preserving the existing chapter navigation UX. Add additional chapters beyond the current list and ensure each new chapter has complete English content (headings, paragraphs, and any supporting bullet lists) consistent with the site’s institutional DeFi tone.",
+      "text": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "increase more topics in whitepaper"
+          "and all other forms submissions"
         ]
       },
       "acceptanceCriteria": [
-        "Whitepaper chapter list includes multiple new chapters (not just minor edits to existing ones).",
-        "Clicking each chapter scrolls to a visible section with content (no blank/hidden sections).",
-        "The active chapter highlight updates correctly while scrolling through both existing and new chapters."
+        "Each page with a form provides English validation errors for required fields.",
+        "Each form submission path provides a clear success indicator and a clear failure indicator (no silent failures).",
+        "No form can be submitted multiple times unintentionally due to missing disabled/loading handling."
       ]
     },
     {
       "id": "REQ-7",
-      "text": "Apply and complete the intended visual theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages so these sections feel fully updated and aligned (typography, spacing, card styling, background treatment, hover states, and motion behavior). Do not remove existing content; restyle and enhance cohesively.",
+      "text": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "theme of insight testimonials security highlight and ecosystem section isn't changed so do it"
+          "and all search box properly"
         ]
       },
       "acceptanceCriteria": [
-        "Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth share a consistent design language (background, card style, headings, and buttons).",
-        "No page appears visually 'older' or mismatched compared to the others (consistent use of the same core layout primitives and styling tokens)."
+        "A visible search input exists in the UI (desktop and mobile).",
+        "Typing a query shows matching results (at minimum: page titles/primary sections) and selecting a result navigates to the corresponding route.",
+        "Search works without requiring authentication.",
+        "Empty/no-match states are handled gracefully with English messaging."
       ]
     },
     {
       "id": "REQ-8",
-      "text": "Add additional new content sections (at developer discretion) to enrich the site experience without breaking existing navigation or functionality. New sections must be English-only, match the existing product domain (institutional DeFi hub / market intel / community), and be integrated into existing pages (do not require new backend services).",
+      "text": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "add more sections on your own"
+          "make it for multipage or single scroll website do whatever you want"
         ]
       },
       "acceptanceCriteria": [
-        "At least 2 new, clearly labeled sections are added to appropriate existing pages (e.g., Insights/Testimonials/Security/Ecosystem/Home) without removing current sections.",
-        "New sections follow the same styling system and do not introduce broken links or empty routes."
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "text": "Audit and fix site-wide real-time and live-update behaviors (Market Pulse, AI sentiment simulations, Market Intel refresh intervals, timers, and any periodic UI updates) to ensure intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker, disappearing content, or excessive network calls.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Fix everything that is live",
-          "fix everything which is in real time",
-          "fix all minor bugs"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Periodic updates do not create duplicate intervals after navigation or re-renders.",
-        "Real-time sections show stable UI (no flicker/disappear) during refresh cycles.",
-        "Network requests for auto-refresh do not multiply unexpectedly over time."
+        "All existing routes remain accessible via navigation on both desktop and mobile.",
+        "No route becomes unreachable due to redesign changes.",
+        "Scroll position behavior remains sensible on route changes (no confusing partial scroll states)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister; do not introduce additional backend services.",
-    "Do not edit any frontend files under frontend immutable paths (including frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui). Compose around them if changes are needed.",
-    "Use English for all user-facing text."
+    "Use English for all user-facing text.",
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not modify files under frontend/src/components/ui or other immutablePaths; compose those components instead.",
+    "Do not remove or change the existing Telegram/WhatsApp URLs defined in frontend/src/constants/socialLinks.ts; ensure the app uses them consistently."
   ],
   "nonGoals": [
-    "Removing Market Intel passcode gating entirely (keep existing access model unless explicitly requested later).",
     "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Adding WebSockets or true real-time streaming; improvements must use existing polling/interval patterns."
+    "Adding external databases or third-party analytics/search services.",
+    "Implementing real-time messaging/chat.",
+    "Changing the project into a Next.js/Vue/Angular app."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Abstract premium hero background with subtle gold/charcoal gradients and light noise texture (hero-bg.dim_1920x1080.png)",
+      "Minimal monoline icon set (telegram, whatsapp, search, form) in a consistent style (ui-icons.dim_512x512.png)",
+      "Soft section-divider graphic with smoky/gold motif (section-divider.dim_1920x240.png)"
+    ],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Prefer a Figma-inspired modern visual redesign; prioritize aesthetics and UX polish while preserving/fixing core functionality."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

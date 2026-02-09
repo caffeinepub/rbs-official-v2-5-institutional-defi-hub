@@ -8,7 +8,9 @@ interface SmokySectionTransitionProps {
 
 export function SmokySectionTransition({ children, delay = 0, className = '' }: SmokySectionTransitionProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [hasBeenVisible, setHasBeenVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -16,29 +18,44 @@ export function SmokySectionTransition({ children, delay = 0, className = '' }: 
     
     if (prefersReducedMotion) {
       setIsVisible(true);
+      setHasBeenVisible(true);
       return;
     }
 
-    const observer = new IntersectionObserver(
+    if (!('IntersectionObserver' in window)) {
+      setIsVisible(true);
+      setHasBeenVisible(true);
+      return;
+    }
+
+    observerRef.current = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          timeoutRef.current = setTimeout(() => setIsVisible(true), delay);
+        if (entry.isIntersecting && !hasBeenVisible) {
+          timeoutRef.current = setTimeout(() => {
+            setIsVisible(true);
+            setHasBeenVisible(true);
+            if (observerRef.current && sectionRef.current) {
+              observerRef.current.unobserve(sectionRef.current);
+            }
+          }, delay);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
     );
 
     if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+      observerRef.current.observe(sectionRef.current);
     }
 
     return () => {
-      observer.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [delay]);
+  }, [delay, hasBeenVisible]);
 
   return (
     <div

@@ -1,212 +1,283 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Stabilize live UX, Market Intel reliability, Alerts persistence wiring, and site-wide content/theme consistency",
+  "title": "Modern UI redesign with reliable social redirects, forms, timers, submission logs, and site search",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure the app uses a single React Query QueryClientProvider so caching and invalidation are consistent across routes.",
+      "summary": "Apply a cohesive modern visual redesign (typography, spacing, colors, and consistent component styling) without breaking any existing routes.",
       "acceptanceCriteria": [
-        "The app has exactly one active QueryClientProvider at runtime (no nested providers).",
-        "React Query cache keys (e.g., ['marketIntelligence'], ['binarySignal'], ['marketIntelAccess']) are shared consistently across routes and do not reset unexpectedly when navigating."
+        "All existing routes render without layout breakage on mobile and desktop.",
+        "A single consistent design system is applied (type scale, spacing rhythm, card/button/input styles, and section backgrounds).",
+        "Animations (if any) respect reduced-motion preferences and do not introduce continuous heavy effects."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Refine the global design system tokens and utilities (type scale, spacing helpers, consistent section styling, background surfaces), and ensure reduced-motion behavior remains respected across all animations."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Align Tailwind theme extensions (colors, fonts, radii, shadows, animations) to the redesigned system for consistent styling across pages."
+        },
+        {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Remove the extra QueryClient/QueryClientProvider wrapper from App so React Query is provided only once (via the existing provider in main), eliminating duplicated clients and inconsistent caching across routes."
+          "description": "Wrap all routes in a consistent page shell (header + content + footer) so every existing route inherits the redesign uniformly while keeping router behavior intact."
+        },
+        {
+          "path": "frontend/src/components/Header.tsx",
+          "operation": "modify",
+          "description": "Restyle the header to match the new design system (modern spacing/typography, clearer active states, consistent surfaces) while preserving all existing navigation targets."
+        },
+        {
+          "path": "frontend/src/components/Footer.tsx",
+          "operation": "modify",
+          "description": "Restyle footer layout/typography/surfaces to match the redesign and ensure icon/link styling is consistent with the new design system."
+        },
+        {
+          "path": "frontend/src/components/BottomNav.tsx",
+          "operation": "modify",
+          "description": "Polish bottom navigation styling and active states to match the updated design system, maintaining accessibility and route reachability."
+        },
+        {
+          "path": "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
+          "operation": "create",
+          "description": "Add the generated asset for the redesigned hero background at frontend/public/assets/generated/hero-bg.dim_1920x1080.png and wire it into the redesigned UI as a static asset."
+        },
+        {
+          "path": "frontend/public/assets/generated/ui-icons.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the generated minimal monoline icon set at frontend/public/assets/generated/ui-icons.dim_512x512.png and wire it into the redesigned UI where appropriate as a static asset."
+        },
+        {
+          "path": "frontend/public/assets/generated/section-divider.dim_1920x240.png",
+          "operation": "create",
+          "description": "Add the generated section divider graphic at frontend/public/assets/generated/section-divider.dim_1920x240.png and wire it into the redesigned UI as a static asset."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Fix animation/transition patterns that hide interactive content after clicks, and ensure reduced-motion users don’t encounter hide-then-reveal behavior for core content.",
+      "summary": "Fix all Telegram/WhatsApp redirects to consistently use SOCIAL_LINKS constants and open in a new tab/window.",
       "acceptanceCriteria": [
-        "Clicking/tapping content cards, buttons, tabs, and navigation items does not cause the clicked section/card to become invisible (opacity: 0) or collapse unexpectedly.",
-        "Whitepaper chapter navigation does not cause the target section to render hidden after clicking a chapter (no blank content caused by transition state).",
-        "Motion respects reduced-motion preferences (no mandatory hide-then-reveal for core content)."
+        "All UI links that claim to open Telegram open https://t.me/Rsuperior.",
+        "All UI links that claim to open WhatsApp channel open https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P.",
+        "All UI flows that claim to open WhatsApp direct message open https://wa.me/923294238997 (with optional encoded message querystring when applicable).",
+        "No hardcoded Telegram/WhatsApp URLs remain outside frontend/src/constants/socialLinks.ts."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/constants/socialLinks.ts",
           "operation": "modify",
-          "description": "Update animation delay utility classes so they do not set persistent opacity:0; keep delays without forcing content to remain hidden after state changes or re-renders. Also refine reduced-motion overrides to avoid any hide-then-reveal patterns for primary content."
+          "description": "Audit and retain the existing Telegram/WhatsApp URLs as the single source of truth; ensure exports remain stable and are referenced everywhere else (no URL changes)."
         },
         {
-          "path": "frontend/src/components/SmokySectionTransition.tsx",
+          "path": "frontend/src/components/Footer.tsx",
           "operation": "modify",
-          "description": "Harden the transition wrapper so it cannot leave children hidden after interactions: ensure pending timeouts are cleared on unmount, and respect reduced-motion by rendering content visible immediately when the user prefers reduced motion."
+          "description": "Ensure Telegram/WhatsApp icons use SOCIAL_LINKS exclusively and open with target=_blank and rel=noopener noreferrer; remove any hardcoded social URLs if present."
         },
         {
-          "path": "frontend/src/pages/WhitepaperPage.tsx",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Adjust chapter-section visibility logic so clicking a chapter never lands on a still-hidden (opacity-0/translated) section; ensure clicked/target section is marked visible immediately and remains readable after navigation."
+          "description": "Audit any Telegram/WhatsApp links/buttons in header/mobile menu to use SOCIAL_LINKS exclusively and open in a new tab/window where applicable."
+        },
+        {
+          "path": "frontend/src/pages/ContactPage.tsx",
+          "operation": "modify",
+          "description": "Ensure any social links on the Contact page use SOCIAL_LINKS (no hardcoded Telegram/WhatsApp URLs) and open in a new tab/window."
+        },
+        {
+          "path": "frontend/src/utils/whatsapp.ts",
+          "operation": "modify",
+          "description": "Ensure WhatsApp URL generation uses SOCIAL_LINKS.whatsappDirect consistently and supports optional encoded prefilled messages for form flows."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Stabilize Market Intel unlock and data loading to reduce avoidable client-side failures and provide clearer error reporting for access vs external API issues.",
+      "summary": "Make Presale and Airdrop registration submissions reliable with validation, clear toasts, disabled/loading states, and WhatsApp redirect + popup-blocked fallback.",
       "acceptanceCriteria": [
-        "After entering a valid passcode and unlocking, selecting an asset and timeframe triggers a successful fetch attempt and renders results when external APIs respond successfully.",
-        "If external APIs fail/rate-limit, the UI displays a clear error state that indicates the cause (API failure) and provides a working retry action.",
-        "Unlock/lock actions do not leave the Market Intel page stuck in an incorrect locked/unlocked state due to stale cache."
+        "Submitting Presale/Airdrop with valid data calls the backend submitForm successfully and shows a success toast.",
+        "Submitting invalid data does not call the backend and shows a validation error.",
+        "While submission is in progress, the active form is disabled and shows an in-progress UI state.",
+        "After successful submission, WhatsApp opens with a correctly encoded, prefilled message that matches the submitted values.",
+        "If the popup is blocked, the UI provides a clear fallback (e.g., a visible link/button) that the user can click to open WhatsApp manually."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/RegistrationForms.tsx",
           "operation": "modify",
-          "description": "Improve Market Intel query robustness: add structured client-side error classification (access/auth vs external market API failure vs timeout), ensure retries are reasonable, and return errors with user-actionable metadata for the UI."
+          "description": "Harden Presale/Airdrop submission flow: prevent submission when locked, validate before submit, show consistent success/error toasts, ensure per-form disabled/loading states, and expose a clear WhatsApp fallback link/button when popup opening is blocked."
         },
         {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update Market Intel UI to display distinct error states for access/auth problems versus external API failures, and present a reliable retry action that re-attempts the correct query without leaving stale locked/unlocked UI state."
+          "description": "Ensure the form submission mutation surfaces actionable error states (for toast display) and reliably invalidates relevant queries after success (including mySubmissions and any timer-related UI dependencies)."
+        },
+        {
+          "path": "frontend/src/utils/whatsapp.ts",
+          "operation": "modify",
+          "description": "Update WhatsApp opening helper to detect blocked popups (e.g., window.open returns null) and return a result that the UI can use to show a manual fallback link."
+        },
+        {
+          "path": "frontend/src/utils/forms.ts",
+          "operation": "modify",
+          "description": "Tighten form validation/normalization to ensure robust required-field errors in English, and consistent payload normalization for both Presale and Airdrop."
+        },
+        {
+          "path": "frontend/src/components/ui/sonner.tsx",
+          "operation": "modify",
+          "description": "Do not modify this file; instead, verify toast usage remains consistent with the redesign. (This operation is a placeholder—skip implementation changes if this path is immutable.)"
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Remove/isolated simulated randomness from Market Intel calculations and make signals stable over short windows using fetched market data wherever possible.",
+      "summary": "Implement timer-based locking/unlocking for Presale/Airdrop forms driven strictly by backend timer values, with smooth countdown updates and clear English lock messaging.",
       "acceptanceCriteria": [
-        "Market Intel signals (standard + binary) do not change on every refresh solely due to randomness when the underlying fetched market data is unchanged or nearly unchanged.",
-        "Forex market metrics displayed/used in calculations are not generated from pure randomness; if the upstream API cannot provide a metric, it is either omitted from calculations or clearly marked as unavailable in the UI.",
-        "Indicator generation does not rely on Date.now-based seeding for its core values."
+        "When remaining time is 0 (or otherwise indicates lock), the corresponding form is visibly locked and cannot be submitted (UI prevents submit; backend rejects if attempted).",
+        "When remaining time is greater than 0 and the form is intended to be available, the form is usable and can be submitted.",
+        "The UI countdown updates smoothly and matches the latest backend remaining-time queries.",
+        "Locked-state messaging is clear and in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/RegistrationForms.tsx",
           "operation": "modify",
-          "description": "Refactor Market Intel computation to remove Math.random and Date.now-based seeding: derive indicator/binary-signal inputs deterministically from fetched market data (with rounding/windowing for short-window stability), and treat unavailable forex metrics as unavailable rather than simulated."
+          "description": "Refactor timer handling so the countdown decreases smoothly client-side between backend refreshes while staying aligned to backend remaining-time queries; enforce locked state both in UI controls and submit handlers, with clear English messaging."
         },
         {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update Market Intel presentation to clearly indicate when certain forex metrics are unavailable and excluded from calculations, and ensure displayed signals remain stable when upstream market data is unchanged."
+          "description": "Adjust timer queries/refetch strategy to keep UI in sync with backend remaining-time values and minimize drift (without adding auth requirements)."
+        },
+        {
+          "path": "frontend/src/utils/timers.ts",
+          "operation": "modify",
+          "description": "Ensure timer processing supports backend nanosecond values robustly (including edge cases like negative/zero), producing consistent formatted display and locked-state signals."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Update Alerts Center frontend to use canister-backed alerts via React Query so alerts persist across refreshes and are scoped to the authenticated user.",
+      "summary": "Add a simple 'My Submissions' UI log that reflects successful submissions with timestamps and stays consistent with backend-stored records.",
       "acceptanceCriteria": [
-        "Creating an alert persists it; after a full page refresh, the alert list remains unchanged.",
-        "Toggling status and deleting an alert persists and is reflected after refresh.",
-        "Alerts are scoped to the authenticated principal (a different Internet Identity does not see another user’s alerts).",
-        "UI shows a clear empty state when no alerts exist, and shows loading/error states while fetching/saving."
+        "After submitting a form, the UI displays an entry in a \"My Submissions\" area (or equivalent) that includes: form type (Presale/Airdrop), submitted timestamp, and key submitted fields.",
+        "The log is fetched from backend getMySubmissions and updates automatically after successful submission.",
+        "No other user’s submissions are visible to a non-admin user."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add React Query hooks for Alerts Center backed by the existing backend actor capabilities (fetch list, create, delete, and status/read updates) and ensure cache invalidation keeps alerts consistent across refreshes and navigation."
+          "path": "frontend/src/components/MySubmissions.tsx",
+          "operation": "create",
+          "description": "Create a 'My Submissions' component that fetches and renders the current user's submissions from useGetMySubmissions with a simple list/table presentation and clear empty/loading states. Use shadcn-ui components for list/table/card styling as needed. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Replace client-only alerts state with React Query + actor-backed persistence: implement loading/error/empty states, wire create/delete/status actions to mutations with optimistic UX, and guard interactions behind Internet Identity authentication so alerts are per-user."
+          "description": "Confirm mySubmissions query is enabled appropriately and is invalidated/refetched after successful submitForm so the UI updates immediately."
+        },
+        {
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "operation": "modify",
+          "description": "Wire the new MySubmissions component into the Acquisition page near the Presale/Airdrop forms so users can see their submission log after submitting."
         }
       ]
     },
     {
       "id": "REQ-6",
-      "summary": "Expand the Whitepaper with multiple new chapters and deeper institutional DeFi content while preserving chapter navigation UX and correct active-chapter tracking.",
+      "summary": "Fix all other site form submissions to validate clearly in English, provide success/error feedback, and prevent accidental double submits.",
       "acceptanceCriteria": [
-        "Whitepaper chapter list includes multiple new chapters (not just minor edits to existing ones).",
-        "Clicking each chapter scrolls to a visible section with content (no blank/hidden sections).",
-        "The active chapter highlight updates correctly while scrolling through both existing and new chapters."
+        "Each page with a form provides English validation errors for required fields.",
+        "Each form submission path provides a clear success indicator and a clear failure indicator (no silent failures).",
+        "No form can be submitted multiple times unintentionally due to missing disabled/loading handling."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/WhitepaperPage.tsx",
+          "path": "frontend/src/pages/ContactPage.tsx",
           "operation": "modify",
-          "description": "Add multiple new whitepaper chapters and full English content sections (headings, paragraphs, bullet lists) in an institutional DeFi tone, while keeping the current sidebar navigation UX and ensuring active-chapter highlighting works for all chapters."
+          "description": "Ensure the contact form has explicit required-field validation messaging in English, uses disabled/loading state to prevent double submits, and always shows a clear toast on success/failure."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Audit any access/passcode or other form-like interactions to ensure clear validation, visible success/failure feedback (toast or inline), and disabled/loading states to prevent double submits. Use shadcn-ui components for consistent UX. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "modify",
+          "description": "Audit any alert creation/edit/delete dialogs/forms to ensure consistent validation feedback, explicit success/error messaging, and disabled/loading states during mutations. Use shadcn-ui dialog/form primitives as-is (compose only). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/errors.ts",
+          "operation": "modify",
+          "description": "Refine user-facing error sanitization so form-related failures consistently display clear, English error messages (and avoid exposing raw technical details)."
         }
       ]
     },
     {
       "id": "REQ-7",
-      "summary": "Apply cohesive theme consistency across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages without removing existing content.",
+      "summary": "Implement a working site-wide search box for multipage routing that navigates to matched routes without authentication.",
       "acceptanceCriteria": [
-        "Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth share a consistent design language (background, card style, headings, and buttons).",
-        "No page appears visually 'older' or mismatched compared to the others (consistent use of the same core layout primitives and styling tokens)."
+        "A visible search input exists in the UI (desktop and mobile).",
+        "Typing a query shows matching results (at minimum: page titles/primary sections) and selecting a result navigates to the corresponding route.",
+        "Search works without requiring authentication.",
+        "Empty/no-match states are handled gracefully with English messaging."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add/adjust shared institutional styling utilities (layout spacing, consistent card wrappers, hover states, and motion defaults) to be reused by the listed pages, ensuring consistent typography and background treatment."
+          "path": "frontend/src/components/SiteSearch.tsx",
+          "operation": "create",
+          "description": "Create a site search component (input + results) that indexes known routes/page titles and navigates via the router on selection. Use shadcn-ui components (e.g., command/menu/dialog/input) to provide accessible interactions and consistent styling. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/InsightsPage.tsx",
-          "operation": "modify",
-          "description": "Align Insights page styling (section spacing, card styling, hover states, typography) to the shared institutional theme utilities without removing existing content."
+          "path": "frontend/src/components/searchIndex.ts",
+          "operation": "create",
+          "description": "Add a small static search index mapping existing routes to titles/keywords (and optional section hints) to support fast client-side search without external services."
         },
         {
-          "path": "frontend/src/pages/TestimonialsPage.tsx",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Align Testimonials page styling (carousel card styling, stats cards, headings, spacing, hover/motion behavior) to the shared institutional theme utilities without removing existing content."
+          "description": "Wire the SiteSearch component into the header for desktop and mobile layouts so search is always visible/accessible without authentication."
         },
         {
-          "path": "frontend/src/pages/SecurityTransparencyPage.tsx",
+          "path": "frontend/src/components/BottomNav.tsx",
           "operation": "modify",
-          "description": "Align Security/Transparency page styling (measure cards, metric cards, risk framework rows, CTA buttons) to the shared institutional theme utilities without removing existing content."
-        },
-        {
-          "path": "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "operation": "modify",
-          "description": "Align Community Highlights page styling (stats, achievements, featured members, initiatives, CTA) to the shared institutional theme utilities without removing existing content."
-        },
-        {
-          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
-          "operation": "modify",
-          "description": "Align Ecosystem Growth page styling (top cards, growth initiatives block, metrics/get involved cards) to the shared institutional theme utilities without removing existing content."
+          "description": "Add an optional search affordance in bottom navigation for mobile users (either a search item that opens the search UI or a compact input), ensuring it does not break existing navigation."
         }
       ]
     },
     {
       "id": "REQ-8",
-      "summary": "Add at least two new English content sections to enrich the experience, integrated into existing pages and consistent with the institutional DeFi hub domain.",
+      "summary": "Preserve multipage router navigation while improving usability via clearer navigation and consistent page shells and scroll behavior.",
       "acceptanceCriteria": [
-        "At least 2 new, clearly labeled sections are added to appropriate existing pages (e.g., Insights/Testimonials/Security/Ecosystem/Home) without removing current sections.",
-        "New sections follow the same styling system and do not introduce broken links or empty routes."
+        "All existing routes remain accessible via navigation on both desktop and mobile.",
+        "No route becomes unreachable due to redesign changes.",
+        "Scroll position behavior remains sensible on route changes (no confusing partial scroll states)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/InsightsPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Add a new, clearly labeled institutional DeFi content section (e.g., methodology/research standards or market structure briefing) integrated into the existing Insights page layout and using the shared styling system."
+          "description": "Ensure the multipage router layout includes consistent header/footer/bottom nav across all routes and keeps all existing routes reachable; confirm notFound handling remains intact."
         },
         {
-          "path": "frontend/src/pages/EcosystemGrowthPage.tsx",
+          "path": "frontend/src/components/ScrollToTop.tsx",
           "operation": "modify",
-          "description": "Add a new, clearly labeled ecosystem-focused content section (e.g., integration pipeline, partner due-diligence framework, or developer enablement overview) integrated into the existing Ecosystem Growth page and using the shared styling system."
-        }
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "summary": "Audit and fix site-wide polling/interval live-update behaviors to prevent duplicate intervals, UI flicker/disappearance, and excessive network calls.",
-      "acceptanceCriteria": [
-        "Periodic updates do not create duplicate intervals after navigation or re-renders.",
-        "Real-time sections show stable UI (no flicker/disappear) during refresh cycles.",
-        "Network requests for auto-refresh do not multiply unexpectedly over time."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
-          "operation": "modify",
-          "description": "Remove avoidable duplicate fetch triggers (e.g., manual refetch effects that duplicate React Query’s key-based fetching) and ensure refresh behavior does not multiply network calls over time while maintaining stable UI during auto-refresh cycles."
+          "description": "Verify scroll-to-top behavior on route changes remains predictable with the redesigned fixed header and ensure it does not create confusing partial scroll states."
         },
         {
-          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "path": "frontend/src/components/PageShell.tsx",
           "operation": "modify",
-          "description": "Harden the simulated live-update loop to guarantee a single interval per mount, reduce flicker-inducing state churn where possible, and ensure the UI remains stable during periodic updates."
+          "description": "Standardize page container spacing and responsive paddings so all pages share a consistent shell and improved readability across mobile/desktop."
         },
         {
-          "path": "frontend/src/components/SmokySectionTransition.tsx",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Ensure live-update-driven re-renders cannot cause transition wrappers to re-hide content; keep visibility state stable once revealed and prevent delayed timeouts from toggling visibility unexpectedly."
+          "description": "Improve navigation clarity (grouping, active states, mobile menu usability) while keeping all existing routes present and accessible."
         }
       ]
     }

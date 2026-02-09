@@ -1,67 +1,76 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T06:01:27.631Z",
-  "summary": "Diff implements several frontend theme/animation updates, adds backend alert storage and frontend hooks for alerts, and updates Market Intel hooks. However, evidence is insufficient that Market Intel randomness was fully removed/isolated (REQ-4) and that site-wide interval/live-update cleanup was completed (REQ-9). Diff also introduces several unrequested UX/content elements such as emoji-based navigation ticker, simulated protocol tickers, and a specific WhatsApp redirection number.",
+  "generatedAt": "2026-02-09T04:28:25.673Z",
+  "summary": "The diff implements site-wide UI theming updates, adds a working site search modal with a static index, adds a My Submissions UI tied to a query hook, and significantly updates registration form handling (validation, toasts, WhatsApp redirect with popup fallback) plus navigation/header/footer changes. However, required image assets are not added, and backend-side enforcement for timer-based locking is not evidenced in the provided backend diff snippet.",
   "missing_requirements": [
     {
       "id": "REQ-4",
-      "requirement": "Improve Market Intel accuracy/consistency by removing or clearly isolating simulated/randomized market inputs (esp. forex 24h change/volume simulation and Date.now-seeded randomness) so signals are stable when underlying fetched data is unchanged.",
-      "reason": "The diff summary mentions \"stabilized Market Intel with time-window rounding\" but does not provide concrete evidence that randomized/simulated inputs (including forex simulation or Date.now-based seeding) were removed from calculations or clearly isolated/marked unavailable. Truncated code does not show the indicator/signal generation logic changes needed to verify this acceptance criterion.",
+      "requirement": "Backend must reject Presale/Airdrop submissions while the corresponding form is locked based on backend timer values.",
+      "reason": "The frontend prevents submission when `presaleTimer.isLocked` / `airdropTimer.isLocked`, but the backend-side rejection is not evidenced in the visible/truncated `backend/main.mo` diff; no `submitForm` logic or timer enforcement is shown.",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts (truncated)",
-        "frontend-file-summaries.txt (Market Intel summary references stabilization but not explicit randomness removal)"
+        "frontend/src/components/RegistrationForms.tsx",
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "id": "REQ-9",
-      "requirement": "Audit and fix site-wide real-time/live-update behaviors so intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker/disappearing content or excessive network calls.",
-      "reason": "While SmokySectionTransition cleans up its timeout and respects reduced-motion, the diff does not show evidence of auditing/fixing periodic polling/interval patterns across the real-time sections (e.g., Market Pulse, AI sentiment simulations, Market Intel refresh intervals) to prevent duplicate intervals or multiplied requests after navigation.",
+      "requirement": "Add the required image assets: hero-bg.dim_1920x1080.png, ui-icons.dim_512x512.png, section-divider.dim_1920x240.png.",
+      "reason": "No image files are added in the diff summary; only TypeScript/TSX/CSS changes are shown.",
       "evidence": [
-        "frontend/src/components/SmokySectionTransition.tsx",
-        "frontend-file-summaries.txt (mentions simulated/dynamic values in multiple sections but does not show interval cleanup changes)"
+        "<file-diff>: ADDED FILES list (no images)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Header navigation ticker that scrolls through pages and includes emojis.",
-      "reason": "Not requested by any requirement; also conflicts with the constraint to use English for all user-facing text (emojis/symbols are a new stylistic addition) and is not necessary to satisfy theme consistency requirements.",
+      "description": "Alerts system added/expanded in backend (addAlert/getAlerts/markAlertAsRead) with authorization checks.",
+      "reason": "The BuildRequest focuses on UI redesign, social redirects, forms (including timers/logging), and search; it does not request implementing an alerts backend system.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/Header.tsx description: \"animated ticker ... displaying all major pages with emojis\")"
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "description": "Simulated 'live protocol ticker cards' on the Hero section with dynamic simulated values (e.g., Resonance Score, Global Nodes, Mesh Parity).",
-      "reason": "Not requested; adds new simulated real-time-style data. This may also run counter to the goal of stabilizing/avoiding simulation-driven live-update behavior (though that goal was specifically focused on Market Intel).",
+      "description": "Market Intelligence page features such as passcode-protected access, dual trading modes (standard/binary), and real-time data fetching.",
+      "reason": "Not requested in REQ-1 through REQ-8; Market Intel is not part of the specified functional fixes.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/HeroSection.tsx description: \"dynamic simulated values\")"
+        "frontend-file-summaries.txt (MarketIntelPage description)",
+        "frontend-file-summaries.txt (useQueries hooks description mentioning Market Intel access control)"
       ]
     },
     {
-      "description": "OracleSection showing simulated market signals with confidence scores and a 'grounding evidence log' with reliability metrics.",
-      "reason": "Not requested by any requirement (beyond general allowance for new sections). This is a substantial new feature-like component with simulated signals and provenance UI.",
+      "description": "New/changed homepage sections with simulated 'live protocol tickers' and an 'Oracle intelligence' section including simulated signals and evidence logs.",
+      "reason": "The BuildRequest requests a cohesive redesign but does not request adding simulated tickers, oracle sections, or grounding/evidence logs.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/OracleSection.tsx description)"
+        "frontend-file-summaries.txt (HeroSection description)",
+        "frontend-file-summaries.txt (OracleSection description)",
+        "frontend-file-summaries.txt (HomePage description)"
       ]
     },
     {
-      "description": "Acquisition page behavior that redirects to WhatsApp with a hard-coded phone number (+92 329 4238997) after submission, plus a 'bypass protocol' button.",
-      "reason": "Not requested in the BuildRequest and introduces a specific external contact flow/number that was not specified as desired behavior.",
+      "description": "Footer attribution link to caffeine.ai.",
+      "reason": "Not part of the requested redesign/functionality requirements and introduces new external branding/content.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/pages/AcquisitionPage.tsx description: \"WhatsApp redirection to +92 329 4238997\" and \"bypass protocol button\")"
+        "frontend/src/components/Footer.tsx"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
     "frontend/src/App.tsx",
-    "frontend/src/components/SmokySectionTransition.tsx",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/components/BottomNav.tsx",
+    "frontend/src/components/Footer.tsx",
+    "frontend/src/components/Header.tsx",
+    "frontend/src/components/MySubmissions.tsx",
+    "frontend/src/components/RegistrationForms.tsx",
+    "frontend/src/components/SiteSearch.tsx",
+    "frontend/src/components/searchIndex.ts",
     "frontend/src/index.css",
+    "frontend/src/pages/AcquisitionPage.tsx",
+    "frontend/src/pages/ContactPage.tsx",
+    "frontend/src/utils/whatsapp.ts",
+    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

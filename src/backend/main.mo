@@ -1,18 +1,12 @@
-import Nat "mo:core/Nat";
 import Map "mo:core/Map";
-import Text "mo:core/Text";
-import Iter "mo:core/Iter";
+import Principal "mo:core/Principal";
 import Time "mo:core/Time";
-import Runtime "mo:core/Runtime";
-import Array "mo:core/Array";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import Runtime "mo:core/Runtime";
 import OutCall "http-outcalls/outcall";
-import Principal "mo:core/Principal";
-import Migration "migration";
 
-(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -111,27 +105,13 @@ actor {
   let marketIntelAccess = Map.empty<Principal, Int>();
   let marketIntelligenceStore = Map.empty<Nat, MarketIntelligence>();
 
-  let testimonialsStore = Map.empty<Nat, Text>();
-  let insightsStore = Map.empty<Nat, Text>();
-  let faqStore = Map.empty<Nat, Text>();
-  let governanceStore = Map.empty<Nat, Text>();
-  let ecosystemStore = Map.empty<Nat, Text>();
-  let whitepaperStore = Map.empty<Nat, Text>();
-  let roadmapStore = Map.empty<Nat, Text>();
-  let aboutStore = Map.empty<Nat, Text>();
-  let communityStore = Map.empty<Nat, Text>();
-  let securityStore = Map.empty<Nat, Text>();
-  let contactStore = Map.empty<Nat, Text>();
-
   var currentId = 0;
   var nextMIId = 1;
-  var lastEconomyUpdate : Int = 0;
   var lastAlertId = 0;
-
   let maxSubmissions = 5000;
-  let marketIntelPassword : Text = "B2420075112009P";
+  let marketIntelPassword : Text = "PB2420075112009PB";
   let presaleEndTime : Int = 1_789_434_800_000_000_000;
-  let airdropEndTime : Int = 2_252_772_800_000_000_000;
+  let airdropEndTime : Nat = 2_252_772_800_000_000_000;
 
   let alertsStore = Map.empty<Principal, [Alert]>();
 
@@ -189,10 +169,8 @@ actor {
       case (?alerts) { alerts };
     };
 
-    let updatedAlerts = Array.tabulate(
-      alerts.size(),
-      func(i) {
-        let alert = alerts[i];
+    let updatedAlerts = alerts.map(
+      func(alert) {
         {
           id = alert.id;
           title = alert.title;
@@ -200,7 +178,7 @@ actor {
           timestamp = alert.timestamp;
           read = if (alert.id == alertId) { true } else { alert.read };
         };
-      },
+      }
     );
 
     alertsStore.add(caller, updatedAlerts);
@@ -397,6 +375,9 @@ actor {
 
   // AI Sentiment Access is always enabled for all users
   public query ({ caller }) func hasAISentimentAccess() : async Bool {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can check AI Sentiment access");
+    };
     true;
   };
 
@@ -439,7 +420,8 @@ actor {
     if (not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Only admins can view all submissions");
     };
-    submissions.values().toArray();
+    let iter = submissions.values();
+    iter.toArray();
   };
 
   public query ({ caller }) func getSubmissionsByType(isPresale : Bool) : async [FormSubmission] {
@@ -447,8 +429,9 @@ actor {
       Runtime.trap("Unauthorized: Only admins can view submissions by type");
     };
 
-    submissions.values().toArray().filter(
-      func(submission : FormSubmission) : Bool {
+    let allSubmissions = submissions.values().toArray();
+    allSubmissions.filter(
+      func(submission) {
         submission.isPresale == isPresale;
       }
     );
@@ -459,8 +442,9 @@ actor {
       Runtime.trap("Unauthorized: Only admins can view submissions by country");
     };
 
-    submissions.values().toArray().filter(
-      func(submission : FormSubmission) : Bool {
+    let allSubmissions = submissions.values().toArray();
+    allSubmissions.filter(
+      func(submission) {
         submission.country == country;
       }
     );
@@ -471,8 +455,9 @@ actor {
       Runtime.trap("Unauthorized: Only authenticated users can view their submissions");
     };
 
-    submissions.values().toArray().filter(
-      func(submission : FormSubmission) : Bool {
+    let allSubmissions = submissions.values().toArray();
+    allSubmissions.filter(
+      func(submission) {
         submission.submittedBy == caller;
       }
     );
@@ -549,24 +534,27 @@ actor {
 
   public query ({ caller }) func getMarketIntelligence(id : Nat) : async ?MarketIntelligence {
     if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required. Please verify password B2420075112009P");
+      Runtime.trap("Unauthorized: Market Intel access required");
     };
     marketIntelligenceStore.get(id);
   };
 
   public query ({ caller }) func getAllMarketIntelligence() : async [MarketIntelligence] {
     if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required. Please verify password B2420075112009P");
+      Runtime.trap("Unauthorized: Market Intel access required");
     };
-    marketIntelligenceStore.values().toArray();
+    let iter = marketIntelligenceStore.values();
+    iter.toArray();
   };
 
   public query ({ caller }) func getMarketIntelligenceByTimeframe(timeframe : Text) : async [MarketIntelligence] {
     if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required. Please verify password B2420075112009P");
+      Runtime.trap("Unauthorized: Market Intel access required");
     };
-    marketIntelligenceStore.values().toArray().filter(
-      func(entry : MarketIntelligence) : Bool {
+
+    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
+    allMarketIntelligence.filter(
+      func(entry) {
         entry.timeframe == timeframe;
       }
     );
@@ -574,10 +562,12 @@ actor {
 
   public query ({ caller }) func getMarketIntelligenceByTimeframeAndAsset(timeframe : Text, asset : Text) : async [MarketIntelligence] {
     if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required. Please verify password B2420075112009P");
+      Runtime.trap("Unauthorized: Market Intel access required");
     };
-    marketIntelligenceStore.values().toArray().filter(
-      func(entry : MarketIntelligence) : Bool {
+
+    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
+    allMarketIntelligence.filter(
+      func(entry) {
         entry.timeframe == timeframe and entry.asset == asset;
       }
     );
@@ -606,200 +596,12 @@ actor {
     if (not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Only admins can view market intelligence by asset");
     };
-    marketIntelligenceStore.values().toArray().filter(
-      func(entry : MarketIntelligence) : Bool {
+
+    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
+    allMarketIntelligence.filter(
+      func(entry) {
         entry.asset == asset;
       }
     );
-  };
-
-  // Content Records Management
-  public shared ({ caller }) func createRecord(recordType : Text, content : Text) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can create records");
-    };
-
-    let id = currentId + 1;
-    currentId += 1;
-
-    switch (recordType) {
-      case ("testimonial") { testimonialsStore.add(id, content) };
-      case ("insight") { insightsStore.add(id, content) };
-      case ("faq") { faqStore.add(id, content) };
-      case ("governance") { governanceStore.add(id, content) };
-      case ("ecosystem") { ecosystemStore.add(id, content) };
-      case ("whitepaper") { whitepaperStore.add(id, content) };
-      case ("roadmap") { roadmapStore.add(id, content) };
-      case ("about") { aboutStore.add(id, content) };
-      case ("community") { communityStore.add(id, content) };
-      case ("security") { securityStore.add(id, content) };
-      case ("contact") { contactStore.add(id, content) };
-      case (_) { Runtime.trap("Unknown record type: " # recordType) };
-    };
-    id;
-  };
-
-  public shared ({ caller }) func updateRecord(recordType : Text, id : Nat, content : Text) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can update records");
-    };
-
-    switch (recordType) {
-      case ("testimonial") { testimonialsStore.add(id, content) };
-      case ("insight") { insightsStore.add(id, content) };
-      case ("faq") { faqStore.add(id, content) };
-      case ("governance") { governanceStore.add(id, content) };
-      case ("ecosystem") { ecosystemStore.add(id, content) };
-      case ("whitepaper") { whitepaperStore.add(id, content) };
-      case ("roadmap") { roadmapStore.add(id, content) };
-      case ("about") { aboutStore.add(id, content) };
-      case ("community") { communityStore.add(id, content) };
-      case ("security") { securityStore.add(id, content) };
-      case ("contact") { contactStore.add(id, content) };
-      case (_) { Runtime.trap("Unknown record type: " # recordType) };
-    };
-  };
-
-  public shared ({ caller }) func deleteRecord(recordType : Text, id : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can delete records");
-    };
-
-    switch (recordType) {
-      case ("testimonial") { testimonialsStore.remove(id) };
-      case ("insight") { insightsStore.remove(id) };
-      case ("faq") { faqStore.remove(id) };
-      case ("governance") { governanceStore.remove(id) };
-      case ("ecosystem") { ecosystemStore.remove(id) };
-      case ("whitepaper") { whitepaperStore.remove(id) };
-      case ("roadmap") { roadmapStore.remove(id) };
-      case ("about") { aboutStore.remove(id) };
-      case ("community") { communityStore.remove(id) };
-      case ("security") { securityStore.remove(id) };
-      case ("contact") { contactStore.remove(id) };
-      case (_) { Runtime.trap("Unknown record type: " # recordType) };
-    };
-  };
-
-  // Public read access for content records (intentional for public website content)
-  public query func getRecords(recordType : Text) : async [Text] {
-    switch (recordType) {
-      case ("testimonial") {
-        testimonialsStore.values().toArray();
-      };
-      case ("insight") { insightsStore.values().toArray() };
-      case ("faq") { faqStore.values().toArray() };
-      case ("governance") { governanceStore.values().toArray() };
-      case ("ecosystem") { ecosystemStore.values().toArray() };
-      case ("whitepaper") { whitepaperStore.values().toArray() };
-      case ("roadmap") { roadmapStore.values().toArray() };
-      case ("about") { aboutStore.values().toArray() };
-      case ("community") { communityStore.values().toArray() };
-      case ("security") { securityStore.values().toArray() };
-      case ("contact") { contactStore.values().toArray() };
-      case (_) { [] };
-    };
-  };
-
-  public shared ({ caller }) func massPopulateRecords(recordType : Text, contents : [Text]) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can mass populate records");
-    };
-
-    contents.forEach(
-      func(content) {
-        let id = currentId + 1;
-        currentId += 1;
-
-        switch (recordType) {
-          case ("testimonial") { testimonialsStore.add(id, content) };
-          case ("insight") { insightsStore.add(id, content) };
-          case ("faq") { faqStore.add(id, content) };
-          case ("governance") { governanceStore.add(id, content) };
-          case ("ecosystem") { ecosystemStore.add(id, content) };
-          case ("whitepaper") { whitepaperStore.add(id, content) };
-          case ("roadmap") { roadmapStore.add(id, content) };
-          case ("about") { aboutStore.add(id, content) };
-          case ("community") { communityStore.add(id, content) };
-          case ("security") { securityStore.add(id, content) };
-          case ("contact") { contactStore.add(id, content) };
-          case (_) { Runtime.trap("Unknown record type: " # recordType) };
-        };
-      }
-    );
-  };
-
-  public shared ({ caller }) func clearAllRecords() : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can clear all records");
-    };
-
-    testimonialsStore.clear();
-    insightsStore.clear();
-    faqStore.clear();
-    governanceStore.clear();
-    ecosystemStore.clear();
-    whitepaperStore.clear();
-    roadmapStore.clear();
-    aboutStore.clear();
-    communityStore.clear();
-    securityStore.clear();
-    contactStore.clear();
-  };
-
-  public shared ({ caller }) func massDeleteAllSubmissions() : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can mass delete all submissions");
-    };
-
-    submissions.clear();
-  };
-
-  // Utility functions for demonstration. In production, handle these responsibly.
-  public query ({ caller }) func getAllUsers() : async [(Principal, UserProfile)] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view all users");
-    };
-    userProfiles.toArray();
-  };
-
-  public query ({ caller }) func getAllTimers() : async [(Text, TimerState)] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view all timers");
-    };
-    timers.toArray();
-  };
-
-  public query func getCurrentId() : async Nat { currentId };
-  public query func getRecordCounts() : async {
-    testimonials : Nat;
-    insights : Nat;
-    faqs : Nat;
-    governance : Nat;
-    ecosystem : Nat;
-    whitepaper : Nat;
-    roadmap : Nat;
-    about : Nat;
-    community : Nat;
-    security : Nat;
-    contact : Nat;
-  } {
-    {
-      testimonials = testimonialsStore.size();
-      insights = insightsStore.size();
-      faqs = faqStore.size();
-      governance = governanceStore.size();
-      ecosystem = ecosystemStore.size();
-      whitepaper = whitepaperStore.size();
-      roadmap = roadmapStore.size();
-      about = aboutStore.size();
-      community = communityStore.size();
-      security = securityStore.size();
-      contact = contactStore.size();
-    };
-  };
-
-  public query func getTimerStates() : async [(Text, TimerState)] {
-    timers.toArray();
   };
 };

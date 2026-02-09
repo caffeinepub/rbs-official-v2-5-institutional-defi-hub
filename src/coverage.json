@@ -1,142 +1,173 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T06:01:27.649Z",
+  "generatedAt": "2026-02-09T04:28:25.676Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 9,
-    "implemented": 7,
+    "total": 8,
+    "implemented": 8,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix React Query client duplication by ensuring the app uses a single QueryClientProvider instance so caching, refetching, and invalidation behave consistently across all pages (including Market Intel and real-time sections).",
+        "summary": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/components/Footer.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
+          "frontend/public/assets/generated/ui-icons.dim_512x512.png",
+          "frontend/public/assets/generated/section-divider.dim_1920x240.png"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/components/Footer.tsx",
+          "frontend/src/components/BottomNav.tsx",
+          "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
+          "frontend/public/assets/generated/ui-icons.dim_512x512.png",
+          "frontend/public/assets/generated/section-divider.dim_1920x240.png"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix UI animation/transition behavior that causes content to disappear when users click or interact with page content (e.g., cards/sections becoming opacity-0 or translating away after state changes). Update animation patterns so interactive content remains visible and readable during and after clicks, while keeping motion effects where they do not hide content.",
+        "summary": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/SmokySectionTransition.tsx",
-          "frontend/src/pages/WhitepaperPage.tsx"
+          "frontend/src/constants/socialLinks.ts",
+          "frontend/src/components/Footer.tsx",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/pages/ContactPage.tsx",
+          "frontend/src/utils/whatsapp.ts"
         ],
         "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/SmokySectionTransition.tsx"
+          "frontend/src/components/Footer.tsx",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/pages/ContactPage.tsx",
+          "frontend/src/utils/whatsapp.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Stabilize Market Intel unlock + data loading so Market Intel reliably loads after unlock and does not frequently show 'Failed to load market data' due to avoidable client-side issues. Improve error reporting so failures distinguish between access/auth problems vs external market API failures.",
+        "summary": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/RegistrationForms.tsx",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/MarketIntelPage.tsx"
+          "frontend/src/utils/whatsapp.ts",
+          "frontend/src/utils/forms.ts",
+          "frontend/src/components/ui/sonner.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/RegistrationForms.tsx",
+          "frontend/src/utils/whatsapp.ts"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Improve Market Intel 'accuracy' and consistency by removing or clearly isolating simulated/randomized market inputs used in real-time calculations (especially forex 24h change/volume simulation and Date.now-seeded randomness in indicator/signal generation). Ensure signals are stable for the same asset/timeframe over a short window and are derived from fetched market data wherever possible.",
+        "summary": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/RegistrationForms.tsx",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/MarketIntelPage.tsx"
+          "frontend/src/utils/timers.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/RegistrationForms.tsx"
         ]
       },
       {
         "id": "REQ-5",
-        "summary": "Make Alerts Center 'work properly' by making alerts persistent per authenticated user: add backend storage and CRUD endpoints for alerts, and update the frontend Alerts Center page to use React Query hooks backed by the canister so alerts do not reset on refresh and behave consistently across sessions/devices for the same Internet Identity.",
+        "summary": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/MySubmissions.tsx",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/AlertsCenterPage.tsx"
+          "frontend/src/pages/AcquisitionPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/MySubmissions.tsx",
+          "frontend/src/pages/AcquisitionPage.tsx"
         ]
       },
       {
         "id": "REQ-6",
-        "summary": "Expand the Whitepaper with more topics/chapters and deeper content while preserving the existing chapter navigation UX. Add additional chapters beyond the current list and ensure each new chapter has complete English content (headings, paragraphs, and any supporting bullet lists) consistent with the site’s institutional DeFi tone.",
-        "status": "missing",
+        "summary": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/WhitepaperPage.tsx"
+          "frontend/src/pages/ContactPage.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx",
+          "frontend/src/pages/AlertsCenterPage.tsx",
+          "frontend/src/utils/errors.ts"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/pages/ContactPage.tsx"
+        ]
       },
       {
         "id": "REQ-7",
-        "summary": "Apply and complete the intended visual theme consistency updates across Insights, Testimonials, Security/Transparency, Community Highlights, and Ecosystem Growth pages so these sections feel fully updated and aligned (typography, spacing, card styling, background treatment, hover states, and motion behavior). Do not remove existing content; restyle and enhance cohesively.",
+        "summary": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/pages/InsightsPage.tsx",
-          "frontend/src/pages/TestimonialsPage.tsx",
-          "frontend/src/pages/SecurityTransparencyPage.tsx",
-          "frontend/src/pages/CommunityHighlightsPage.tsx",
-          "frontend/src/pages/EcosystemGrowthPage.tsx"
+          "frontend/src/components/SiteSearch.tsx",
+          "frontend/src/components/searchIndex.ts",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/components/BottomNav.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/index.css"
+          "frontend/src/components/SiteSearch.tsx",
+          "frontend/src/components/searchIndex.ts",
+          "frontend/src/components/Header.tsx",
+          "frontend/src/components/BottomNav.tsx"
         ]
       },
       {
         "id": "REQ-8",
-        "summary": "Add additional new content sections (at developer discretion) to enrich the site experience without breaking existing navigation or functionality. New sections must be English-only, match the existing product domain (institutional DeFi hub / market intel / community), and be integrated into existing pages (do not require new backend services).",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/pages/InsightsPage.tsx",
-          "frontend/src/pages/EcosystemGrowthPage.tsx"
-        ],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Audit and fix site-wide real-time and live-update behaviors (Market Pulse, AI sentiment simulations, Market Intel refresh intervals, timers, and any periodic UI updates) to ensure intervals/timeouts are cleaned up, loading states are correct, and updates do not cause UI flicker, disappearing content, or excessive network calls.",
+        "summary": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/pages/MarketPulsePage.tsx",
-          "frontend/src/components/SmokySectionTransition.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/ScrollToTop.tsx",
+          "frontend/src/components/PageShell.tsx",
+          "frontend/src/components/Header.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/SmokySectionTransition.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/Header.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
+    "frontend/public/assets/generated/section-divider.dim_1920x240.png",
+    "frontend/public/assets/generated/ui-icons.dim_512x512.png",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/SmokySectionTransition.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/components/BottomNav.tsx",
+    "frontend/src/components/Footer.tsx",
+    "frontend/src/components/Header.tsx",
+    "frontend/src/components/MySubmissions.tsx",
+    "frontend/src/components/RegistrationForms.tsx",
+    "frontend/src/components/SiteSearch.tsx",
+    "frontend/src/components/searchIndex.ts",
     "frontend/src/index.css",
+    "frontend/src/pages/AcquisitionPage.tsx",
+    "frontend/src/pages/ContactPage.tsx",
+    "frontend/src/utils/whatsapp.ts",
+    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
