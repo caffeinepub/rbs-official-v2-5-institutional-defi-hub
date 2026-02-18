@@ -1,226 +1,183 @@
-import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Activity, AlertCircle, Calendar, BarChart3, Globe } from 'lucide-react';
+import { useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/PageHead';
-import { PageShell } from '@/components/PageShell';
-import { SmokySectionTransition } from '@/components/SmokySectionTransition';
-
-interface SentimentData {
-  source: string;
-  sentiment: 'bullish' | 'bearish' | 'neutral';
-  score: number;
-  change: number;
-}
-
-interface MacroEvent {
-  title: string;
-  date: string;
-  impact: 'high' | 'medium' | 'low';
-  description: string;
-}
+import { useMarketPulse } from '@/hooks/useMarketPulse';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function MarketPulsePage() {
-  const [narrativeSnapshot, setNarrativeSnapshot] = useState({
-    headline: 'Crypto Markets Show Strong Recovery Momentum',
-    summary: 'Digital assets continue their upward trajectory as institutional adoption accelerates and regulatory clarity improves across major markets.',
-    timestamp: new Date().toLocaleString(),
-  });
-
-  const [sentimentData, setSentimentData] = useState<SentimentData[]>([
-    { source: 'Social Media', sentiment: 'bullish', score: 72, change: 5.2 },
-    { source: 'News Outlets', sentiment: 'neutral', score: 58, change: -2.1 },
-    { source: 'On-Chain Data', sentiment: 'bullish', score: 81, change: 8.4 },
-    { source: 'Trading Volume', sentiment: 'bullish', score: 76, change: 12.3 },
-  ]);
-
-  const [macroEvents, setMacroEvents] = useState<MacroEvent[]>([
-    {
-      title: 'Federal Reserve Interest Rate Decision',
-      date: 'Feb 15, 2026',
-      impact: 'high',
-      description: 'Expected to maintain current rates, potentially bullish for risk assets.',
-    },
-    {
-      title: 'Major Exchange Listing Announcement',
-      date: 'Feb 18, 2026',
-      impact: 'high',
-      description: 'Leading exchange to list multiple new digital assets.',
-    },
-    {
-      title: 'Regulatory Framework Update',
-      date: 'Feb 22, 2026',
-      impact: 'medium',
-      description: 'New guidelines expected to provide clarity on DeFi protocols.',
-    },
-  ]);
-
-  const [weeklyBrief, setWeeklyBrief] = useState({
-    title: 'Weekly Market Brief',
-    highlights: [
-      'Bitcoin maintains support above $50K with strong institutional inflows',
-      'DeFi TVL reaches new all-time high of $120B',
-      'Layer-2 solutions see 40% increase in daily active users',
-      'Stablecoin market cap grows to $180B amid increased adoption',
-    ],
-    outlook: 'Bullish momentum expected to continue through Q1 2026',
-  });
+  const { data: pulse, isLoading, error, refetch } = useMarketPulse();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSentimentData((prev) =>
-        prev.map((item) => ({
-          ...item,
-          score: Math.max(0, Math.min(100, item.score + (Math.random() - 0.5) * 5)),
-          change: +(Math.random() * 20 - 10).toFixed(1),
-        }))
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
+    document.body.style.setProperty('--animate-duration', '0.6s');
+    return () => {
+      document.body.style.removeProperty('--animate-duration');
+    };
   }, []);
 
-  const getSentimentColor = (sentiment: string) => {
-    switch (sentiment) {
-      case 'bullish':
-        return 'text-green-600';
-      case 'bearish':
-        return 'text-red-600';
+  const getMomentumIcon = () => {
+    if (!pulse) return <Activity className="h-6 w-6" />;
+    switch (pulse.status) {
+      case 'Bullish':
+        return <TrendingUp className="h-6 w-6 text-green-600 animate-pulse" />;
+      case 'Bearish':
+        return <TrendingDown className="h-6 w-6 text-red-600 animate-pulse" />;
       default:
-        return 'text-gray-600';
+        return <Minus className="h-6 w-6 text-yellow-600 animate-pulse" />;
     }
   };
 
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'high':
-        return 'bg-red-100 text-red-800 border-red-300';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+  const getMomentumColor = () => {
+    if (!pulse) return 'text-muted-foreground';
+    switch (pulse.status) {
+      case 'Bullish':
+        return 'text-green-600 dark:text-green-400';
+      case 'Bearish':
+        return 'text-red-600 dark:text-red-400';
       default:
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'text-yellow-600 dark:text-yellow-400';
     }
   };
 
   return (
     <>
-      <PageHead title="Market Pulse" description="Real-time market insights, sentiment analysis, and macro event tracking for informed trading decisions." />
-      <PageShell>
-        <div className="space-y-12">
-          <SmokySectionTransition>
-            <div className="text-center mb-12">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <Activity className="h-10 w-10 text-gold" />
-                <h1 className="section-heading">Market Pulse</h1>
-              </div>
-              <p className="section-description">
-                Real-time market insights and sentiment tracking
+      <PageHead title="Market Pulse" description="Real-time market momentum and technical indicators" />
+      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12 animate-fade-in">
+              <h1 className="text-4xl md:text-5xl font-poppins font-bold metallic-text-hero mb-4">
+                Market Pulse
+              </h1>
+              <p className="text-lg metallic-text-secondary mb-6">
+                Real-time technical analysis and market momentum
               </p>
+              <Button
+                onClick={() => refetch()}
+                variant="outline"
+                className="mex-hover-lift transition-all duration-300"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh Analysis
+              </Button>
             </div>
-          </SmokySectionTransition>
 
-          <SmokySectionTransition delay={200}>
-            <div className="glass-card-gold p-8 glow-border">
-              <div className="flex items-center gap-3 mb-6">
-                <Globe className="h-6 w-6 text-gold" />
-                <h2 className="text-2xl font-poppins font-bold metallic-text">Market Narrative Snapshot</h2>
-              </div>
-              <h3 className="text-xl font-poppins font-bold text-gold mb-4">{narrativeSnapshot.headline}</h3>
-              <p className="metallic-text-secondary font-inter leading-relaxed mb-4 text-base">
-                {narrativeSnapshot.summary}
-              </p>
-              <p className="text-sm metallic-text-secondary font-inter">
-                Last updated: {narrativeSnapshot.timestamp}
-              </p>
-            </div>
-          </SmokySectionTransition>
+            {error && (
+              <Alert variant="destructive" className="mb-6 animate-fade-in">
+                <AlertDescription>
+                  Failed to load market data. Please try again later.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <SmokySectionTransition delay={300}>
-            <div className="glass-card p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <BarChart3 className="h-6 w-6 text-gold" />
-                <h2 className="text-2xl font-poppins font-bold metallic-text">Sentiment Pulse</h2>
+            {isLoading && !pulse && (
+              <div className="text-center py-12 animate-pulse">
+                <p className="text-muted-foreground">Analyzing market conditions...</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sentimentData.map((item, index) => (
-                  <div key={index} className="glass-card-gold p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-poppins font-bold metallic-text">{item.source}</h3>
-                      <span className={`text-sm font-inter font-semibold uppercase ${getSentimentColor(item.sentiment)}`}>
-                        {item.sentiment}
+            )}
+
+            {pulse && (
+              <div className="space-y-6">
+                {/* Market Momentum Card */}
+                <Card className="glass-card-gold glow-border animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        {getMomentumIcon()}
+                        Market Momentum
                       </span>
-                    </div>
-                    <div className="flex items-end gap-4">
-                      <div className="flex-1">
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-gold-matte to-gold-light transition-all duration-500"
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-2xl font-poppins font-bold text-gold">{item.score}</span>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      {item.change >= 0 ? (
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600" />
-                      )}
-                      <span className={`text-sm font-inter ${item.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.change >= 0 ? '+' : ''}
-                        {item.change}% (24h)
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SmokySectionTransition>
+                      <Badge
+                        variant={pulse.status === 'Bullish' ? 'default' : pulse.status === 'Bearish' ? 'destructive' : 'secondary'}
+                        className="transition-all duration-300"
+                      >
+                        {pulse.status}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription>Current market sentiment based on technical indicators</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-2xl font-bold ${getMomentumColor()} transition-all duration-300`}>
+                      {pulse.status} Market Conditions
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Analysis based on RSI, MACD, and moving averages
+                    </p>
+                  </CardContent>
+                </Card>
 
-          <SmokySectionTransition delay={400}>
-            <div className="glass-card p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Calendar className="h-6 w-6 text-gold" />
-                <h2 className="text-2xl font-poppins font-bold metallic-text">Macro Events Calendar</h2>
-              </div>
-              <div className="space-y-4">
-                {macroEvents.map((event, index) => (
-                  <div key={index} className="glass-card-gold p-6 glow-border">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <h3 className="text-lg font-poppins font-bold metallic-text flex-1">{event.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-inter font-semibold border ${getImpactColor(event.impact)}`}>
-                        {event.impact.toUpperCase()} IMPACT
-                      </span>
-                    </div>
-                    <p className="text-sm metallic-text-secondary font-inter mb-2">{event.date}</p>
-                    <p className="metallic-text-secondary font-inter leading-relaxed text-base">{event.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SmokySectionTransition>
+                {/* Technical Indicators Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* RSI Card */}
+                  <Card className="glass-card mex-hover-lift transition-all duration-300 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <CardHeader>
+                      <CardTitle className="text-gold">RSI</CardTitle>
+                      <CardDescription>Relative Strength Index</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-gold transition-all duration-300">
+                        {pulse.rsi.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {pulse.rsi > 70 ? 'Overbought' : pulse.rsi < 30 ? 'Oversold' : 'Neutral'}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-          <SmokySectionTransition delay={500}>
-            <div className="glass-card-gold p-8 glow-border">
-              <div className="flex items-center gap-3 mb-6">
-                <AlertCircle className="h-6 w-6 text-gold" />
-                <h2 className="text-2xl font-poppins font-bold metallic-text">{weeklyBrief.title}</h2>
+                  {/* MACD Card */}
+                  <Card className="glass-card mex-hover-lift transition-all duration-300 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader>
+                      <CardTitle className="text-gold">MACD</CardTitle>
+                      <CardDescription>Moving Average Convergence Divergence</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-gold transition-all duration-300">
+                        {pulse.macd.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {pulse.macd > 0 ? 'Bullish Signal' : 'Bearish Signal'}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Moving Average Card */}
+                  <Card className="glass-card mex-hover-lift transition-all duration-300 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <CardHeader>
+                      <CardTitle className="text-gold">MA (50)</CardTitle>
+                      <CardDescription>50-Period Moving Average</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-gold transition-all duration-300">
+                        ${pulse.ma50.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Trend indicator
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Last Update Info */}
+                <div className="text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
+                  <p className="text-sm text-muted-foreground">
+                    Analysis updates automatically every 20 seconds
+                  </p>
+                  {pulse.timestamp && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Last updated: {new Date(pulse.timestamp).toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Data sourced from backend market pulse engine
+                  </p>
+                </div>
               </div>
-              <div className="space-y-4 mb-6">
-                {weeklyBrief.highlights.map((highlight, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="flex-shrink-0 h-2 w-2 rounded-full bg-gold mt-2" />
-                    <p className="metallic-text-secondary font-inter leading-relaxed text-base flex-1">{highlight}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-6 border-t border-gold/20">
-                <p className="text-lg font-poppins font-bold text-gold">Market Outlook</p>
-                <p className="metallic-text-secondary font-inter leading-relaxed text-base mt-2">{weeklyBrief.outlook}</p>
-              </div>
-            </div>
-          </SmokySectionTransition>
+            )}
+          </div>
         </div>
-      </PageShell>
+      </div>
     </>
   );
 }

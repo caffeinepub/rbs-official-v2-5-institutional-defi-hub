@@ -1,5 +1,7 @@
 import { Users, Award, TrendingUp, Heart, Star, Trophy, Target, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SmokySectionTransition } from '@/components/SmokySectionTransition';
+import { PageHead } from '@/components/PageHead';
 
 export default function CommunityHighlightsPage() {
   const achievements = [
@@ -99,179 +101,195 @@ export default function CommunityHighlightsPage() {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-black via-black/95 to-black">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <h1 className="text-4xl md:text-6xl font-orbitron font-bold mb-4">
-              <span className="shimmer-gold">Community Highlights</span>
-            </h1>
-            <p className="text-lg text-silver/80 font-inter max-w-3xl mx-auto leading-relaxed">
-              Celebrating the achievements, contributions, and success stories of our vibrant RBS community
-            </p>
-          </div>
-
-          {/* Community Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 animate-fade-in-up animation-delay-200">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-black/60 backdrop-blur-sm border-2 border-gold/30 rounded-lg p-6 text-center hover:border-gold/50 hover:shadow-lg hover:shadow-gold/20 transition-all duration-300 hover:scale-105 glow-border"
-              >
-                <stat.icon className="h-8 w-8 text-gold mx-auto mb-3" />
-                <p className="text-3xl font-orbitron font-bold text-gold mb-2">{stat.value}</p>
-                <p className="text-sm text-silver/70 font-inter">{stat.label}</p>
+    <>
+      <PageHead 
+        title="Community Highlights" 
+        description="Celebrating the achievements, contributions, and success stories of our vibrant RBS community"
+      />
+      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <SmokySectionTransition>
+              <div className="text-center mb-16">
+                <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-gold/10 border-2 border-gold/30 mb-8">
+                  <Users className="h-10 w-10 text-gold" />
+                </div>
+                <h1 className="text-5xl md:text-7xl font-poppins font-bold mb-6 leading-tight metallic-text-hero">
+                  Community Highlights
+                </h1>
+                <p className="text-xl metallic-text-secondary font-inter max-w-3xl mx-auto leading-relaxed">
+                  Celebrating the achievements, contributions, and success stories of our vibrant RBS community
+                </p>
               </div>
-            ))}
-          </div>
+            </SmokySectionTransition>
 
-          {/* Major Achievements */}
-          <div className="mb-16 animate-fade-in-up animation-delay-300">
-            <h2 className="text-3xl font-orbitron font-bold text-gold mb-8 text-center">
-              Major Achievements
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {achievements.map((achievement, index) => (
-                <div
-                  key={index}
-                  className="bg-black/60 backdrop-blur-sm border-2 border-silver/20 rounded-lg p-6 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 hover:scale-[1.02] glow-border-hover"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
-                      <achievement.icon className="h-6 w-6 text-gold" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-gold border-gold/30">
-                          {achievement.category}
-                        </Badge>
-                        <span className="text-xs text-silver/60 font-inter">{achievement.date}</span>
+            <SmokySectionTransition delay={100}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+                {stats.map((stat, index) => (
+                  <div
+                    key={index}
+                    className="glass-card-gold p-6 text-center glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20"
+                  >
+                    <stat.icon className="h-8 w-8 text-gold mx-auto mb-3" />
+                    <p className="text-3xl font-poppins font-bold text-gold mb-2">{stat.value}</p>
+                    <p className="text-sm metallic-text-secondary font-inter">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </SmokySectionTransition>
+
+            <SmokySectionTransition delay={200}>
+              <div className="mb-16">
+                <h2 className="text-4xl font-poppins font-bold text-gold mb-8 text-center">
+                  Major Achievements
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {achievements.map((achievement, index) => (
+                    <div
+                      key={index}
+                      className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                    >
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
+                          <achievement.icon className="h-6 w-6 text-gold" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-gold border-gold/30">
+                              {achievement.category}
+                            </Badge>
+                            <span className="text-xs metallic-text-secondary font-inter">{achievement.date}</span>
+                          </div>
+                          <h3 className="text-xl font-poppins font-bold text-gold mb-2">
+                            {achievement.title}
+                          </h3>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-orbitron font-bold text-gold mb-2">
-                        {achievement.title}
-                      </h3>
-                    </div>
-                  </div>
-                  <p className="text-silver/80 font-inter leading-relaxed mb-4">
-                    {achievement.description}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-400" />
-                    <span className="text-2xl font-jetbrains font-bold text-green-400">
-                      {achievement.metric}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Featured Community Members */}
-          <div className="mb-16 animate-fade-in-up animation-delay-400">
-            <h2 className="text-3xl font-orbitron font-bold text-gold mb-8 text-center">
-              Featured Community Members
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {featuredMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="bg-gradient-to-br from-gold/10 to-black/60 backdrop-blur-sm border-2 border-gold/30 rounded-lg p-6 hover:shadow-lg hover:shadow-gold/20 transition-all duration-300 hover:scale-[1.02] glow-border"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="h-16 w-16 rounded-full bg-gold/20 flex items-center justify-center border-2 border-gold/40">
-                      <span className="text-2xl font-orbitron font-bold text-gold">
-                        {member.name.charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-orbitron font-bold text-gold">{member.name}</h3>
-                      <p className="text-sm text-silver/70 font-inter">{member.role}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-silver/60 font-inter mb-1">Contribution</p>
-                      <p className="text-silver/80 font-inter leading-relaxed">
-                        {member.contribution}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-silver/60 font-inter mb-1">Impact</p>
-                      <p className="text-gold font-inter font-semibold">{member.impact}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Community Initiatives */}
-          <div className="mb-16 animate-fade-in-up animation-delay-600">
-            <h2 className="text-3xl font-orbitron font-bold text-gold mb-8 text-center">
-              Active Community Initiatives
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {initiatives.map((initiative, index) => (
-                <div
-                  key={index}
-                  className="bg-black/60 backdrop-blur-sm border-2 border-silver/20 rounded-lg p-6 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 hover:scale-[1.02] glow-border-hover"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
-                      <initiative.icon className="h-6 w-6 text-gold" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-orbitron font-bold text-gold mb-2">
-                        {initiative.title}
-                      </h3>
-                      <p className="text-silver/80 font-inter leading-relaxed mb-3">
-                        {initiative.description}
+                      <p className="metallic-text-secondary font-inter leading-relaxed mb-4">
+                        {achievement.description}
                       </p>
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gold" />
-                        <span className="text-sm font-jetbrains text-gold">
-                          {initiative.participants} participants
+                        <TrendingUp className="h-4 w-4 text-green-400" />
+                        <span className="text-2xl font-jetbrains font-bold text-green-400">
+                          {achievement.metric}
                         </span>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </SmokySectionTransition>
 
-          {/* Call to Action */}
-          <div className="bg-gradient-to-br from-gold/20 to-black/60 backdrop-blur-sm border-2 border-gold/40 rounded-lg p-8 text-center animate-fade-in-up animation-delay-700 glow-border">
-            <Heart className="h-12 w-12 text-gold mx-auto mb-4" />
-            <h3 className="text-2xl font-orbitron font-bold text-gold mb-4">
-              Join Our Community
-            </h3>
-            <p className="text-silver/80 font-inter leading-relaxed max-w-2xl mx-auto mb-6">
-              Be part of the RBS revolution. Contribute, participate, and help shape the future of
-              decentralized finance. All opinions about RBS will be taken from the RBS community to
-              ensure it remains fairly community-driven.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://t.me/RBSuperior"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-gold hover:bg-gold/90 text-black font-orbitron font-bold rounded-lg transition-colors metallic-button"
-              >
-                Join Telegram
-              </a>
-              <a
-                href="https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-black border-2 border-gold/30 hover:border-gold text-gold font-orbitron font-bold rounded-lg transition-colors"
-              >
-                Join WhatsApp
-              </a>
-            </div>
+            <SmokySectionTransition delay={300}>
+              <div className="mb-16">
+                <h2 className="text-4xl font-poppins font-bold text-gold mb-8 text-center">
+                  Featured Community Members
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {featuredMembers.map((member, index) => (
+                    <div
+                      key={index}
+                      className="glass-card-gold p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="h-16 w-16 rounded-full bg-gold/20 flex items-center justify-center border-2 border-gold/40">
+                          <span className="text-2xl font-poppins font-bold text-gold">
+                            {member.name.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-poppins font-bold text-gold">{member.name}</h3>
+                          <p className="text-sm metallic-text-secondary font-inter">{member.role}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs metallic-text-secondary font-inter mb-1">Contribution</p>
+                          <p className="metallic-text-secondary font-inter leading-relaxed">
+                            {member.contribution}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs metallic-text-secondary font-inter mb-1">Impact</p>
+                          <p className="text-gold font-inter font-semibold">{member.impact}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SmokySectionTransition>
+
+            <SmokySectionTransition delay={400}>
+              <div className="mb-16">
+                <h2 className="text-4xl font-poppins font-bold text-gold mb-8 text-center">
+                  Active Community Initiatives
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {initiatives.map((initiative, index) => (
+                    <div
+                      key={index}
+                      className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
+                          <initiative.icon className="h-6 w-6 text-gold" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-poppins font-bold text-gold mb-2">
+                            {initiative.title}
+                          </h3>
+                          <p className="metallic-text-secondary font-inter leading-relaxed mb-3">
+                            {initiative.description}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gold" />
+                            <span className="text-sm font-jetbrains text-gold">
+                              {initiative.participants} participants
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SmokySectionTransition>
+
+            <SmokySectionTransition delay={500}>
+              <div className="glass-card-gold p-8 text-center glow-border">
+                <Heart className="h-12 w-12 text-gold mx-auto mb-4" />
+                <h3 className="text-2xl font-poppins font-bold text-gold mb-4">
+                  Join Our Community
+                </h3>
+                <p className="metallic-text-secondary font-inter leading-relaxed max-w-2xl mx-auto mb-6">
+                  Be part of the RBS revolution. Contribute, participate, and help shape the future of
+                  decentralized finance. All opinions about RBS will be taken from the RBS community to
+                  ensure it remains fairly community-driven.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="https://t.me/RBSuperior"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 bg-gold hover:bg-gold/90 text-black font-poppins font-bold rounded-lg transition-all duration-300 metallic-button"
+                  >
+                    Join Telegram
+                  </a>
+                  <a
+                    href="https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 bg-white border-2 border-gold/30 hover:border-gold text-gold font-poppins font-bold rounded-lg transition-all duration-300"
+                  >
+                    Join WhatsApp
+                  </a>
+                </div>
+              </div>
+            </SmokySectionTransition>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

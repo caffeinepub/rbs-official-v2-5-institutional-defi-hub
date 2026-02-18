@@ -3,24 +3,24 @@ import { SiTelegram, SiWhatsapp } from 'react-icons/si';
 import { SOCIAL_LINKS } from '@/constants/socialLinks';
 
 export function Footer() {
+  const appIdentifier = typeof window !== 'undefined' 
+    ? encodeURIComponent(window.location.hostname) 
+    : 'rbs-app';
+
   return (
-    <footer className="border-t border-border bg-card py-12 mt-auto">
+    <footer className="bg-gradient-to-b from-transparent to-white/50 border-t border-gold-matte/30 py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent mb-8" />
+          <div className="h-px bg-gradient-to-r from-transparent via-gold-matte to-transparent mb-8" />
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="relative h-8 w-8 rounded-full overflow-hidden shadow-md">
-                <img
-                  src="/assets/IMG_20250821_154306_073.jpg"
-                  alt="RBS"
-                  className="h-full w-full object-cover"
-                />
+              <div className="coin-3d" style={{ width: '32px', height: '32px' }}>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-light via-gold-matte to-gold-dark shadow-md" />
               </div>
               <div>
-                <p className="text-sm font-bold text-foreground">RBS Official</p>
-                <p className="text-xs text-muted-foreground">Professional Crypto Token</p>
+                <p className="text-sm font-poppins text-dark-matter font-bold">RBS Official</p>
+                <p className="text-xs text-dark-matter opacity-90">Professional Crypto Token</p>
               </div>
             </div>
 
@@ -29,7 +29,7 @@ export function Footer() {
                 href={SOCIAL_LINKS.telegram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-dark-matter hover:text-gold-matte transition-colors opacity-90 hover:opacity-100"
                 aria-label="Telegram"
               >
                 <SiTelegram className="h-5 w-5" />
@@ -38,7 +38,7 @@ export function Footer() {
                 href={SOCIAL_LINKS.whatsappChannel}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-dark-matter hover:text-gold-matte transition-colors opacity-90 hover:opacity-100"
                 aria-label="WhatsApp"
               >
                 <SiWhatsapp className="h-5 w-5" />
@@ -46,14 +46,14 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-border text-center">
-            <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-              © 2026. Built with <Heart className="h-4 w-4 text-primary fill-primary" /> using{' '}
+          <div className="mt-8 pt-6 border-t border-gold-matte/20 text-center">
+            <p className="text-sm text-dark-matter opacity-90 font-inter flex items-center justify-center gap-2">
+              © {new Date().getFullYear()}. Built with <Heart className="h-4 w-4 text-gold-matte fill-gold-matte" /> using{' '}
               <a
-                href="https://caffeine.ai"
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${appIdentifier}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:opacity-80 transition-opacity font-semibold"
+                className="text-gold-matte hover:opacity-80 transition-opacity font-semibold"
               >
                 caffeine.ai
               </a>

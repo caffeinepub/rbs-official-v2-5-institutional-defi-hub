@@ -1,19 +1,24 @@
+import Nat "mo:core/Nat";
 import Map "mo:core/Map";
-import Principal "mo:core/Principal";
+import Array "mo:core/Array";
 import Time "mo:core/Time";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-import OutCall "http-outcalls/outcall";
+import Float "mo:core/Float";
+import List "mo:core/List";
+import Iter "mo:core/Iter";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // Types
   public type UserProfile = {
     name : Text;
     email : ?Text;
@@ -96,128 +101,141 @@ actor {
     message : Text;
     timestamp : Int;
     read : Bool;
+    autoCreated : Bool;
+    triggerEnabled : Bool;
+    lastChecked : Int;
   };
 
-  // State Variables
+  public type LivePriceSnapshot = {
+    priceUsd : Float;
+    volume24h : Float;
+    marketCap : Float;
+    timestamp : Int;
+  };
+
+  public type AISentiment = {
+    id : Nat;
+    sentimentScore : Float;
+    timestamp : Int;
+    sentimentType : SentimentType;
+  };
+
+  public type SentimentType = {
+    #positive;
+    #neutral;
+    #negative;
+  };
+
+  public type Poll = {
+    id : Nat;
+    question : Text;
+    options : [Text];
+    createdAt : Time.Time;
+    creator : Principal;
+    code : Text;
+    votes : Map.Map<Text, Nat>;
+    voterTracking : Map.Map<Principal, Bool>;
+    isActive : Bool;
+  };
+
+  public type PollView = {
+    id : Nat;
+    question : Text;
+    options : [Text];
+    createdAt : Time.Time;
+    creator : Principal;
+    code : Text;
+    votes : [KeyVal];
+    isActive : Bool;
+  };
+
+  public type KeyVal = {
+    key : Text;
+    value : Nat;
+  };
+
+  public type ApiKey = {
+    id : Nat;
+    provider : Text;
+    key : Text;
+    createdAt : Time.Time;
+    updatedAt : ?Time.Time;
+    active : Bool;
+    secretRef : Text;
+  };
+
+  public type MarketAnalysisConfig = {
+    endpoints : [Text];
+  };
+
+  public type VotingOption = {
+    text : Text;
+    count : Nat;
+  };
+
   let userProfiles = Map.empty<Principal, UserProfile>();
   let submissions = Map.empty<Nat, FormSubmission>();
   let timers = Map.empty<Text, TimerState>();
   let marketIntelAccess = Map.empty<Principal, Int>();
   let marketIntelligenceStore = Map.empty<Nat, MarketIntelligence>();
+  let apiKeys = Map.empty<Nat, ApiKey>();
+  let polls = Map.empty<Nat, Poll>();
+
+  let testimonialsStore = Map.empty<Nat, Text>();
+  let insightsStore = Map.empty<Nat, Text>();
+  let faqStore = Map.empty<Nat, Text>();
+  let governanceStore = Map.empty<Nat, Text>();
+  let ecosystemStore = Map.empty<Nat, Text>();
+  let whitepaperStore = Map.empty<Nat, Text>();
+  let roadmapStore = Map.empty<Nat, Text>();
+  let aboutStore = Map.empty<Nat, Text>();
+  let communityStore = Map.empty<Nat, Text>();
+  let securityStore = Map.empty<Nat, Text>();
+  let contactStore = Map.empty<Nat, Text>();
 
   var currentId = 0;
   var nextMIId = 1;
+  var pollIdCounter = 0;
+  var lastEconomyUpdate : Int = 0;
   var lastAlertId = 0;
+  var lastPoll : ?Poll = null;
   let maxSubmissions = 5000;
-  let marketIntelPassword : Text = "PB2420075112009PB";
+  var marketIntelPassword : Text = "BP2420075112009BP";
   let presaleEndTime : Int = 1_789_434_800_000_000_000;
-  let airdropEndTime : Nat = 2_252_772_800_000_000_000;
+  let airdropEndTime : Int = 2_252_772_800_000_000;
 
   let alertsStore = Map.empty<Principal, [Alert]>();
+  let livePriceSnapshots = Map.empty<Nat, LivePriceSnapshot>();
+  let aiSentimentsStore = Map.empty<Nat, AISentiment>();
 
-  // Transformation Method (required for HTTP calls)
-  public query func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
-    OutCall.transform(input);
-  };
+  var initialized = false;
 
-  // Alerts
-  public shared ({ caller }) func addAlert(title : Text, message : Text) : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can add alerts");
+  public shared ({ caller }) func initialize() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can initialize");
     };
-
-    let alertId = lastAlertId + 1;
-    lastAlertId += 1;
-
-    let alert : Alert = {
-      id = alertId;
-      title;
-      message;
-      timestamp = Time.now();
-      read = false;
+    if (initialized) {
+      Runtime.trap("Already initialized");
     };
-
-    var existingAlerts = switch (alertsStore.get(caller)) {
-      case (null) { [] };
-      case (?alerts) { alerts };
-    };
-
-    existingAlerts := existingAlerts.concat([alert]);
-    alertsStore.add(caller, existingAlerts);
-
-    alertId;
-  };
-
-  public query ({ caller }) func getAlerts() : async [Alert] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can view alerts");
-    };
-
-    switch (alertsStore.get(caller)) {
-      case (null) { [] };
-      case (?alerts) { alerts };
-    };
-  };
-
-  public shared ({ caller }) func markAlertAsRead(alertId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can mark alerts as read");
-    };
-
-    let alerts = switch (alertsStore.get(caller)) {
-      case (null) { [] };
-      case (?alerts) { alerts };
-    };
-
-    let updatedAlerts = alerts.map(
-      func(alert) {
-        {
-          id = alert.id;
-          title = alert.title;
-          message = alert.message;
-          timestamp = alert.timestamp;
-          read = if (alert.id == alertId) { true } else { alert.read };
-        };
-      }
+    timers.add(
+      "presale",
+      {
+        isUnlocked = false;
+        endTime = presaleEndTime;
+        lastUpdate = Time.now();
+      },
     );
-
-    alertsStore.add(caller, updatedAlerts);
+    timers.add(
+      "airdrop",
+      {
+        isUnlocked = false;
+        endTime = airdropEndTime;
+        lastUpdate = Time.now();
+      },
+    );
+    initialized := true;
   };
 
-  public shared ({ caller }) func deleteAlert(alertId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can delete alerts");
-    };
-
-    let alerts = switch (alertsStore.get(caller)) {
-      case (null) { [] };
-      case (?alerts) { alerts };
-    };
-
-    let filteredAlerts = alerts.filter(func(alert) { alert.id != alertId });
-    alertsStore.add(caller, filteredAlerts);
-  };
-
-  public shared ({ caller }) func clearAlerts() : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can clear alerts");
-    };
-
-    alertsStore.remove(caller);
-  };
-
-  public query ({ caller }) func getAlertCount() : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can view alert count");
-    };
-
-    switch (alertsStore.get(caller)) {
-      case (null) { 0 };
-      case (?alerts) { alerts.size() };
-    };
-  };
-
-  // User Profile Management (Required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");
@@ -239,7 +257,43 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Timer Queries (Public - intentional for public website)
+  public query ({ caller }) func hasMarketIntelAccess() : async Bool {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can check Market Intel access");
+    };
+    if (not marketIntelAccess.containsKey(caller)) {
+      return false;
+    };
+    marketIntelAccess.containsKey(caller);
+  };
+
+  public shared ({ caller }) func grantMarketIntelAccess(password : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can request Market Intel access");
+    };
+    if (password != marketIntelPassword) {
+      Runtime.trap("Unauthorized: Invalid Market Intel passcode");
+    };
+    marketIntelAccess.add(caller, Time.now());
+    true;
+  };
+
+  public shared ({ caller }) func revokeMarketIntelAccessWithPassword(password : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can revoke Market Intel access");
+    };
+    if (password != marketIntelPassword) {
+      Runtime.trap("Unauthorized: Invalid Market Intel passcode");
+    };
+    switch (marketIntelAccess.get(caller)) {
+      case (?_) {
+        marketIntelAccess.remove(caller);
+        true;
+      };
+      case (null) { false };
+    };
+  };
+
   public query func getPresaleRemainingTime() : async Int {
     let now = Time.now();
     if (presaleEndTime < now) { 0 } else { presaleEndTime - now };
@@ -250,358 +304,327 @@ actor {
     if (airdropEndTime < now) { 0 } else { airdropEndTime - now };
   };
 
-  public query func getTimerState(timerType : TimerType) : async ?TimerState {
-    let timerKey = switch (timerType) {
+  public query ({ caller }) func getTimerState(timerType : TimerType) : async TimerState {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view timer state");
+    };
+    let key = switch (timerType) {
       case (#presale) { "presale" };
       case (#airdrop) { "airdrop" };
     };
-    timers.get(timerKey);
-  };
-
-  public shared ({ caller }) func toggleTimer(timerType : TimerType) : async TimerState {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can toggle timer states");
-    };
-
-    let timerKey = switch (timerType) {
-      case (#presale) { "presale" };
-      case (#airdrop) { "airdrop" };
-    };
-
-    let currentTime = Time.now();
-    let timerState = switch (timers.get(timerKey)) {
+    switch (timers.get(key)) {
+      case (?state) { state };
       case (null) {
-        let endTime = if (timerType == #presale) { presaleEndTime } else { airdropEndTime };
-        { isUnlocked = false; endTime; lastUpdate = currentTime };
-      };
-      case (?existing) {
         {
-          isUnlocked = not existing.isUnlocked;
-          endTime = existing.endTime;
-          lastUpdate = currentTime;
+          isUnlocked = false;
+          endTime = switch (timerType) {
+            case (#presale) { presaleEndTime };
+            case (#airdrop) { airdropEndTime };
+          };
+          lastUpdate = Time.now();
         };
       };
     };
-    timers.add(timerKey, timerState);
-    timerState;
   };
 
-  public shared ({ caller }) func updateTimer(timerType : TimerType, isUnlocked : Bool, endTime : Int) : async TimerState {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can update timers");
+  public shared ({ caller }) func toggleTimer(timerType : TimerType) : async TimerState {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can toggle timers");
     };
-
-    let timerKey = switch (timerType) {
+    let key = switch (timerType) {
       case (#presale) { "presale" };
       case (#airdrop) { "airdrop" };
     };
-
-    let newState : TimerState = {
-      isUnlocked;
-      endTime;
+    let currentState = switch (timers.get(key)) {
+      case (?state) { state };
+      case (null) {
+        {
+          isUnlocked = false;
+          endTime = switch (timerType) {
+            case (#presale) { presaleEndTime };
+            case (#airdrop) { airdropEndTime };
+          };
+          lastUpdate = Time.now();
+        };
+      };
+    };
+    let newState = {
+      isUnlocked = not currentState.isUnlocked;
+      endTime = currentState.endTime;
       lastUpdate = Time.now();
     };
-    timers.add(timerKey, newState);
+    timers.add(key, newState);
     newState;
   };
 
-  public shared ({ caller }) func deleteTimer(timerType : TimerType) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can delete timers");
+  public shared ({ caller }) func updateRecord(recordType : Text, id : Nat, content : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update records");
     };
-
-    let timerKey = switch (timerType) {
-      case (#presale) { "presale" };
-      case (#airdrop) { "airdrop" };
+    switch (recordType) {
+      case ("testimonial") { testimonialsStore.add(id, content) };
+      case ("insight") { insightsStore.add(id, content) };
+      case ("faq") { faqStore.add(id, content) };
+      case ("governance") { governanceStore.add(id, content) };
+      case ("ecosystem") { ecosystemStore.add(id, content) };
+      case ("whitepaper") { whitepaperStore.add(id, content) };
+      case ("roadmap") { roadmapStore.add(id, content) };
+      case ("about") { aboutStore.add(id, content) };
+      case ("community") { communityStore.add(id, content) };
+      case ("security") { securityStore.add(id, content) };
+      case ("contact") { contactStore.add(id, content) };
+      case (_) { Runtime.trap("Unknown record type: " # recordType) };
     };
-
-    timers.remove(timerKey);
-
-    let newTimer : TimerState = switch (timerType) {
-      case (#presale) { { isUnlocked = false; endTime = presaleEndTime; lastUpdate = Time.now() } };
-      case (#airdrop) { { isUnlocked = false; endTime = airdropEndTime; lastUpdate = Time.now() } };
-    };
-
-    timers.add(timerKey, newTimer);
   };
 
-  // Market Intel Access Control
-  func hasMarketIntelAccess(caller : Principal) : Bool {
-    marketIntelAccess.containsKey(caller);
+  public type CreatePollInput = {
+    question : Text;
+    options : [Text];
+    isActive : Bool;
+    code : Text;
   };
 
-  // Checks if the caller has access to the full Market Intelligence suite
-  func hasFullMarketIntelAccess(caller : Principal) : Bool {
-    hasMarketIntelAccess(caller);
+  public shared ({ caller }) func createPoll(input : CreatePollInput) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create polls");
+    };
+    if (input.code != marketIntelPassword) {
+      Runtime.trap("Unauthorized: Invalid Market Intel passcode for poll creation");
+    };
+    let newPoll : Poll = {
+      id = pollIdCounter;
+      question = input.question;
+      options = input.options;
+      createdAt = Time.now();
+      creator = caller;
+      code = input.code;
+      votes = Map.empty<Text, Nat>();
+      voterTracking = Map.empty<Principal, Bool>();
+      isActive = input.isActive;
+    };
+    polls.add(pollIdCounter, newPoll);
+    lastPoll := ?newPoll;
+    pollIdCounter += 1;
+    pollIdCounter - 1;
   };
 
-  public shared ({ caller }) func grantMarketIntelAccess(password : Text) : async Bool {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can request Market Intel access");
+  public query ({ caller }) func getAllPolls() : async [PollView] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can get polls list");
     };
-
-    if (password != marketIntelPassword) {
-      return false;
-    };
-
-    marketIntelAccess.add(caller, Time.now());
-    true;
+    if (polls.isEmpty()) { return [] };
+    let valuesIter = polls.values();
+    let resultsArray = valuesIter.toArray();
+    resultsArray.map(convertPollToView);
   };
 
-  public shared ({ caller }) func revokeMarketIntelAccessWithPassword(password : Text) : async Bool {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can revoke Market Intel access");
+  public query ({ caller }) func getPoll(id : Nat) : async ?PollView {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can get a poll");
+    };
+    switch (polls.get(id)) {
+      case (?poll) { ?convertPollToView(poll) };
+      case (null) { null };
+    };
+  };
+
+  public shared ({ caller }) func vote(pollId : Nat, option : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can vote on polls");
+    };
+    switch (polls.get(pollId)) {
+      case (?poll) {
+        switch (poll.voterTracking.get(caller)) {
+          case (?true) {
+            Runtime.trap("Unauthorized: You have already voted on this poll");
+          };
+          case (_) {
+            let votesMap = poll.votes;
+            let currentVotes = switch (votesMap.get(option)) {
+              case (?votes) { votes };
+              case (null) { 0 };
+            };
+            votesMap.add(option, currentVotes + 1);
+            poll.voterTracking.add(caller, true);
+            polls.add(pollId, poll);
+            true;
+          };
+        };
+      };
+      case (null) { Runtime.trap("Poll not found") };
+    };
+  };
+
+  public shared ({ caller }) func submitVote(pollId : Nat, optionIndex : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can submit votes");
     };
 
-    if (password != marketIntelPassword) {
-      return false;
+    switch (polls.get(pollId)) {
+      case (?poll) {
+        switch (poll.voterTracking.get(caller)) {
+          case (?true) {
+            Runtime.trap("Unauthorized: You have already voted on this poll");
+          };
+          case (_) {
+            if (optionIndex >= poll.options.size()) {
+              Runtime.trap("Invalid option index");
+            };
+            let optionText = poll.options[optionIndex];
+            await vote(pollId, optionText);
+          };
+        };
+      };
+      case (null) { Runtime.trap("Poll not found") };
+    };
+  };
+
+  public query ({ caller }) func getLastPoll() : async ?PollView {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can get the latest poll");
+    };
+    switch (lastPoll) {
+      case (?poll) { ?convertPollToView(poll) };
+      case (null) { null };
+    };
+  };
+
+  func convertPollToView(poll : Poll) : PollView {
+    {
+      id = poll.id;
+      question = poll.question;
+      options = poll.options;
+      createdAt = poll.createdAt;
+      creator = poll.creator;
+      code = poll.code;
+      votes = poll.votes.toArray().map(func((k, v)) { { key = k; value = v } });
+      isActive = poll.isActive;
+    };
+  };
+
+  public shared ({ caller }) func createAlert(title : Text, message : Text) : async Alert {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create alerts");
     };
 
-    switch (marketIntelAccess.get(caller)) {
-      case (?_) {
-        marketIntelAccess.remove(caller);
+    let id = lastAlertId + 1;
+    lastAlertId := id;
+
+    let newAlert : Alert = {
+      id;
+      title;
+      message;
+      timestamp = Time.now();
+      read = false;
+      autoCreated = false;
+      triggerEnabled = false;
+      lastChecked = Time.now();
+    };
+
+    let existingAlerts = switch (alertsStore.get(caller)) {
+      case (?alerts) { alerts };
+      case (null) { [] };
+    };
+
+    alertsStore.add(caller, existingAlerts.concat([newAlert]));
+    newAlert;
+  };
+
+  public query ({ caller }) func getAlerts() : async [Alert] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view alerts");
+    };
+    switch (alertsStore.get(caller)) {
+      case (?alerts) { alerts };
+      case (null) { [] };
+    };
+  };
+
+  public shared ({ caller }) func markAlertAsRead(alertId : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark alerts as read");
+    };
+    switch (alertsStore.get(caller)) {
+      case (?alerts) {
+        let updatedAlerts = alerts.map(
+          func(alert) {
+            if (alert.id == alertId) {
+              { alert with read = true };
+            } else {
+              alert;
+            };
+          }
+        );
+        alertsStore.add(caller, updatedAlerts);
         true;
       };
       case (null) { false };
     };
   };
 
-  public query ({ caller }) func checkMarketIntelAccess() : async Bool {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can check Market Intel access");
+  public shared ({ caller }) func deleteAlert(alertId : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete alerts");
     };
-    hasMarketIntelAccess(caller);
+    switch (alertsStore.get(caller)) {
+      case (?alerts) {
+        let updatedAlerts = alerts.filter(
+          func(alert) { alert.id != alertId }
+        );
+        alertsStore.add(caller, updatedAlerts);
+        true;
+      };
+      case (null) { false };
+    };
   };
 
-  // AI Sentiment Access is always enabled for all users
-  public query ({ caller }) func hasAISentimentAccess() : async Bool {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can check AI Sentiment access");
+  public shared ({ caller }) func enableTrigger(enable : Bool) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can enable/disable triggers");
     };
-    true;
+
+    let existingAlerts = switch (alertsStore.get(caller)) {
+      case (?alerts) { alerts };
+      case (null) { [] };
+    };
+
+    let updatedAlerts = existingAlerts.map(
+      func(alert) { { alert with triggerEnabled = enable } }
+    );
+
+    alertsStore.add(caller, updatedAlerts);
   };
 
-  public shared ({ caller }) func submitForm(name : Text, country : Text, walletAddress : Text, rbsAmount : Float, isPresale : Bool) : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can submit forms");
+  public shared ({ caller }) func checkAndCreateAutoAlert() : async ?Alert {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can check and create auto alerts");
     };
 
-    let id = currentId + 1;
-    currentId += 1;
+    switch (alertsStore.get(caller)) {
+      case (?alerts) {
+        let enabledAlerts = alerts.filter(
+          func(alert) { alert.triggerEnabled }
+        );
+        if (enabledAlerts.size() == 0) {
+          return null;
+        };
 
-    let submission : FormSubmission = {
-      id;
-      name;
-      country;
-      walletAddress;
-      rbsAmount;
-      isPresale;
-      timestamp = Time.now();
-      submittedBy = caller;
-    };
+        let autoAlert : Alert = {
+          id = lastAlertId + 1;
+          title = "Auto Alert";
+          message = "This is a system-generated alert";
+          timestamp = Time.now();
+          read = false;
+          autoCreated = true;
+          triggerEnabled = true;
+          lastChecked = Time.now();
+        };
 
-    submissions.add(id, submission);
-    id;
-  };
-
-  public query ({ caller }) func getFormSubmission(id : Nat) : async ?FormSubmission {
-    switch (submissions.get(id)) {
+        alertsStore.add(caller, alerts.concat([autoAlert]));
+        lastAlertId += 1;
+        ?autoAlert;
+      };
       case (null) { null };
-      case (?submission) {
-        if (submission.submittedBy != caller and not AccessControl.isAdmin(accessControlState, caller)) {
-          Runtime.trap("Unauthorized: Can only view your own submissions or be an admin");
-        };
-        ?submission;
-      };
     };
-  };
-
-  public query ({ caller }) func getAllSubmissions() : async [FormSubmission] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view all submissions");
-    };
-    let iter = submissions.values();
-    iter.toArray();
-  };
-
-  public query ({ caller }) func getSubmissionsByType(isPresale : Bool) : async [FormSubmission] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view submissions by type");
-    };
-
-    let allSubmissions = submissions.values().toArray();
-    allSubmissions.filter(
-      func(submission) {
-        submission.isPresale == isPresale;
-      }
-    );
-  };
-
-  public query ({ caller }) func getSubmissionsByCountry(country : Text) : async [FormSubmission] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view submissions by country");
-    };
-
-    let allSubmissions = submissions.values().toArray();
-    allSubmissions.filter(
-      func(submission) {
-        submission.country == country;
-      }
-    );
-  };
-
-  public query ({ caller }) func getMySubmissions() : async [FormSubmission] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only authenticated users can view their submissions");
-    };
-
-    let allSubmissions = submissions.values().toArray();
-    allSubmissions.filter(
-      func(submission) {
-        submission.submittedBy == caller;
-      }
-    );
-  };
-
-  public shared ({ caller }) func deleteSubmission(id : Nat) : async () {
-    switch (submissions.get(id)) {
-      case (null) {
-        Runtime.trap("Submission does not exist");
-      };
-      case (?submission) {
-        if (submission.submittedBy != caller and not AccessControl.isAdmin(accessControlState, caller)) {
-          Runtime.trap("Unauthorized: Can only delete your own submissions or be an admin");
-        };
-        submissions.remove(id);
-      };
-    };
-  };
-
-  public shared ({ caller }) func updateSubmission(id : Nat, name : Text, country : Text, walletAddress : Text, rbsAmount : Float, isPresale : Bool) : async () {
-    switch (submissions.get(id)) {
-      case (null) {
-        Runtime.trap("Submission does not exist");
-      };
-      case (?existing) {
-        if (existing.submittedBy != caller and not AccessControl.isAdmin(accessControlState, caller)) {
-          Runtime.trap("Unauthorized: Can only update your own submissions or be an admin");
-        };
-
-        let updated : FormSubmission = {
-          id;
-          name;
-          country;
-          walletAddress;
-          rbsAmount;
-          isPresale;
-          timestamp = existing.timestamp;
-          submittedBy = existing.submittedBy;
-        };
-        submissions.add(id, updated);
-      };
-    };
-  };
-
-  public query ({ caller }) func getSubmissionsCount() : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view submission statistics");
-    };
-    submissions.size();
-  };
-
-  // Market Intelligence (Admin only for creation)
-  public shared ({ caller }) func generateMarketIntel(asset : Text, timeframe : Text, indicators : [TechnicalIndicator], overallSignal : SignalConfidence, historicalAccuracy : Float) : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can generate market intelligence");
-    };
-
-    let id = nextMIId;
-    nextMIId += 1;
-
-    let entry : MarketIntelligence = {
-      id;
-      asset;
-      timeframe;
-      indicators;
-      overallSignal;
-      historicalAccuracy;
-      timestamp = Time.now();
-    };
-
-    marketIntelligenceStore.add(id, entry);
-    id;
-  };
-
-  public query ({ caller }) func getMarketIntelligence(id : Nat) : async ?MarketIntelligence {
-    if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required");
-    };
-    marketIntelligenceStore.get(id);
-  };
-
-  public query ({ caller }) func getAllMarketIntelligence() : async [MarketIntelligence] {
-    if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required");
-    };
-    let iter = marketIntelligenceStore.values();
-    iter.toArray();
-  };
-
-  public query ({ caller }) func getMarketIntelligenceByTimeframe(timeframe : Text) : async [MarketIntelligence] {
-    if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required");
-    };
-
-    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
-    allMarketIntelligence.filter(
-      func(entry) {
-        entry.timeframe == timeframe;
-      }
-    );
-  };
-
-  public query ({ caller }) func getMarketIntelligenceByTimeframeAndAsset(timeframe : Text, asset : Text) : async [MarketIntelligence] {
-    if (not hasFullMarketIntelAccess(caller)) {
-      Runtime.trap("Unauthorized: Market Intel access required");
-    };
-
-    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
-    allMarketIntelligence.filter(
-      func(entry) {
-        entry.timeframe == timeframe and entry.asset == asset;
-      }
-    );
-  };
-
-  public shared ({ caller }) func deleteMarketIntelligence(id : Nat) : async () {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can delete market intelligence records");
-    };
-
-    if (not marketIntelligenceStore.containsKey(id)) {
-      Runtime.trap("Market intelligence record does not exist");
-    };
-
-    marketIntelligenceStore.remove(id);
-  };
-
-  public query ({ caller }) func getMarketIntelligenceCount() : async Nat {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view market intelligence statistics");
-    };
-    marketIntelligenceStore.size();
-  };
-
-  public query ({ caller }) func getMarketIntelligenceByAsset(asset : Text) : async [MarketIntelligence] {
-    if (not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only admins can view market intelligence by asset");
-    };
-
-    let allMarketIntelligence = marketIntelligenceStore.values().toArray();
-    allMarketIntelligence.filter(
-      func(entry) {
-        entry.asset == asset;
-      }
-    );
   };
 };

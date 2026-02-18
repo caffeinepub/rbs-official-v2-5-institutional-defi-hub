@@ -2,15 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-apply-a-cohesive-modern-visual-redesign-across-the-entire-site-figma-inspired-improving-typography-spacing-color-system-and-component-styling-so-the-site-no-longer-looks-ugly-while-keeping-all-existing-pages-routes-functional",
-      "featureTitle": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
+      "featureId": "feature-fix-the-internet-identity-login-logout-ux-so-users-can-reliably-log-in-and-log-out-without-getting-stuck-in-an-inconsistent-state-e-g-repeated-clicks-user-is-already-authenticated-loop-requiring-a-hard-refresh-without-changing-the-app-s-visual-design",
+      "featureTitle": "Fix the Internet Identity login/logout UX so users can reliably log in and log out without getting stuck in an inconsistent state (e.g., repeated clicks, \"User is already authenticated\" loop, requiring a hard refresh), without changing the app’s visual design.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/BottomNav.tsx",
-        "frontend/src/components/Footer.tsx",
         "frontend/src/components/Header.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
+        "frontend/src/hooks/useReliableAuth.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -23,17 +19,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-24"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-all-telegram-and-whatsapp-redirects-so-every-telegram-whatsapp-button-link-consistently-opens-the-correct-url-in-a-new-tab-window-using-the-centralized-constants-in-frontend-src-constants-sociallinks-ts",
-      "featureTitle": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
+      "featureId": "feature-ensure-both-acquisition-portal-forms-presale-registration-and-airdrop-registration-redirect-to-whatsapp-for-the-configured-direct-number-92-329-4238997-when-unlocked-and-that-pending-submissions-saved-before-unlock-automatically-redirect-once-the-countdown-reaches-zero-without-changing-the-visual-design",
+      "featureTitle": "Ensure both Acquisition Portal forms (Presale Registration and Airdrop Registration) redirect to WhatsApp for the configured direct number (+92 329 4238997) when unlocked, and that pending submissions saved before unlock automatically redirect once the countdown reaches zero, without changing the visual design.",
       "files": [
-        "frontend/src/components/Footer.tsx",
-        "frontend/src/components/Header.tsx",
-        "frontend/src/pages/ContactPage.tsx",
+        "frontend/src/pages/AcquisitionPage.tsx",
         "frontend/src/utils/whatsapp.ts"
       ],
       "components": [
@@ -47,126 +41,17 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-26"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-both-primary-registration-forms-presale-and-airdrop-submit-successfully-and-reliably-including-correct-backend-submission-clear-success-error-toasts-correct-whatsapp-redirect-after-successful-submission-and-proper-disabled-loading-states",
-      "featureTitle": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
-      "files": [
-        "frontend/src/components/RegistrationForms.tsx",
-        "frontend/src/utils/whatsapp.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-timer-based-locking-behavior-for-presale-and-airdrop-forms-according-to-the-roadmap-timers-forms-must-be-locked-unlocked-strictly-based-on-the-backend-timer-values-presale-airdrop-remaining-time-and-must-not-allow-submission-while-locked",
-      "featureTitle": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
-      "files": [
-        "frontend/src/components/RegistrationForms.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-submission-logging-visibility-that-reflects-the-timer-context-after-a-successful-presale-airdrop-submission-the-user-can-see-a-simple-log-entry-showing-what-was-submitted-and-when-timestamp-and-it-remains-consistent-with-backend-stored-submission-records",
-      "featureTitle": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
-      "files": [
-        "frontend/src/components/MySubmissions.tsx",
-        "frontend/src/pages/AcquisitionPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-all-other-form-submissions-across-the-site-so-they-behave-correctly-with-clear-validation-and-user-feedback-success-error-and-do-not-silently-fail",
-      "featureTitle": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
-      "files": [
-        "frontend/src/pages/ContactPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-a-working-search-box-that-allows-users-to-search-site-content-pages-and-navigate-to-relevant-results-multipage-routing",
-      "featureTitle": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
-      "files": [
-        "frontend/src/components/BottomNav.tsx",
-        "frontend/src/components/Header.tsx",
-        "frontend/src/components/SiteSearch.tsx",
-        "frontend/src/components/searchIndex.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "http-outcalls@3.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-keep-the-site-as-a-multipage-application-existing-router-based-navigation-while-improving-usability-navigation-clarity-consistent-page-shells-headers-footers-as-part-of-the-redesign",
-      "featureTitle": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
+      "featureId": "feature-complete-any-missing-wiring-required-so-authentication-gated-pages-that-depend-on-backend-permissions-via-accesscontrol-work-consistently-after-login-including-ensuring-the-actor-initialization-access-control-initialization-path-does-not-intermittently-leave-the-app-in-an-unauthenticated-unauthorized-state-after-a-successful-internet-identity-login",
+      "featureTitle": "Complete any missing wiring required so authentication-gated pages that depend on backend permissions (via AccessControl) work consistently after login, including ensuring the actor initialization/access-control initialization path does not intermittently leave the app in an unauthenticated/unauthorized state after a successful Internet Identity login.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/Header.tsx"
+        "frontend/src/components/AuthInitializer.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -179,7 +64,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-27"
       ],
       "confidence": "high"
     }

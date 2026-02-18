@@ -1,16 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Deliver a cohesive, modern UI redesign across the existing multipage site while fixing Telegram/WhatsApp redirects, ensuring all forms (including Presale/Airdrop) submit reliably with timer-based locking and submission logs, and implementing a working site search.
+**Goal:** Fix Internet Identity authentication reliability and ensure Acquisition Portal timers (Q1 2027 presale, Q1 2029 airdrop) unlock correctly with WhatsApp redirection, without changing the existing visual design.
 
 **Planned changes:**
-- Apply a consistent, modern design system site-wide (typography, spacing, colors, and unified styling for cards/buttons/inputs/backgrounds) without breaking any existing routes on mobile or desktop.
-- Centralize and correct all Telegram/WhatsApp links so every related button/link opens the correct destination in a new tab/window using `frontend/src/constants/socialLinks.ts` (no hardcoded URLs elsewhere).
-- Fix Presale and Airdrop registration forms end-to-end: validation, backend submission, clear success/error toasts, disabled/loading states, and WhatsApp redirect after success with a correctly encoded prefilled message plus a popup-blocked fallback link.
-- Enforce timer-based lock/unlock for Presale/Airdrop forms based strictly on backend remaining-time values; prevent submission while locked and display clear English locked-state messaging with a smoothly updating countdown.
-- Add a “My Submissions” view/area that fetches from the backend and shows the user’s Presale/Airdrop submission history (type, timestamp, key fields), updating after successful submission and not exposing other users’ records.
-- Fix all other site forms to provide English validation and explicit success/error feedback, and to prevent unintended multiple submissions via proper loading/disabled handling.
-- Implement a functional search box (desktop and mobile) that searches site content/pages (at minimum page titles/primary sections), shows results, and navigates to the selected route with graceful empty/no-match states.
-- Preserve multipage router-based navigation while improving usability via consistent page shells/navigation so all routes remain reachable and route-change scroll behavior remains sensible.
+- Improve frontend login/logout flow to prevent inconsistent authenticated states (e.g., repeated clicks, “already authenticated” loops) and ensure gated pages become accessible immediately after login without a hard refresh.
+- Complete/repair actor + AccessControl initialization and cache/cleanup behavior so authenticated pages consistently load data after login and do not call authenticated endpoints with stale identity after logout.
+- Fix backend timer timestamp/remaining-time logic so presale (Q1 2027) and airdrop (Q1 2029) unlock at correct UTC times and remaining time values are returned in nanoseconds (0 when passed).
+- Ensure both Acquisition Portal forms redirect to WhatsApp (+92 329 4238997 via https://wa.me/923294238997) when unlocked, and that submissions made before unlock auto-redirect once the countdown reaches zero using the existing pending sessionStorage flow.
 
-**User-visible outcome:** The site looks modern and consistent, all routes remain usable, Telegram/WhatsApp links open the correct targets, Presale/Airdrop (and other) forms submit reliably with clear feedback and timer-based locking, users can view their own submission history, and the search box returns results and navigates to relevant pages.
+**User-visible outcome:** Users can reliably log in and log out without refresh loops, authenticated sections consistently work after login, and the presale/airdrop forms unlock at the correct times and open WhatsApp to the configured number (including automatic redirect for submissions made before unlock).

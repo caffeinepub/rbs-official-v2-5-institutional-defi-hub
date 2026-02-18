@@ -1,156 +1,131 @@
 import { useState } from 'react';
-import { Lock, Unlock, TrendingUp, TrendingDown, Activity, BarChart3, RefreshCw, AlertCircle } from 'lucide-react';
+import { Lock, Unlock, Activity, BarChart3, AlertCircle, CheckCircle, RefreshCw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { PageHead } from '@/components/PageHead';
-import { PageShell } from '@/components/PageShell';
-import { MarketIntelSkeleton } from '@/components/MarketIntelSkeleton';
-import { useGrantMarketIntelAccess, useRevokeMarketIntelAccess, useCheckMarketIntelAccess, useFetchMarketIntelligence, useFetchBinarySignal } from '@/hooks/useQueries';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCheckMarketIntelAccess, useGrantMarketIntelAccess, useRevokeMarketIntelAccessWithPassword } from '@/hooks/useQueries';
+import { useGetLiveMarketIntel, useRefreshMarketIntel, isDataStale, formatLastUpdated } from '@/hooks/useMarketIntelLive';
 import { useInternetIdentity } from '@/hooks/useInternetIdentity';
 import { toast } from 'sonner';
-import { processBinarySignal } from '@/utils/binarySignal';
-import type { TechnicalIndicator } from '@/backend';
+import { PageHead } from '@/components/PageHead';
 
-const ASSET_CATEGORIES = {
-  crypto: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'BNB/USD', 'XRP/USD'],
-  forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD'],
-};
+const ASSETS = [
+  'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'DOGE', 'LTC', 'DOT',
+  'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD',
+  'GOLD', 'SILVER', 'OIL', 'NATURAL_GAS', 'COPPER'
+];
 
 const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
 
 export default function MarketIntelPage() {
   const { identity } = useInternetIdentity();
-  const [passcode, setPasscode] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'crypto' | 'forex'>('crypto');
-  const [selectedAsset, setSelectedAsset] = useState('BTC/USD');
+  const [password, setPassword] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState('');
   const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
-  const [tradingMode, setTradingMode] = useState<'standard' | 'binary'>('standard');
+  const [isLocking, setIsLocking] = useState(false);
 
-  const { data: hasAccess, isLoading: checkingAccess, refetch: refetchAccess } = useCheckMarketIntelAccess();
+  const { data: hasAccess, isLoading: accessLoading, refetch: refetchAccess } = useCheckMarketIntelAccess();
   const grantAccessMutation = useGrantMarketIntelAccess();
-  const revokeAccessMutation = useRevokeMarketIntelAccess();
+  const revokeAccessMutation = useRevokeMarketIntelAccessWithPassword();
 
-  const {
-    data: marketIntel,
-    isLoading: loadingIntel,
-    error: intelError,
-    refetch: refetchIntel,
-  } = useFetchMarketIntelligence(selectedTimeframe, selectedAsset, hasAccess || false);
+  const { data: liveData, isLoading: intelLoading, error: intelError, refetch: refetchIntel } = useGetLiveMarketIntel(
+    selectedAsset,
+    selectedTimeframe,
+    hasAccess || false
+  );
 
-  const {
-    data: binaryData,
-    isLoading: loadingBinary,
-    error: binaryError,
-    refetch: refetchBinary,
-  } = useFetchBinarySignal(selectedTimeframe, selectedAsset, hasAccess || false);
+  const refreshMutation = useRefreshMarketIntel();
 
-  const binarySignal = processBinarySignal(binaryData);
+  const handleManualRefresh = async () => {
+    if (!selectedAsset || !selectedTimeframe) return;
+    
+    try {
+      await refreshMutation.mutateAsync({ asset: selectedAsset, timeframe: selectedTimeframe });
+      toast.success('Market Intel refreshed');
+      await refetchIntel();
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast.error('Failed to refresh data');
+    }
+  };
 
   const handleUnlock = async () => {
-    if (!identity) {
-      toast.error('Please log in to access Market Intelligence');
-      return;
-    }
-
-    if (!passcode.trim()) {
-      toast.error('Please enter the access passcode');
+    if (!password.trim()) {
+      toast.error('Please enter the access password');
       return;
     }
 
     try {
-      await grantAccessMutation.mutateAsync(passcode);
-      toast.success('Market Intelligence unlocked successfully!');
-      setPasscode('');
-      refetchAccess();
-    } catch (error: any) {
-      toast.error(error.message || 'Invalid passcode. Please try again.');
+      const granted = await grantAccessMutation.mutateAsync(password);
+      if (granted) {
+        toast.success('Market Intel access granted!');
+        setPassword('');
+        await refetchAccess();
+      } else {
+        toast.error('Invalid password. Please try again.');
+      }
+    } catch (error) {
+      console.error('Unlock error:', error);
+      toast.error('Failed to unlock Market Intel');
     }
   };
 
   const handleLock = async () => {
-    if (!identity) {
-      toast.error('Please log in first');
+    if (!password.trim()) {
+      toast.error('Please enter the password to lock');
       return;
     }
 
-    if (!passcode.trim()) {
-      toast.error('Please enter the access passcode to lock');
-      return;
-    }
-
+    setIsLocking(true);
     try {
-      await revokeAccessMutation.mutateAsync(passcode);
-      toast.success('Market Intelligence locked successfully');
-      setPasscode('');
-      refetchAccess();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to lock access');
+      const revoked = await revokeAccessMutation.mutateAsync(password);
+      if (revoked) {
+        toast.success('Market Intel access locked');
+        setPassword('');
+        setSelectedAsset('');
+        setSelectedTimeframe('1h');
+        await refetchAccess();
+      } else {
+        toast.error('Invalid password. Please try again.');
+      }
+    } catch (error) {
+      console.error('Lock error:', error);
+      toast.error('Failed to lock Market Intel');
+    } finally {
+      setIsLocking(false);
     }
-  };
-
-  const handleRefresh = () => {
-    if (tradingMode === 'standard') {
-      refetchIntel();
-    } else {
-      refetchBinary();
-    }
-    toast.success('Data refreshed');
-  };
-
-  const getSignalColor = (signal: string) => {
-    switch (signal) {
-      case 'strongBuy':
-        return 'text-green-700 bg-green-100 border-green-300';
-      case 'buy':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'neutral':
-        return 'text-gray-600 bg-gray-100 border-gray-300';
-      case 'sell':
-        return 'text-red-600 bg-red-50 border-red-200';
-      case 'strongSell':
-        return 'text-red-700 bg-red-100 border-red-300';
-      default:
-        return 'text-gray-600 bg-gray-100 border-gray-300';
-    }
-  };
-
-  const getSignalIcon = (signal: string) => {
-    if (signal.includes('Buy')) return <TrendingUp className="h-4 w-4" />;
-    if (signal.includes('Sell')) return <TrendingDown className="h-4 w-4" />;
-    return <Activity className="h-4 w-4" />;
   };
 
   if (!identity) {
     return (
       <>
-        <PageHead title="Market Intelligence" description="Advanced market analysis and trading signals" />
-        <PageShell>
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="glass-card-gold p-12 max-w-md text-center glow-border">
-              <Lock className="h-16 w-16 text-gold mx-auto mb-6" />
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-4">Authentication Required</h2>
-              <p className="metallic-text-secondary font-inter leading-relaxed text-base">
-                Please log in to access Market Intelligence features.
-              </p>
-            </div>
-          </div>
-        </PageShell>
+        <PageHead title="Market Intel" description="Advanced market intelligence and trading signals" />
+        <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white flex items-center justify-center">
+          <Card className="max-w-md w-full mx-4 mex-scale-in">
+            <CardHeader>
+              <CardTitle className="text-gold">Authentication Required</CardTitle>
+              <CardDescription>Please log in to access Market Intel</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </>
     );
   }
 
-  if (checkingAccess) {
+  if (accessLoading) {
     return (
       <>
-        <PageHead title="Market Intelligence" description="Advanced market analysis and trading signals" />
-        <PageShell>
-          <MarketIntelSkeleton />
-        </PageShell>
+        <PageHead title="Market Intel" description="Advanced market intelligence and trading signals" />
+        <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white flex items-center justify-center">
+          <div className="text-center mex-fade-in">
+            <Activity className="h-12 w-12 text-gold mx-auto mb-4 animate-spin" />
+            <p className="text-lg metallic-text">Loading Market Intel...</p>
+          </div>
+        </div>
       </>
     );
   }
@@ -158,99 +133,117 @@ export default function MarketIntelPage() {
   if (!hasAccess) {
     return (
       <>
-        <PageHead title="Market Intelligence" description="Advanced market analysis and trading signals" />
-        <PageShell>
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="glass-card-gold p-12 max-w-md glow-border">
-              <Lock className="h-16 w-16 text-gold mx-auto mb-6" />
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-6 text-center">Market Intelligence</h2>
-              <p className="metallic-text-secondary font-inter leading-relaxed mb-8 text-center text-base">
-                Enter your access passcode to unlock advanced market analysis and trading signals.
-              </p>
+        <PageHead title="Market Intel" description="Advanced market intelligence and trading signals" />
+        <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white flex items-center justify-center">
+          <Card className="max-w-md w-full mx-4 mex-scale-in">
+            <CardHeader>
+              <div className="flex items-center justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
+                  <Lock className="h-8 w-8 text-gold" />
+                </div>
+              </div>
+              <CardTitle className="text-center text-gold">Market Intel Access</CardTitle>
+              <CardDescription className="text-center">
+                Enter password to unlock advanced market intelligence
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
-                <Input
-                  type="password"
-                  placeholder="Enter passcode"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-                  className="text-center font-inter"
-                  disabled={grantAccessMutation.isPending}
-                />
+                <div>
+                  <Label htmlFor="password">Access Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                    placeholder="Enter password"
+                    className="mt-2 mex-focus-ring"
+                  />
+                </div>
                 <Button
                   onClick={handleUnlock}
-                  disabled={grantAccessMutation.isPending || !passcode.trim()}
-                  className="w-full bg-gradient-to-r from-gold-matte to-gold-light hover:from-gold-light hover:to-gold-matte text-dark-matter font-poppins font-bold"
+                  disabled={grantAccessMutation.isPending || !password.trim()}
+                  className="w-full bg-gold hover:bg-gold/90 text-black mex-hover-lift mex-focus-ring"
                 >
-                  {grantAccessMutation.isPending ? 'Unlocking...' : 'Unlock Access'}
+                  {grantAccessMutation.isPending ? (
+                    <>
+                      <Activity className="mr-2 h-4 w-4 animate-spin" />
+                      Unlocking...
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="mr-2 h-4 w-4" />
+                      Unlock Market Intel
+                    </>
+                  )}
                 </Button>
               </div>
-            </div>
-          </div>
-        </PageShell>
+            </CardContent>
+          </Card>
+        </div>
       </>
     );
   }
 
+  const marketIntel = liveData?.intel;
+  const dataIsStale = liveData ? liveData.isStale || isDataStale(liveData.lastUpdated) : false;
+  const fetchFailed = liveData?.fetchFailed || false;
+
   return (
     <>
-      <PageHead title="Market Intelligence" description="Advanced market analysis and trading signals" />
-      <PageShell>
-        <div className="space-y-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <BarChart3 className="h-8 w-8 text-gold" />
-                <h1 className="text-4xl font-poppins font-bold metallic-text">Market Intelligence</h1>
+      <PageHead title="Market Intel" description="Advanced market intelligence and trading signals" />
+      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 mex-fade-up">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-poppins font-bold metallic-text-hero mb-2">
+                  Market Intelligence
+                </h1>
+                <p className="text-lg metallic-text-secondary">
+                  Live trading signals and market analysis
+                </p>
               </div>
-              <p className="metallic-text-secondary font-inter text-base">Advanced market analysis and trading signals</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                className="border-gold/30 hover:bg-gold/10"
-                disabled={loadingIntel || loadingBinary}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${(loadingIntel || loadingBinary) ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-              <div className="glass-card px-4 py-2">
-                <div className="flex items-center gap-2">
-                  <Unlock className="h-4 w-4 text-gold" />
-                  <span className="text-sm font-inter font-semibold text-gold">Access Granted</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <Badge variant="outline" className="text-green-500 border-green-500">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  Access Granted
+                </Badge>
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password to lock"
+                    className="w-40 mex-focus-ring"
+                  />
+                  <Button
+                    onClick={handleLock}
+                    disabled={isLocking || !password.trim()}
+                    variant="outline"
+                    size="sm"
+                    className="mex-hover-lift mex-focus-ring"
+                  >
+                    {isLocking ? (
+                      <Activity className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="glass-card p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 mex-fade-up animation-delay-200">
               <div>
-                <label className="text-sm font-inter font-semibold metallic-text mb-2 block">Asset Category</label>
-                <Select value={selectedCategory} onValueChange={(value: 'crypto' | 'forex') => {
-                  setSelectedCategory(value);
-                  setSelectedAsset(ASSET_CATEGORIES[value][0]);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                    <SelectItem value="forex">Forex</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-inter font-semibold metallic-text mb-2 block">Asset</label>
+                <Label htmlFor="asset">Select Asset</Label>
                 <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger id="asset" className="mt-2 mex-focus-ring">
+                    <SelectValue placeholder="Choose an asset" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ASSET_CATEGORIES[selectedCategory].map((asset) => (
+                    {ASSETS.map((asset) => (
                       <SelectItem key={asset} value={asset}>
                         {asset}
                       </SelectItem>
@@ -258,11 +251,10 @@ export default function MarketIntelPage() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <label className="text-sm font-inter font-semibold metallic-text mb-2 block">Timeframe</label>
+                <Label htmlFor="timeframe">Timeframe</Label>
                 <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                  <SelectTrigger>
+                  <SelectTrigger id="timeframe" className="mt-2 mex-focus-ring">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -274,144 +266,197 @@ export default function MarketIntelPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <label className="text-sm font-inter font-semibold metallic-text mb-2 block">Trading Mode</label>
-                <Tabs value={tradingMode} onValueChange={(value) => setTradingMode(value as 'standard' | 'binary')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="standard">Standard</TabsTrigger>
-                    <TabsTrigger value="binary">Binary</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-gold/20">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="password"
-                  placeholder="Enter passcode to lock"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className="w-48 text-sm"
-                  disabled={revokeAccessMutation.isPending}
-                />
-                <Button
-                  onClick={handleLock}
-                  variant="outline"
-                  size="sm"
-                  disabled={revokeAccessMutation.isPending || !passcode.trim()}
-                  className="border-gold/30 hover:bg-gold/10"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Lock Access
-                </Button>
-              </div>
-            </div>
-          </div>
+            {!selectedAsset ? (
+              <Card className="mex-scale-in">
+                <CardContent className="py-12 text-center">
+                  <BarChart3 className="h-12 w-12 text-gold mx-auto mb-4" />
+                  <p className="text-lg metallic-text">Select an asset to view market intelligence</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6 mex-fade-up animation-delay-400">
+                {fetchFailed && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Failed to fetch latest data. Showing cached results. Try manual refresh.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-          {tradingMode === 'standard' ? (
-            <>
-              {loadingIntel && <MarketIntelSkeleton />}
-              {intelError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{intelError.message}</AlertDescription>
-                </Alert>
-              )}
-              {marketIntel && marketIntel.length > 0 && (
-                <div className="space-y-6">
-                  {marketIntel.map((intel) => (
-                    <div key={Number(intel.id)} className="glass-card-gold p-8 glow-border">
-                      <div className="flex items-start justify-between mb-6">
-                        <div>
-                          <h3 className="text-2xl font-poppins font-bold metallic-text mb-2">
-                            {intel.asset} - {intel.timeframe}
-                          </h3>
-                          <p className="text-sm metallic-text-secondary font-inter">
-                            Analysis generated: {new Date(Number(intel.timestamp) / 1000000).toLocaleString()}
-                          </p>
-                        </div>
-                        <Badge className={`${getSignalColor(intel.overallSignal)} border px-4 py-2`}>
-                          <span className="flex items-center gap-2 font-inter font-semibold">
-                            {getSignalIcon(intel.overallSignal)}
-                            {intel.overallSignal.replace(/([A-Z])/g, ' $1').trim()}
-                          </span>
+                {liveData && (
+                  <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm border border-gold/20 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-gold" />
+                      <div>
+                        <p className="text-sm font-medium text-gold">Last Updated</p>
+                        <p className="text-xs text-muted-foreground">{formatLastUpdated(liveData.lastUpdated)}</p>
+                      </div>
+                      {dataIsStale && (
+                        <Badge variant="outline" className="text-orange-500 border-orange-500">
+                          Stale Data
                         </Badge>
-                      </div>
-
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-inter font-semibold metallic-text">Historical Accuracy</span>
-                          <span className="text-sm font-inter font-bold text-gold">{intel.historicalAccuracy.toFixed(1)}%</span>
-                        </div>
-                        <Progress value={intel.historicalAccuracy} className="h-2" />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {intel.indicators.map((indicator: TechnicalIndicator, idx: number) => (
-                          <div key={idx} className="glass-card p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm font-inter font-semibold metallic-text uppercase">
-                                {indicator.indicatorType.replace(/([A-Z])/g, ' $1').trim()}
-                              </h4>
-                              <Badge className={`${getSignalColor(indicator.signal)} border text-xs`}>
-                                {indicator.signal.replace(/([A-Z])/g, ' $1').trim()}
-                              </Badge>
-                            </div>
-                            <p className="text-2xl font-poppins font-bold text-gold">{indicator.value.toFixed(2)}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {loadingBinary && <MarketIntelSkeleton />}
-              {binaryError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{binaryError.message}</AlertDescription>
-                </Alert>
-              )}
-              {binarySignal && (
-                <div className="glass-card-gold p-8 glow-border">
-                  <div className="text-center mb-8">
-                    <h3 className="text-3xl font-poppins font-bold metallic-text mb-2">Binary Options Signal</h3>
-                    <p className="text-lg metallic-text-secondary font-inter">
-                      {selectedAsset} - {selectedTimeframe}
-                    </p>
-                  </div>
-
-                  <div className="max-w-md mx-auto">
-                    <div className={`glass-card p-8 text-center ${binarySignal.signal === 'CALL' ? 'border-2 border-green-500' : 'border-2 border-red-500'}`}>
-                      {binarySignal.signal === 'CALL' ? (
-                        <TrendingUp className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                      ) : (
-                        <TrendingDown className="h-16 w-16 text-red-600 mx-auto mb-4" />
                       )}
-                      <h4 className="text-4xl font-poppins font-bold mb-4" style={{ color: binarySignal.signal === 'CALL' ? '#16a34a' : '#dc2626' }}>
-                        {binarySignal.signal}
-                      </h4>
-                      <div className="mb-6">
-                        <p className="text-sm font-inter font-semibold metallic-text mb-2">Confidence Level</p>
-                        <p className="text-3xl font-poppins font-bold text-gold">{binarySignal.confidence}%</p>
-                        <Progress value={binarySignal.confidence} className="h-3 mt-3" />
-                      </div>
-                      <p className="text-sm metallic-text-secondary font-inter">
-                        Based on {binarySignal.rawData?.indicators.length || 0} technical indicators
-                      </p>
                     </div>
+                    <Button
+                      onClick={handleManualRefresh}
+                      disabled={refreshMutation.isPending}
+                      size="sm"
+                      variant="outline"
+                      className="border-gold text-gold hover:bg-gold/10 mex-hover-lift"
+                    >
+                      {refreshMutation.isPending ? (
+                        <>
+                          <Activity className="mr-2 h-4 w-4 animate-spin" />
+                          Refreshing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Manual Refresh
+                        </>
+                      )}
+                    </Button>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+
+                {intelLoading ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Activity className="h-12 w-12 text-gold mx-auto mb-4 animate-spin" />
+                      <p className="text-lg metallic-text">Loading market intelligence...</p>
+                    </CardContent>
+                  </Card>
+                ) : intelError ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Failed to load market intelligence. Please try again later.
+                    </AlertDescription>
+                  </Alert>
+                ) : marketIntel ? (
+                  <Card className="glass-card border-gold/30">
+                    <CardHeader>
+                      <CardTitle className="text-2xl text-gold">
+                        {selectedAsset} - {selectedTimeframe}
+                      </CardTitle>
+                      <CardDescription>
+                        Technical analysis and trading signals
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between p-4 bg-gold/5 rounded-lg border border-gold/20">
+                          <span className="font-semibold text-lg">Overall Signal</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-lg px-4 py-1 ${
+                              marketIntel.overallSignal === 'strongBuy'
+                                ? 'bg-green-500/10 text-green-600 border-green-500'
+                                : marketIntel.overallSignal === 'buy'
+                                ? 'bg-green-400/10 text-green-500 border-green-400'
+                                : marketIntel.overallSignal === 'neutral'
+                                ? 'bg-gray-400/10 text-gray-600 border-gray-400'
+                                : marketIntel.overallSignal === 'sell'
+                                ? 'bg-red-400/10 text-red-500 border-red-400'
+                                : 'bg-red-500/10 text-red-600 border-red-500'
+                            }`}
+                          >
+                            {marketIntel.overallSignal === 'strongBuy'
+                              ? 'STRONG BUY'
+                              : marketIntel.overallSignal === 'buy'
+                              ? 'BUY'
+                              : marketIntel.overallSignal === 'neutral'
+                              ? 'NEUTRAL'
+                              : marketIntel.overallSignal === 'sell'
+                              ? 'SELL'
+                              : 'STRONG SELL'}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {marketIntel.indicators.map((indicator, idx) => (
+                            <div
+                              key={idx}
+                              className="p-4 bg-white/50 rounded-lg border border-gold/20 mex-hover-lift"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-gold">
+                                  {indicator.indicatorType === 'rsi'
+                                    ? 'RSI'
+                                    : indicator.indicatorType === 'macd'
+                                    ? 'MACD'
+                                    : indicator.indicatorType === 'bollingerBands'
+                                    ? 'Bollinger Bands'
+                                    : indicator.indicatorType === 'vwap'
+                                    ? 'VWAP'
+                                    : indicator.indicatorType === 'movingAverage'
+                                    ? 'Moving Average'
+                                    : indicator.indicatorType === 'fvg'
+                                    ? 'Fair Value Gap'
+                                    : 'Order Blocks'}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    indicator.signal === 'strongBuy'
+                                      ? 'bg-green-500/10 text-green-600 border-green-500'
+                                      : indicator.signal === 'buy'
+                                      ? 'bg-green-400/10 text-green-500 border-green-400'
+                                      : indicator.signal === 'neutral'
+                                      ? 'bg-gray-400/10 text-gray-600 border-gray-400'
+                                      : indicator.signal === 'sell'
+                                      ? 'bg-red-400/10 text-red-500 border-red-400'
+                                      : 'bg-red-500/10 text-red-600 border-red-500'
+                                  }
+                                >
+                                  {indicator.signal === 'strongBuy'
+                                    ? 'Strong Buy'
+                                    : indicator.signal === 'buy'
+                                    ? 'Buy'
+                                    : indicator.signal === 'neutral'
+                                    ? 'Neutral'
+                                    : indicator.signal === 'sell'
+                                    ? 'Sell'
+                                    : 'Strong Sell'}
+                                </Badge>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-800">
+                                {indicator.value.toFixed(2)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-4 bg-gold/5 rounded-lg border border-gold/20">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gold">Historical Accuracy</span>
+                            <span className="text-2xl font-bold text-gray-800">
+                              {(marketIntel.historicalAccuracy * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <AlertCircle className="h-12 w-12 text-gold mx-auto mb-4" />
+                      <p className="text-lg metallic-text">No data available for this asset and timeframe</p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Market intelligence is currently being generated. Please check back later.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </PageShell>
+      </div>
     </>
   );
 }

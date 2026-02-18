@@ -1,173 +1,80 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T04:28:25.676Z",
+  "generatedAt": "2026-02-18T12:21:42.862Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 8,
-    "implemented": 8,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
+        "id": "REQ-24",
+        "summary": "Fix the Internet Identity login/logout UX so users can reliably log in and log out without getting stuck in an inconsistent state (e.g., repeated clicks, \"User is already authenticated\" loop, requiring a hard refresh), without changing the app’s visual design.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/App.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/Footer.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
-          "frontend/public/assets/generated/ui-icons.dim_512x512.png",
-          "frontend/public/assets/generated/section-divider.dim_1920x240.png"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/App.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/Footer.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
-          "frontend/public/assets/generated/ui-icons.dim_512x512.png",
-          "frontend/public/assets/generated/section-divider.dim_1920x240.png"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/constants/socialLinks.ts",
-          "frontend/src/components/Footer.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/pages/ContactPage.tsx",
-          "frontend/src/utils/whatsapp.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/Footer.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/pages/ContactPage.tsx",
-          "frontend/src/utils/whatsapp.ts"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/RegistrationForms.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/whatsapp.ts",
-          "frontend/src/utils/forms.ts",
-          "frontend/src/components/ui/sonner.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/RegistrationForms.tsx",
-          "frontend/src/utils/whatsapp.ts"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/RegistrationForms.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/timers.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/RegistrationForms.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/MySubmissions.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/AcquisitionPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/MySubmissions.tsx",
-          "frontend/src/pages/AcquisitionPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/ContactPage.tsx",
-          "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/pages/AlertsCenterPage.tsx",
-          "frontend/src/utils/errors.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/ContactPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/SiteSearch.tsx",
-          "frontend/src/components/searchIndex.ts",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/BottomNav.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/SiteSearch.tsx",
-          "frontend/src/components/searchIndex.ts",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/BottomNav.tsx"
-        ]
-      },
-      {
-        "id": "REQ-8",
-        "summary": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/ScrollToTop.tsx",
-          "frontend/src/components/PageShell.tsx",
+          "frontend/src/hooks/useReliableAuth.ts",
           "frontend/src/components/Header.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
+          "frontend/src/hooks/useReliableAuth.ts",
           "frontend/src/components/Header.tsx"
+        ]
+      },
+      {
+        "id": "REQ-25",
+        "summary": "Ensure the Acquisition Portal presale and airdrop countdown timers unlock at the correct UTC times for Q1 2027 (presale) and Q1 2029 (airdrop), and that the backend exposes correct remaining time values in nanoseconds.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-26",
+        "summary": "Ensure both Acquisition Portal forms (Presale Registration and Airdrop Registration) redirect to WhatsApp for the configured direct number (+92 329 4238997) when unlocked, and that pending submissions saved before unlock automatically redirect once the countdown reaches zero, without changing the visual design.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx",
+          "frontend/src/utils/whatsapp.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx",
+          "frontend/src/utils/whatsapp.ts"
+        ]
+      },
+      {
+        "id": "REQ-27",
+        "summary": "Complete any missing wiring required so authentication-gated pages that depend on backend permissions (via AccessControl) work consistently after login, including ensuring the actor initialization/access-control initialization path does not intermittently leave the app in an unauthenticated/unauthorized state after a successful Internet Identity login.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AuthInitializer.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AuthInitializer.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/hero-bg.dim_1920x1080.png",
-    "frontend/public/assets/generated/section-divider.dim_1920x240.png",
-    "frontend/public/assets/generated/ui-icons.dim_512x512.png",
     "frontend/src/App.tsx",
-    "frontend/src/components/BottomNav.tsx",
-    "frontend/src/components/Footer.tsx",
+    "frontend/src/components/AuthInitializer.tsx",
     "frontend/src/components/Header.tsx",
-    "frontend/src/components/MySubmissions.tsx",
-    "frontend/src/components/RegistrationForms.tsx",
-    "frontend/src/components/SiteSearch.tsx",
-    "frontend/src/components/searchIndex.ts",
-    "frontend/src/index.css",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useReliableAuth.ts",
     "frontend/src/pages/AcquisitionPage.tsx",
-    "frontend/src/pages/ContactPage.tsx",
+    "frontend/src/pages/MarketIntelPage.tsx",
     "frontend/src/utils/whatsapp.ts",
-    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

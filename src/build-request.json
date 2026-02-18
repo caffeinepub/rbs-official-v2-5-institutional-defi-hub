@@ -1,188 +1,99 @@
 {
   "kind": "build_request",
-  "title": "Redesign site UI and fix social redirects, forms, timers, and search",
-  "priority": "normal",
+  "title": "Fix Internet Identity login reliability and ensure Q1 2027/Q1 2029 acquisition timers unlock with WhatsApp redirection",
+  "projectName": "RBS Portal",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
+      "id": "REQ-24",
+      "text": "Fix the Internet Identity login/logout UX so users can reliably log in and log out without getting stuck in an inconsistent state (e.g., repeated clicks, \"User is already authenticated\" loop, requiring a hard refresh), without changing the app’s visual design.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages-4"
         ],
         "quotes": [
-          "The design was still too ugly do whatever you want to do with it ... just make it better use figma and more for it"
+          "fix login issues"
         ]
       },
       "acceptanceCriteria": [
-        "All existing routes render without layout breakage on mobile and desktop.",
-        "A single consistent design system is applied (type scale, spacing rhythm, card/button/input styles, and section backgrounds).",
-        "Animations (if any) respect reduced-motion preferences and do not introduce continuous heavy effects."
+        "Clicking Login successfully authenticates and enables authenticated-gated pages without requiring a page refresh.",
+        "Clicking Logout clears the session and returns the UI to the logged-out state; subsequent Login works again.",
+        "No uncaught promise errors or console loops occur during login/logout interactions.",
+        "No edits are made to immutable files: frontend/src/hooks/useInternetIdentity.ts and frontend/src/hooks/useActor.ts."
       ]
     },
     {
-      "id": "REQ-2",
-      "text": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
+      "id": "REQ-25",
+      "text": "Ensure the Acquisition Portal presale and airdrop countdown timers unlock at the correct UTC times for Q1 2027 (presale) and Q1 2029 (airdrop), and that the backend exposes correct remaining time values in nanoseconds.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "recent-messages-4"
+        ],
+        "quotes": [
+          "make sure both forms pre-sale Q1 2027 AND Q1 2029 open at there time"
+        ]
+      },
+      "acceptanceCriteria": [
+        "backend/main.mo constants and/or timer state produce correct UTC-based nanosecond timestamps for Q1 2027 (presale) and Q1 2029 (airdrop).",
+        "backend/main.mo query methods getPresaleRemainingTime() and getAirdropRemainingTime() return 0 when the respective timer has passed, otherwise a positive nanosecond duration.",
+        "The airdrop timer value is in nanoseconds (same scale as Time.now()) and not an incorrectly small value due to unit mismatch.",
+        "No changes break existing timer APIs getTimerState(timerType) and toggleTimer(timerType)."
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "text": "Ensure both Acquisition Portal forms (Presale Registration and Airdrop Registration) redirect to WhatsApp for the configured direct number (+92 329 4238997) when unlocked, and that pending submissions saved before unlock automatically redirect once the countdown reaches zero, without changing the visual design.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages-4"
         ],
         "quotes": [
-          "fix all its functionality redirection to WhatsApp telegram"
+          "with proper redirection to +92 329 4238997"
         ]
       },
       "acceptanceCriteria": [
-        "All UI links that claim to open Telegram open https://t.me/Rsuperior.",
-        "All UI links that claim to open WhatsApp channel open https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P.",
-        "All UI flows that claim to open WhatsApp direct message open https://wa.me/923294238997 (with optional encoded message querystring when applicable).",
-        "No hardcoded Telegram/WhatsApp URLs remain outside frontend/src/constants/socialLinks.ts."
+        "When presale is unlocked, submitting the presale form opens WhatsApp using REDIRECT_CONFIG.whatsapp.directUrl (https://wa.me/923294238997) with the pre-filled message payload.",
+        "When airdrop is unlocked, submitting the airdrop form opens WhatsApp using REDIRECT_CONFIG.whatsapp.directUrl (https://wa.me/923294238997) with the pre-filled message payload.",
+        "If a user submits either form before unlock, the submission is saved and the app automatically redirects to WhatsApp after unlock (using the existing sessionStorage pending flow).",
+        "User-facing text remains in English and existing visual design (colors/typography/layout) is unchanged."
       ]
     },
     {
-      "id": "REQ-3",
-      "text": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
+      "id": "REQ-27",
+      "text": "Complete any missing wiring required so authentication-gated pages that depend on backend permissions (via AccessControl) work consistently after login, including ensuring the actor initialization/access-control initialization path does not intermittently leave the app in an unauthenticated/unauthorized state after a successful Internet Identity login.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages-4"
         ],
         "quotes": [
-          "make sure both forms work properly"
+          "complete the whole coding and fix login issues"
         ]
       },
       "acceptanceCriteria": [
-        "Submitting Presale/Airdrop with valid data calls the backend submitForm successfully and shows a success toast.",
-        "Submitting invalid data does not call the backend and shows a validation error.",
-        "While submission is in progress, the active form is disabled and shows an in-progress UI state.",
-        "After successful submission, WhatsApp opens with a correctly encoded, prefilled message that matches the submitted values.",
-        "If the popup is blocked, the UI provides a clear fallback (e.g., a visible link/button) that the user can click to open WhatsApp manually."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "logged with the timer locked with the timer according to roadmap"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When remaining time is 0 (or otherwise indicates lock), the corresponding form is visibly locked and cannot be submitted (UI prevents submit; backend rejects if attempted).",
-        "When remaining time is greater than 0 and the form is intended to be available, the form is usable and can be submitted.",
-        "The UI countdown updates smoothly and matches the latest backend remaining-time queries.",
-        "Locked-state messaging is clear and in English."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "logged with the timer"
-        ]
-      },
-      "acceptanceCriteria": [
-        "After submitting a form, the UI displays an entry in a \"My Submissions\" area (or equivalent) that includes: form type (Presale/Airdrop), submitted timestamp, and key submitted fields.",
-        "The log is fetched from backend getMySubmissions and updates automatically after successful submission.",
-        "No other user’s submissions are visible to a non-admin user."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "and all other forms submissions"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each page with a form provides English validation errors for required fields.",
-        "Each form submission path provides a clear success indicator and a clear failure indicator (no silent failures).",
-        "No form can be submitted multiple times unintentionally due to missing disabled/loading handling."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "and all search box properly"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A visible search input exists in the UI (desktop and mobile).",
-        "Typing a query shows matching results (at minimum: page titles/primary sections) and selecting a result navigates to the corresponding route.",
-        "Search works without requiring authentication.",
-        "Empty/no-match states are handled gracefully with English messaging."
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "make it for multipage or single scroll website do whatever you want"
-        ]
-      },
-      "acceptanceCriteria": [
-        "All existing routes remain accessible via navigation on both desktop and mobile.",
-        "No route becomes unreachable due to redesign changes.",
-        "Scroll position behavior remains sensible on route changes (no confusing partial scroll states)."
+        "After a successful Internet Identity login, pages that require authentication (e.g., Market Intel, Live Price, Market Pulse, Voting) can load their data without spurious Unauthorized errors caused by an actor/identity mismatch.",
+        "Logging out clears cached authenticated queries and prevents authenticated endpoints from being called with a stale identity.",
+        "No visual design changes are introduced."
       ]
     }
   ],
   "constraints": [
+    "Preserve Version 89 UI visual design (no color, typography, layout changes).",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/* (compose instead).",
     "Use English for all user-facing text.",
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not modify files under frontend/src/components/ui or other immutablePaths; compose those components instead.",
-    "Do not remove or change the existing Telegram/WhatsApp URLs defined in frontend/src/constants/socialLinks.ts; ensure the app uses them consistently."
+    "Backend must remain single-actor (all Motoko logic in backend/main.mo); add backend/migration.mo only if an upgrade-safe state migration is required."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Adding external databases or third-party analytics/search services.",
-    "Implementing real-time messaging/chat.",
-    "Changing the project into a Next.js/Vue/Angular app."
+    "Implementing third-party authentication providers (only Internet Identity is supported).",
+    "Changing the WhatsApp target number away from +92 329 4238997.",
+    "Redesigning the Acquisition Portal or other pages (visual refresh, new color palette, layout changes).",
+    "Adding unspecified new features/services beyond resolving login reliability and acquisition timer unlock/redirection behavior."
   ],
   "imageRequirements": {
-    "required": [
-      "Abstract premium hero background with subtle gold/charcoal gradients and light noise texture (hero-bg.dim_1920x1080.png)",
-      "Minimal monoline icon set (telegram, whatsapp, search, form) in a consistent style (ui-icons.dim_512x512.png)",
-      "Soft section-divider graphic with smoky/gold motif (section-divider.dim_1920x240.png)"
-    ],
+    "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Prefer a Figma-inspired modern visual redesign; prioritize aesthetics and UX polish while preserving/fixing core functionality."
-    ],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

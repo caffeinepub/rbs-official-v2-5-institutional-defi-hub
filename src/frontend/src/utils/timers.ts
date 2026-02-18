@@ -1,83 +1,58 @@
 /**
- * Shared timer utilities for converting backend-provided remaining time (bigint)
- * into stable UI-safe values for consistent lock/unlock behavior across forms.
+ * Timer utility functions for countdown display
+ * Converts backend remaining time (bigint nanoseconds) to stable UI-friendly format
  */
 
-export interface TimerData {
-  remainingMs: number;
-  remainingSeconds: number;
-  isLocked: boolean;
-  formattedTime: string;
+export interface CountdownTime {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
+  isUnlocked: boolean;
 }
 
 /**
- * Converts backend bigint nanoseconds to milliseconds safely
+ * Convert bigint nanoseconds to seconds, clamped at 0
  */
-export function nanosToMs(nanos: bigint): number {
-  return Number(nanos / 1_000_000n);
+export function nanosToSeconds(nanos: bigint): number {
+  const seconds = Number(nanos / BigInt(1_000_000_000));
+  return Math.max(0, seconds);
 }
 
 /**
- * Formats remaining time into a human-readable string
+ * Format remaining seconds into countdown parts
+ * Returns stable time parts for UI rendering with fixed-width support
  */
-export function formatRemainingTime(remainingMs: number): string {
-  if (remainingMs <= 0) return 'Unlocked';
+export function formatCountdown(remainingSeconds: number): CountdownTime {
+  const safeSeconds = Math.max(0, Math.floor(remainingSeconds));
   
-  const seconds = Math.floor(remainingMs / 1000);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`;
-  } else {
-    return `${secs}s`;
-  }
-}
-
-/**
- * Processes backend timer data into UI-safe timer state
- */
-export function processTimerData(backendTime: bigint | undefined): TimerData {
-  if (backendTime === undefined) {
+  if (safeSeconds === 0) {
     return {
-      remainingMs: 0,
-      remainingSeconds: 0,
-      isLocked: false,
-      formattedTime: 'Loading...',
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0,
+      isUnlocked: true,
     };
   }
 
-  const remainingMs = nanosToMs(backendTime);
-  const remainingSeconds = Math.floor(remainingMs / 1000);
-  const isLocked = remainingMs > 0;
-  
-  const days = Math.floor(remainingSeconds / 86400);
-  const hours = Math.floor((remainingSeconds % 86400) / 3600);
-  const minutes = Math.floor((remainingSeconds % 3600) / 60);
-  const seconds = remainingSeconds % 60;
+  const days = Math.floor(safeSeconds / 86400);
+  const hours = Math.floor((safeSeconds % 86400) / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
 
   return {
-    remainingMs,
-    remainingSeconds,
-    isLocked,
-    formattedTime: formatRemainingTime(remainingMs),
     days,
     hours,
     minutes,
     seconds,
+    isUnlocked: false,
   };
+}
+
+/**
+ * Format time part with leading zero for stable display
+ */
+export function padTime(value: number): string {
+  return value.toString().padStart(2, '0');
 }

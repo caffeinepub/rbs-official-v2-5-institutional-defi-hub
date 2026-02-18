@@ -14,45 +14,30 @@ export interface Alert {
   'id' : bigint,
   'title' : string,
   'read' : boolean,
+  'triggerEnabled' : boolean,
   'message' : string,
   'timestamp' : bigint,
+  'lastChecked' : bigint,
+  'autoCreated' : boolean,
 }
-export interface FormSubmission {
+export interface CreatePollInput {
+  'question' : string,
+  'code' : string,
+  'isActive' : boolean,
+  'options' : Array<string>,
+}
+export interface KeyVal { 'key' : string, 'value' : bigint }
+export interface PollView {
   'id' : bigint,
-  'country' : string,
-  'isPresale' : boolean,
-  'name' : string,
-  'submittedBy' : Principal,
-  'walletAddress' : string,
-  'rbsAmount' : number,
-  'timestamp' : bigint,
+  'creator' : Principal,
+  'question' : string,
+  'votes' : Array<KeyVal>,
+  'code' : string,
+  'createdAt' : Time,
+  'isActive' : boolean,
+  'options' : Array<string>,
 }
-export type IndicatorType = { 'fvg' : null } |
-  { 'rsi' : null } |
-  { 'macd' : null } |
-  { 'vwap' : null } |
-  { 'movingAverage' : null } |
-  { 'bollingerBands' : null } |
-  { 'orderBlocks' : null };
-export interface MarketIntelligence {
-  'id' : bigint,
-  'historicalAccuracy' : number,
-  'asset' : string,
-  'timeframe' : string,
-  'overallSignal' : SignalConfidence,
-  'indicators' : Array<TechnicalIndicator>,
-  'timestamp' : bigint,
-}
-export type SignalConfidence = { 'buy' : null } |
-  { 'strongBuy' : null } |
-  { 'sell' : null } |
-  { 'neutral' : null } |
-  { 'strongSell' : null };
-export interface TechnicalIndicator {
-  'value' : number,
-  'indicatorType' : IndicatorType,
-  'signal' : SignalConfidence,
-}
+export type Time = bigint;
 export interface TimerState {
   'endTime' : bigint,
   'lastUpdate' : bigint,
@@ -60,15 +45,6 @@ export interface TimerState {
 }
 export type TimerType = { 'presale' : null } |
   { 'airdrop' : null };
-export interface TransformationInput {
-  'context' : Uint8Array,
-  'response' : http_request_result,
-}
-export interface TransformationOutput {
-  'status' : bigint,
-  'body' : Uint8Array,
-  'headers' : Array<http_header>,
-}
 export interface UserProfile { 'name' : string, 'email' : [] | [string] }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -83,12 +59,6 @@ export interface _CaffeineStorageRefillInformation {
 export interface _CaffeineStorageRefillResult {
   'success' : [] | [boolean],
   'topped_up_amount' : [] | [bigint],
-}
-export interface http_header { 'value' : string, 'name' : string }
-export interface http_request_result {
-  'status' : bigint,
-  'body' : Uint8Array,
-  'headers' : Array<http_header>,
 }
 export interface _SERVICE {
   '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
@@ -107,61 +77,33 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'addAlert' : ActorMethod<[string, string], bigint>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'checkMarketIntelAccess' : ActorMethod<[], boolean>,
-  'clearAlerts' : ActorMethod<[], undefined>,
-  'deleteAlert' : ActorMethod<[bigint], undefined>,
-  'deleteMarketIntelligence' : ActorMethod<[bigint], undefined>,
-  'deleteSubmission' : ActorMethod<[bigint], undefined>,
-  'deleteTimer' : ActorMethod<[TimerType], undefined>,
-  'generateMarketIntel' : ActorMethod<
-    [string, string, Array<TechnicalIndicator>, SignalConfidence, number],
-    bigint
-  >,
+  'checkAndCreateAutoAlert' : ActorMethod<[], [] | [Alert]>,
+  'createAlert' : ActorMethod<[string, string], Alert>,
+  'createPoll' : ActorMethod<[CreatePollInput], bigint>,
+  'deleteAlert' : ActorMethod<[bigint], boolean>,
+  'enableTrigger' : ActorMethod<[boolean], undefined>,
   'getAirdropRemainingTime' : ActorMethod<[], bigint>,
-  'getAlertCount' : ActorMethod<[], bigint>,
   'getAlerts' : ActorMethod<[], Array<Alert>>,
-  'getAllMarketIntelligence' : ActorMethod<[], Array<MarketIntelligence>>,
-  'getAllSubmissions' : ActorMethod<[], Array<FormSubmission>>,
+  'getAllPolls' : ActorMethod<[], Array<PollView>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getFormSubmission' : ActorMethod<[bigint], [] | [FormSubmission]>,
-  'getMarketIntelligence' : ActorMethod<[bigint], [] | [MarketIntelligence]>,
-  'getMarketIntelligenceByAsset' : ActorMethod<
-    [string],
-    Array<MarketIntelligence>
-  >,
-  'getMarketIntelligenceByTimeframe' : ActorMethod<
-    [string],
-    Array<MarketIntelligence>
-  >,
-  'getMarketIntelligenceByTimeframeAndAsset' : ActorMethod<
-    [string, string],
-    Array<MarketIntelligence>
-  >,
-  'getMarketIntelligenceCount' : ActorMethod<[], bigint>,
-  'getMySubmissions' : ActorMethod<[], Array<FormSubmission>>,
+  'getLastPoll' : ActorMethod<[], [] | [PollView]>,
+  'getPoll' : ActorMethod<[bigint], [] | [PollView]>,
   'getPresaleRemainingTime' : ActorMethod<[], bigint>,
-  'getSubmissionsByCountry' : ActorMethod<[string], Array<FormSubmission>>,
-  'getSubmissionsByType' : ActorMethod<[boolean], Array<FormSubmission>>,
-  'getSubmissionsCount' : ActorMethod<[], bigint>,
-  'getTimerState' : ActorMethod<[TimerType], [] | [TimerState]>,
+  'getTimerState' : ActorMethod<[TimerType], TimerState>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'grantMarketIntelAccess' : ActorMethod<[string], boolean>,
-  'hasAISentimentAccess' : ActorMethod<[], boolean>,
+  'hasMarketIntelAccess' : ActorMethod<[], boolean>,
+  'initialize' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'markAlertAsRead' : ActorMethod<[bigint], undefined>,
+  'markAlertAsRead' : ActorMethod<[bigint], boolean>,
   'revokeMarketIntelAccessWithPassword' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'submitForm' : ActorMethod<[string, string, string, number, boolean], bigint>,
+  'submitVote' : ActorMethod<[bigint, bigint], boolean>,
   'toggleTimer' : ActorMethod<[TimerType], TimerState>,
-  'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
-  'updateSubmission' : ActorMethod<
-    [bigint, string, string, string, number, boolean],
-    undefined
-  >,
-  'updateTimer' : ActorMethod<[TimerType, boolean, bigint], TimerState>,
+  'updateRecord' : ActorMethod<[string, bigint, string], undefined>,
+  'vote' : ActorMethod<[bigint, string], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

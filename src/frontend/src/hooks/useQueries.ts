@@ -1,225 +1,150 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { MarketIntelligence, Alert } from '../backend';
-import { sanitizeErrorMessage } from '@/utils/errors';
+import { useInternetIdentity } from './useInternetIdentity';
+import type { UserProfile, Alert } from '../backend';
 
-// Form submission hook
-export function useSubmitForm() {
+export function useGetCallerUserProfile() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  const query = useQuery<UserProfile | null>({
+    queryKey: ['currentUserProfile'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getCallerUserProfile();
+    },
+    enabled: !!actor && !!identity && !actorFetching,
+    retry: false,
+    staleTime: 300000,
+  });
+
+  return {
+    ...query,
+    isLoading: actorFetching || query.isLoading,
+    isFetched: !!actor && !!identity && query.isFetched,
+  };
+}
+
+export function useSaveCallerUserProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      name: string;
-      country: string;
-      walletAddress: string;
-      rbsAmount: number;
-      isPresale: boolean;
-    }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.submitForm(
-        data.name,
-        data.country,
-        data.walletAddress,
-        data.rbsAmount,
-        data.isPresale
-      );
+    mutationFn: async (profile: UserProfile) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
-    },
-    onError: (error) => {
-      // Log for debugging but don't expose to user
-      console.error('Form submission error:', error);
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
     },
   });
 }
 
-// Get my submissions
-export function useGetMySubmissions() {
-  const { actor, isFetching } = useActor();
+export function useCheckMarketIntelAccess() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
-  return useQuery({
-    queryKey: ['mySubmissions'],
+  return useQuery<boolean>({
+    queryKey: ['marketIntelAccess'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getMySubmissions();
+      if (!actor) return false;
+      return actor.hasMarketIntelAccess();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !!identity && !actorFetching,
+    staleTime: 300000,
+    retry: false,
   });
 }
 
-// Timer queries
-export function useGetPresaleRemainingTime() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['presaleRemainingTime'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getPresaleRemainingTime();
-    },
-    enabled: !!actor && !isFetching,
-    refetchInterval: 5000, // Refetch every 5 seconds
-  });
-}
-
-export function useGetAirdropRemainingTime() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['airdropRemainingTime'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getAirdropRemainingTime();
-    },
-    enabled: !!actor && !isFetching,
-    refetchInterval: 5000, // Refetch every 5 seconds
-  });
-}
-
-// Market Intel Access
 export function useGrantMarketIntelAccess() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not initialized');
-      const result = await actor.grantMarketIntelAccess(password);
-      if (!result) {
-        throw new Error('Invalid passcode');
-      }
-      return result;
+      if (!actor) throw new Error('Actor not available');
+      return actor.grantMarketIntelAccess(password);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['marketIntelAccess'] });
-      queryClient.invalidateQueries({ queryKey: ['marketIntelligence'] });
-    },
-    onError: (error) => {
-      console.error('Market Intel access error:', error);
     },
   });
 }
 
-export function useRevokeMarketIntelAccess() {
+export function useRevokeMarketIntelAccessWithPassword() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not initialized');
-      const result = await actor.revokeMarketIntelAccessWithPassword(password);
-      if (!result) {
-        throw new Error('Invalid passcode');
-      }
-      return result;
+      if (!actor) throw new Error('Actor not available');
+      return actor.revokeMarketIntelAccessWithPassword(password);
     },
     onSuccess: () => {
-      queryClient.clear();
-    },
-    onError: (error) => {
-      console.error('Market Intel revoke error:', error);
+      queryClient.invalidateQueries({ queryKey: ['marketIntelAccess'] });
+      queryClient.invalidateQueries({ queryKey: ['liveMarketIntel'] });
     },
   });
 }
 
-// Alias for backward compatibility
-export const useRevokeMarketIntelAccessWithPassword = useRevokeMarketIntelAccess;
-
-export function useCheckMarketIntelAccess() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['marketIntelAccess'],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.checkMarketIntelAccess();
-    },
-    enabled: !!actor && !isFetching,
-    retry: false,
-  });
-}
-
-// Market Intelligence queries
-export function useGetMarketIntelligenceByTimeframeAndAsset(
-  timeframe: string,
-  asset: string
-) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<MarketIntelligence[]>({
-    queryKey: ['marketIntelligence', timeframe, asset],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getMarketIntelligenceByTimeframeAndAsset(timeframe, asset);
-    },
-    enabled: !!actor && !isFetching && !!timeframe && !!asset,
-    retry: 1,
-  });
-}
-
-// Fetch market intelligence (standard mode)
-export function useFetchMarketIntelligence(
-  asset: string,
-  timeframe: string,
-  enabled: boolean = true
-) {
+export function useGetPresaleRemainingTime() {
   const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<MarketIntelligence[]>({
-    queryKey: ['marketIntelligence', asset, timeframe],
+  return useQuery<bigint>({
+    queryKey: ['presaleRemainingTime'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getMarketIntelligenceByTimeframeAndAsset(timeframe, asset);
+      if (!actor) throw new Error('Actor not available');
+      return actor.getPresaleRemainingTime();
     },
-    enabled: !!actor && !actorFetching && !!asset && !!timeframe && enabled,
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 1000,
     retry: 1,
   });
 }
 
-// Fetch binary signal (binary options mode)
-// Note: This uses the same backend data but could be processed differently on the frontend
-export function useFetchBinarySignal(
-  asset: string,
-  timeframe: string,
-  enabled: boolean = true
-) {
+export function useGetAirdropRemainingTime() {
   const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<MarketIntelligence[]>({
-    queryKey: ['binarySignal', asset, timeframe],
+  return useQuery<bigint>({
+    queryKey: ['airdropRemainingTime'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.getMarketIntelligenceByTimeframeAndAsset(timeframe, asset);
+      if (!actor) throw new Error('Actor not available');
+      return actor.getAirdropRemainingTime();
     },
-    enabled: !!actor && !actorFetching && !!asset && !!timeframe && enabled,
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 1000,
     retry: 1,
   });
 }
 
-// Alerts
+// ============================================
+// ALERTS SYSTEM HOOKS
+// ============================================
+
 export function useGetAlerts() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<Alert[]>({
     queryKey: ['alerts'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error('Actor not available');
       return actor.getAlerts();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !!identity && !actorFetching,
+    staleTime: 30000,
+    retry: false,
   });
 }
 
-export function useAddAlert() {
+export function useCreateAlert() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string; message: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.addAlert(data.title, data.message);
+    mutationFn: async ({ title, message }: { title: string; message: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createAlert(title, message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
@@ -233,7 +158,7 @@ export function useMarkAlertAsRead() {
 
   return useMutation({
     mutationFn: async (alertId: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error('Actor not available');
       return actor.markAlertAsRead(alertId);
     },
     onSuccess: () => {
@@ -248,7 +173,7 @@ export function useDeleteAlert() {
 
   return useMutation({
     mutationFn: async (alertId: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error('Actor not available');
       return actor.deleteAlert(alertId);
     },
     onSuccess: () => {
@@ -257,14 +182,29 @@ export function useDeleteAlert() {
   });
 }
 
-export function useClearAlerts() {
+export function useEnableTrigger() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (enable: boolean) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.enableTrigger(enable);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+}
+
+export function useCheckAndCreateAutoAlert() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.clearAlerts();
+      if (!actor) throw new Error('Actor not available');
+      return actor.checkAndCreateAutoAlert();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alerts'] });

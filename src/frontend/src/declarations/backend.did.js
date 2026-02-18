@@ -24,83 +24,46 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const TimerType = IDL.Variant({
-  'presale' : IDL.Null,
-  'airdrop' : IDL.Null,
-});
-export const IndicatorType = IDL.Variant({
-  'fvg' : IDL.Null,
-  'rsi' : IDL.Null,
-  'macd' : IDL.Null,
-  'vwap' : IDL.Null,
-  'movingAverage' : IDL.Null,
-  'bollingerBands' : IDL.Null,
-  'orderBlocks' : IDL.Null,
-});
-export const SignalConfidence = IDL.Variant({
-  'buy' : IDL.Null,
-  'strongBuy' : IDL.Null,
-  'sell' : IDL.Null,
-  'neutral' : IDL.Null,
-  'strongSell' : IDL.Null,
-});
-export const TechnicalIndicator = IDL.Record({
-  'value' : IDL.Float64,
-  'indicatorType' : IndicatorType,
-  'signal' : SignalConfidence,
-});
 export const Alert = IDL.Record({
   'id' : IDL.Nat,
   'title' : IDL.Text,
   'read' : IDL.Bool,
+  'triggerEnabled' : IDL.Bool,
   'message' : IDL.Text,
   'timestamp' : IDL.Int,
+  'lastChecked' : IDL.Int,
+  'autoCreated' : IDL.Bool,
 });
-export const MarketIntelligence = IDL.Record({
-  'id' : IDL.Nat,
-  'historicalAccuracy' : IDL.Float64,
-  'asset' : IDL.Text,
-  'timeframe' : IDL.Text,
-  'overallSignal' : SignalConfidence,
-  'indicators' : IDL.Vec(TechnicalIndicator),
-  'timestamp' : IDL.Int,
+export const CreatePollInput = IDL.Record({
+  'question' : IDL.Text,
+  'code' : IDL.Text,
+  'isActive' : IDL.Bool,
+  'options' : IDL.Vec(IDL.Text),
 });
-export const FormSubmission = IDL.Record({
+export const KeyVal = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Nat });
+export const Time = IDL.Int;
+export const PollView = IDL.Record({
   'id' : IDL.Nat,
-  'country' : IDL.Text,
-  'isPresale' : IDL.Bool,
-  'name' : IDL.Text,
-  'submittedBy' : IDL.Principal,
-  'walletAddress' : IDL.Text,
-  'rbsAmount' : IDL.Float64,
-  'timestamp' : IDL.Int,
+  'creator' : IDL.Principal,
+  'question' : IDL.Text,
+  'votes' : IDL.Vec(KeyVal),
+  'code' : IDL.Text,
+  'createdAt' : Time,
+  'isActive' : IDL.Bool,
+  'options' : IDL.Vec(IDL.Text),
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'email' : IDL.Opt(IDL.Text),
 });
+export const TimerType = IDL.Variant({
+  'presale' : IDL.Null,
+  'airdrop' : IDL.Null,
+});
 export const TimerState = IDL.Record({
   'endTime' : IDL.Int,
   'lastUpdate' : IDL.Int,
   'isUnlocked' : IDL.Bool,
-});
-export const http_header = IDL.Record({
-  'value' : IDL.Text,
-  'name' : IDL.Text,
-});
-export const http_request_result = IDL.Record({
-  'status' : IDL.Nat,
-  'body' : IDL.Vec(IDL.Nat8),
-  'headers' : IDL.Vec(http_header),
-});
-export const TransformationInput = IDL.Record({
-  'context' : IDL.Vec(IDL.Nat8),
-  'response' : http_request_result,
-});
-export const TransformationOutput = IDL.Record({
-  'status' : IDL.Nat,
-  'body' : IDL.Vec(IDL.Nat8),
-  'headers' : IDL.Vec(http_header),
 });
 
 export const idlService = IDL.Service({
@@ -131,104 +94,37 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'addAlert' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
-  'clearAlerts' : IDL.Func([], [], []),
-  'deleteAlert' : IDL.Func([IDL.Nat], [], []),
-  'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
-  'deleteSubmission' : IDL.Func([IDL.Nat], [], []),
-  'deleteTimer' : IDL.Func([TimerType], [], []),
-  'generateMarketIntel' : IDL.Func(
-      [
-        IDL.Text,
-        IDL.Text,
-        IDL.Vec(TechnicalIndicator),
-        SignalConfidence,
-        IDL.Float64,
-      ],
-      [IDL.Nat],
-      [],
-    ),
+  'checkAndCreateAutoAlert' : IDL.Func([], [IDL.Opt(Alert)], []),
+  'createAlert' : IDL.Func([IDL.Text, IDL.Text], [Alert], []),
+  'createPoll' : IDL.Func([CreatePollInput], [IDL.Nat], []),
+  'deleteAlert' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'enableTrigger' : IDL.Func([IDL.Bool], [], []),
   'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
-  'getAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
-  'getAllMarketIntelligence' : IDL.Func(
-      [],
-      [IDL.Vec(MarketIntelligence)],
-      ['query'],
-    ),
-  'getAllSubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+  'getAllPolls' : IDL.Func([], [IDL.Vec(PollView)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getFormSubmission' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Opt(FormSubmission)],
-      ['query'],
-    ),
-  'getMarketIntelligence' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Opt(MarketIntelligence)],
-      ['query'],
-    ),
-  'getMarketIntelligenceByAsset' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(MarketIntelligence)],
-      ['query'],
-    ),
-  'getMarketIntelligenceByTimeframe' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(MarketIntelligence)],
-      ['query'],
-    ),
-  'getMarketIntelligenceByTimeframeAndAsset' : IDL.Func(
-      [IDL.Text, IDL.Text],
-      [IDL.Vec(MarketIntelligence)],
-      ['query'],
-    ),
-  'getMarketIntelligenceCount' : IDL.Func([], [IDL.Nat], ['query']),
-  'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+  'getLastPoll' : IDL.Func([], [IDL.Opt(PollView)], ['query']),
+  'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
   'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
-  'getSubmissionsByCountry' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(FormSubmission)],
-      ['query'],
-    ),
-  'getSubmissionsByType' : IDL.Func(
-      [IDL.Bool],
-      [IDL.Vec(FormSubmission)],
-      ['query'],
-    ),
-  'getSubmissionsCount' : IDL.Func([], [IDL.Nat], ['query']),
-  'getTimerState' : IDL.Func([TimerType], [IDL.Opt(TimerState)], ['query']),
+  'getTimerState' : IDL.Func([TimerType], [TimerState], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
-  'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
+  'hasMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
+  'initialize' : IDL.Func([], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'markAlertAsRead' : IDL.Func([IDL.Nat], [], []),
+  'markAlertAsRead' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'revokeMarketIntelAccessWithPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'submitForm' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Text, IDL.Float64, IDL.Bool],
-      [IDL.Nat],
-      [],
-    ),
+  'submitVote' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Bool], []),
   'toggleTimer' : IDL.Func([TimerType], [TimerState], []),
-  'transform' : IDL.Func(
-      [TransformationInput],
-      [TransformationOutput],
-      ['query'],
-    ),
-  'updateSubmission' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Float64, IDL.Bool],
-      [],
-      [],
-    ),
-  'updateTimer' : IDL.Func([TimerType, IDL.Bool, IDL.Int], [TimerState], []),
+  'updateRecord' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [], []),
+  'vote' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
 });
 
 export const idlInitArgs = [];
@@ -250,77 +146,43 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const TimerType = IDL.Variant({ 'presale' : IDL.Null, 'airdrop' : IDL.Null });
-  const IndicatorType = IDL.Variant({
-    'fvg' : IDL.Null,
-    'rsi' : IDL.Null,
-    'macd' : IDL.Null,
-    'vwap' : IDL.Null,
-    'movingAverage' : IDL.Null,
-    'bollingerBands' : IDL.Null,
-    'orderBlocks' : IDL.Null,
-  });
-  const SignalConfidence = IDL.Variant({
-    'buy' : IDL.Null,
-    'strongBuy' : IDL.Null,
-    'sell' : IDL.Null,
-    'neutral' : IDL.Null,
-    'strongSell' : IDL.Null,
-  });
-  const TechnicalIndicator = IDL.Record({
-    'value' : IDL.Float64,
-    'indicatorType' : IndicatorType,
-    'signal' : SignalConfidence,
-  });
   const Alert = IDL.Record({
     'id' : IDL.Nat,
     'title' : IDL.Text,
     'read' : IDL.Bool,
+    'triggerEnabled' : IDL.Bool,
     'message' : IDL.Text,
     'timestamp' : IDL.Int,
+    'lastChecked' : IDL.Int,
+    'autoCreated' : IDL.Bool,
   });
-  const MarketIntelligence = IDL.Record({
-    'id' : IDL.Nat,
-    'historicalAccuracy' : IDL.Float64,
-    'asset' : IDL.Text,
-    'timeframe' : IDL.Text,
-    'overallSignal' : SignalConfidence,
-    'indicators' : IDL.Vec(TechnicalIndicator),
-    'timestamp' : IDL.Int,
+  const CreatePollInput = IDL.Record({
+    'question' : IDL.Text,
+    'code' : IDL.Text,
+    'isActive' : IDL.Bool,
+    'options' : IDL.Vec(IDL.Text),
   });
-  const FormSubmission = IDL.Record({
+  const KeyVal = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Nat });
+  const Time = IDL.Int;
+  const PollView = IDL.Record({
     'id' : IDL.Nat,
-    'country' : IDL.Text,
-    'isPresale' : IDL.Bool,
-    'name' : IDL.Text,
-    'submittedBy' : IDL.Principal,
-    'walletAddress' : IDL.Text,
-    'rbsAmount' : IDL.Float64,
-    'timestamp' : IDL.Int,
+    'creator' : IDL.Principal,
+    'question' : IDL.Text,
+    'votes' : IDL.Vec(KeyVal),
+    'code' : IDL.Text,
+    'createdAt' : Time,
+    'isActive' : IDL.Bool,
+    'options' : IDL.Vec(IDL.Text),
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Opt(IDL.Text),
   });
+  const TimerType = IDL.Variant({ 'presale' : IDL.Null, 'airdrop' : IDL.Null });
   const TimerState = IDL.Record({
     'endTime' : IDL.Int,
     'lastUpdate' : IDL.Int,
     'isUnlocked' : IDL.Bool,
-  });
-  const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
-  const http_request_result = IDL.Record({
-    'status' : IDL.Nat,
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(http_header),
-  });
-  const TransformationInput = IDL.Record({
-    'context' : IDL.Vec(IDL.Nat8),
-    'response' : http_request_result,
-  });
-  const TransformationOutput = IDL.Record({
-    'status' : IDL.Nat,
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(http_header),
   });
   
   return IDL.Service({
@@ -351,108 +213,41 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'addAlert' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'checkMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
-    'clearAlerts' : IDL.Func([], [], []),
-    'deleteAlert' : IDL.Func([IDL.Nat], [], []),
-    'deleteMarketIntelligence' : IDL.Func([IDL.Nat], [], []),
-    'deleteSubmission' : IDL.Func([IDL.Nat], [], []),
-    'deleteTimer' : IDL.Func([TimerType], [], []),
-    'generateMarketIntel' : IDL.Func(
-        [
-          IDL.Text,
-          IDL.Text,
-          IDL.Vec(TechnicalIndicator),
-          SignalConfidence,
-          IDL.Float64,
-        ],
-        [IDL.Nat],
-        [],
-      ),
+    'checkAndCreateAutoAlert' : IDL.Func([], [IDL.Opt(Alert)], []),
+    'createAlert' : IDL.Func([IDL.Text, IDL.Text], [Alert], []),
+    'createPoll' : IDL.Func([CreatePollInput], [IDL.Nat], []),
+    'deleteAlert' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'enableTrigger' : IDL.Func([IDL.Bool], [], []),
     'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
-    'getAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
-    'getAllMarketIntelligence' : IDL.Func(
-        [],
-        [IDL.Vec(MarketIntelligence)],
-        ['query'],
-      ),
-    'getAllSubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+    'getAllPolls' : IDL.Func([], [IDL.Vec(PollView)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getFormSubmission' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Opt(FormSubmission)],
-        ['query'],
-      ),
-    'getMarketIntelligence' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Opt(MarketIntelligence)],
-        ['query'],
-      ),
-    'getMarketIntelligenceByAsset' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(MarketIntelligence)],
-        ['query'],
-      ),
-    'getMarketIntelligenceByTimeframe' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(MarketIntelligence)],
-        ['query'],
-      ),
-    'getMarketIntelligenceByTimeframeAndAsset' : IDL.Func(
-        [IDL.Text, IDL.Text],
-        [IDL.Vec(MarketIntelligence)],
-        ['query'],
-      ),
-    'getMarketIntelligenceCount' : IDL.Func([], [IDL.Nat], ['query']),
-    'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
+    'getLastPoll' : IDL.Func([], [IDL.Opt(PollView)], ['query']),
+    'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
     'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
-    'getSubmissionsByCountry' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(FormSubmission)],
-        ['query'],
-      ),
-    'getSubmissionsByType' : IDL.Func(
-        [IDL.Bool],
-        [IDL.Vec(FormSubmission)],
-        ['query'],
-      ),
-    'getSubmissionsCount' : IDL.Func([], [IDL.Nat], ['query']),
-    'getTimerState' : IDL.Func([TimerType], [IDL.Opt(TimerState)], ['query']),
+    'getTimerState' : IDL.Func([TimerType], [TimerState], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'grantMarketIntelAccess' : IDL.Func([IDL.Text], [IDL.Bool], []),
-    'hasAISentimentAccess' : IDL.Func([], [IDL.Bool], ['query']),
+    'hasMarketIntelAccess' : IDL.Func([], [IDL.Bool], ['query']),
+    'initialize' : IDL.Func([], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'markAlertAsRead' : IDL.Func([IDL.Nat], [], []),
+    'markAlertAsRead' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'revokeMarketIntelAccessWithPassword' : IDL.Func(
         [IDL.Text],
         [IDL.Bool],
         [],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'submitForm' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Float64, IDL.Bool],
-        [IDL.Nat],
-        [],
-      ),
+    'submitVote' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Bool], []),
     'toggleTimer' : IDL.Func([TimerType], [TimerState], []),
-    'transform' : IDL.Func(
-        [TransformationInput],
-        [TransformationOutput],
-        ['query'],
-      ),
-    'updateSubmission' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Float64, IDL.Bool],
-        [],
-        [],
-      ),
-    'updateTimer' : IDL.Func([TimerType, IDL.Bool, IDL.Int], [TimerState], []),
+    'updateRecord' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [], []),
+    'vote' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
   });
 };
 

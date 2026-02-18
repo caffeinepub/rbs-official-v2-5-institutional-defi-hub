@@ -40,7 +40,7 @@ export function SmokySectionTransition({ children, delay = 0, className = '' }: 
           }, delay);
         }
       },
-      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.1 }
     );
 
     if (sectionRef.current) {

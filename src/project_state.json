@@ -1,80 +1,72 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "Website project: improve overall design (Figma-led) while fixing core functionality including WhatsApp/Telegram redirects, working forms (with timer-based lock/log per roadmap), proper form submissions across the site, and a functioning search box; page structure can be multipage or single-scroll.",
+  "projectStateVersion": 7,
+  "summary": "Build and deploy an app with enhanced animations (without altering visual design) and a robust backend featuring persistent alerts, real-time market intel/signals, voting with anti-duplication, UTC countdown timers with messaging/redirect integrations, real-time price feeds, technical indicator calculations, crypto news feed, and advanced analytics.",
   "architectural_notes": [
-    "Site structure is flexible: may be multipage or single-scroll, whichever improves UX and implementation."
+    "Do not change or affect the existing visual design while adding animations/features.",
+    "Backend work is a priority; features require persistent storage and real-time updates where specified.",
+    "Countdown timers must support correct end-of-timer UX behavior: both forms function correctly and redirect fully when timers end, without altering the existing visual design.",
+    "Keep existing visual design unchanged while completing remaining coding, adding animations, and addressing login/timer issues."
   ],
   "known_issues": [
-    "Current design is considered unacceptable/too ugly by user.",
-    "WhatsApp/Telegram redirect functionality is broken or unreliable.",
-    "Forms (including primary forms with timer lock/log requirements) are not working properly.",
-    "Search box is not working properly."
+    "Automated build/implementation attempt failed with 'AI couldn't implement that'; request may need to be executed in smaller backend-focused increments to avoid build failure.",
+    "Login/authentication issues currently present; needs debugging and fix."
   ],
   "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Abstract premium hero background with subtle gold/charcoal gradients and light noise texture (hero-bg.dim_1920x1080.png)\n- Minimal monoline icon set (telegram, whatsapp, search, form) in a consistent style (ui-icons.dim_512x512.png)\n- Soft section-divider graphic with smoky/gold motif (section-divider.dim_1920x240.png)",
   "existing_features": [
     {
-      "id": "feature-apply-a-cohesive-modern-visual-redesign-across-the-entire-site-figma-inspired-improving-typography-spacing-color-system-and-component-styling-so-the-site-no-longer-looks-ugly-while-keeping-all-existing-pages-routes-functional",
-      "title": "Apply a cohesive, modern visual redesign across the entire site (Figma-inspired), improving typography, spacing, color system, and component styling so the site no longer looks \"ugly\" while keeping all existing pages/routes functional.",
+      "id": "feature-fix-end-of-timer-behavior-in-the-frontend-so-both-presale-and-airdrop-forms-complete-their-expected-submission-flow-and-then-perform-full-redirection-when-the-respective-countdown-reaches-0-without-changing-the-app-s-visual-design",
+      "title": "Fix end-of-timer behavior in the frontend so both presale and airdrop forms complete their expected submission flow and then perform full redirection when the respective countdown reaches 0, without changing the app’s visual design.",
       "reqIds": [
-        "REQ-1"
+        "REQ-12"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-all-telegram-and-whatsapp-redirects-so-every-telegram-whatsapp-button-link-consistently-opens-the-correct-url-in-a-new-tab-window-using-the-centralized-constants-in-frontend-src-constants-sociallinks-ts",
-      "title": "Fix all Telegram and WhatsApp redirects so every Telegram/WhatsApp button/link consistently opens the correct URL in a new tab/window using the centralized constants in frontend/src/constants/socialLinks.ts.",
+      "id": "feature-update-the-frontend-live-price-section-to-use-the-backend-real-time-price-engine-apis-instead-of-direct-client-side-external-api-calls-keeping-the-existing-visual-design-intact",
+      "title": "Update the frontend live price section to use the backend real-time price engine APIs (instead of direct client-side external API calls), keeping the existing visual design intact.",
       "reqIds": [
-        "REQ-2"
+        "REQ-16"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-both-primary-registration-forms-presale-and-airdrop-submit-successfully-and-reliably-including-correct-backend-submission-clear-success-error-toasts-correct-whatsapp-redirect-after-successful-submission-and-proper-disabled-loading-states",
-      "title": "Ensure both primary registration forms (Presale and Airdrop) submit successfully and reliably, including correct backend submission, clear success/error toasts, correct WhatsApp redirect after successful submission, and proper disabled/loading states.",
+      "id": "feature-update-the-market-pulse-frontend-data-hook-to-consume-the-backend-market-pulse-apis-while-preserving-the-existing-market-pulse-page-visual-design-and-behavior",
+      "title": "Update the Market Pulse frontend data hook to consume the backend Market Pulse APIs while preserving the existing Market Pulse page visual design and behavior.",
       "reqIds": [
-        "REQ-3"
+        "REQ-18"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-timer-based-locking-behavior-for-presale-and-airdrop-forms-according-to-the-roadmap-timers-forms-must-be-locked-unlocked-strictly-based-on-the-backend-timer-values-presale-airdrop-remaining-time-and-must-not-allow-submission-while-locked",
-      "title": "Implement timer-based locking behavior for Presale and Airdrop forms according to the roadmap timers: forms must be locked/unlocked strictly based on the backend timer values (presale/airdrop remaining time) and must not allow submission while locked.",
+      "id": "feature-add-more-animations-across-the-existing-ui-using-the-current-animation-utilities-classes-components-e-g-transition-wrappers-existing-mex-classes-without-changing-the-visual-design-no-color-typography-layout-changes",
+      "title": "Add more animations across the existing UI using the current animation utilities/classes/components (e.g., transition wrappers, existing mex-* classes) without changing the visual design (no color/typography/layout changes).",
       "reqIds": [
-        "REQ-4"
+        "REQ-23"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-submission-logging-visibility-that-reflects-the-timer-context-after-a-successful-presale-airdrop-submission-the-user-can-see-a-simple-log-entry-showing-what-was-submitted-and-when-timestamp-and-it-remains-consistent-with-backend-stored-submission-records",
-      "title": "Add submission logging/visibility that reflects the timer context: after a successful Presale/Airdrop submission, the user can see a simple log entry showing what was submitted and when (timestamp), and it remains consistent with backend-stored submission records.",
+      "id": "feature-fix-the-internet-identity-login-logout-ux-so-users-can-reliably-log-in-and-log-out-without-getting-stuck-in-an-inconsistent-state-e-g-repeated-clicks-user-is-already-authenticated-loop-requiring-a-hard-refresh-without-changing-the-app-s-visual-design",
+      "title": "Fix the Internet Identity login/logout UX so users can reliably log in and log out without getting stuck in an inconsistent state (e.g., repeated clicks, \"User is already authenticated\" loop, requiring a hard refresh), without changing the app’s visual design.",
       "reqIds": [
-        "REQ-5"
+        "REQ-24"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-all-other-form-submissions-across-the-site-so-they-behave-correctly-with-clear-validation-and-user-feedback-success-error-and-do-not-silently-fail",
-      "title": "Fix all other form submissions across the site so they behave correctly with clear validation and user feedback (success/error) and do not silently fail.",
+      "id": "feature-ensure-both-acquisition-portal-forms-presale-registration-and-airdrop-registration-redirect-to-whatsapp-for-the-configured-direct-number-92-329-4238997-when-unlocked-and-that-pending-submissions-saved-before-unlock-automatically-redirect-once-the-countdown-reaches-zero-without-changing-the-visual-design",
+      "title": "Ensure both Acquisition Portal forms (Presale Registration and Airdrop Registration) redirect to WhatsApp for the configured direct number (+92 329 4238997) when unlocked, and that pending submissions saved before unlock automatically redirect once the countdown reaches zero, without changing the visual design.",
       "reqIds": [
-        "REQ-6"
+        "REQ-26"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-working-search-box-that-allows-users-to-search-site-content-pages-and-navigate-to-relevant-results-multipage-routing",
-      "title": "Implement a working search box that allows users to search site content/pages and navigate to relevant results (multipage routing).",
+      "id": "feature-complete-any-missing-wiring-required-so-authentication-gated-pages-that-depend-on-backend-permissions-via-accesscontrol-work-consistently-after-login-including-ensuring-the-actor-initialization-access-control-initialization-path-does-not-intermittently-leave-the-app-in-an-unauthenticated-unauthorized-state-after-a-successful-internet-identity-login",
+      "title": "Complete any missing wiring required so authentication-gated pages that depend on backend permissions (via AccessControl) work consistently after login, including ensuring the actor initialization/access-control initialization path does not intermittently leave the app in an unauthenticated/unauthorized state after a successful Internet Identity login.",
       "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-keep-the-site-as-a-multipage-application-existing-router-based-navigation-while-improving-usability-navigation-clarity-consistent-page-shells-headers-footers-as-part-of-the-redesign",
-      "title": "Keep the site as a multipage application (existing router-based navigation), while improving usability (navigation clarity, consistent page shells/headers/footers) as part of the redesign.",
-      "reqIds": [
-        "REQ-8"
+        "REQ-27"
       ],
       "version": 1
     }
@@ -82,36 +74,238 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Redesign/improve website UI/UX (Figma-led); overall make design better (multipage or single-scroll allowed).",
+      "summary": "Add more animations without affecting the current visual design",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Fix WhatsApp and Telegram redirection functionality.",
+      "summary": "Persistent Alerts System backend (storage + notifications + triggers)",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Ensure both primary forms work properly with timer-based locking/logging per roadmap.",
+      "summary": "Market Intel real-time backend (signals every few seconds using technical indicators)",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Fix all other form submissions across the site to work properly.",
+      "summary": "Voting system backend (storage, prevent duplicate voting, real-time updates)",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-5",
-      "summary": "Fix/implement search box functionality to work properly.",
+      "summary": "UTC-based persistent countdown timers for 2027 pre-sale and 2029 airdrop with pre-filled message redirects (WhatsApp +92 329 4238997, Telegram/WhatsApp channels) and Binance Square deep link to @RBSuperior when Binance installed",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Real-time price engine backend for BTC/ETH/BNB/XAU/XAG",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Market Pulse backend engine for RSI/MACD/MA calculations",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Crypto news live feed backend",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Advanced analytics backend (trend, risk, volatility, strength) with efficient, correct operation without impacting visual design",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Make all backend state required for alerts, polls/votes, timers, market intel signals, price snapshots/history, news cache, and analytics cache persistent across canister upgrades by storing it in stable variables and restoring it on upgrade; include any required upgrade/migration logic so existing deployed data is preserved.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Complete the Persistent Alerts System backend so it supports: per-Principal persistent alert storage; creating, listing, marking read, deleting; and a trigger system that can generate automatic alerts based on backend-computed conditions (e.g., price/indicator thresholds) with a caller-invoked check endpoint that is safe to poll.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Implement a real-time Market Intel backend that generates and persists live signals for a selected asset/timeframe using technical indicators, updates at a short cadence (seconds-level) with throttling/caching, and exposes query APIs suitable for frontend polling (to replace the current mocked implementation).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Harden and complete the Voting system backend to ensure: polls are stored persistently; duplicate voting per Principal is prevented; votes are counted correctly per option; and the backend exposes APIs to support frontend polling for near-real-time updates.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Fix and complete the Countdown Timers backend so the presale countdown targets year 2027 and the airdrop countdown targets year 2029 with UTC-based accuracy, correct nanosecond timestamps, and persistent timer state; implement `getTimerState` and `toggleTimer` correctly based on the requested `TimerType` and stored timer state.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Implement a real-time price engine backend for BTC/ETH/BNB/XAU/XAG that fetches prices via HTTP outcalls, persists the latest snapshots and a bounded recent history per asset, and exposes query APIs for clients to poll.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Implement the Market Pulse backend engine to compute RSI, MACD, and Moving Averages using the backend’s stored price history and expose an API returning these computed indicators with timestamps for client polling.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Implement a crypto news live feed backend that fetches and caches news items (compatible with the current CryptoPanic-style fields: title, source, url, published_at/timestamp) and exposes a query API for clients to poll, with rate limiting/caching to avoid excessive outcalls.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Implement an Advanced Analytics backend that computes and returns trend, risk, volatility, and strength metrics efficiently (cached where appropriate) using backend price history and/or market intel results; expose a query API for authenticated clients.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Update Voting/Polls backend so voting is open (not inadvertently closed) and poll creation is restricted behind the Market Intel passcode (passcode-gated create endpoint/flow).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Ensure countdown timers correctly handle end-of-timer behavior: both presale/airdrop forms work properly and perform complete redirection when timers end (per existing redirect integrations), without affecting visual design.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Repair and harden backend persistence so all critical state survives canister upgrades (stable storage + restore) for: user profiles, form submissions, timers, Market Intel access, Market Intel signals store, API keys, polls/votes, alerts, live price snapshots/history, news cache, analytics cache, and all ID counters.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Fix countdown timer backend to correctly support both presale (Q1 2027) and airdrop (Q1 2029) as UTC-based nanosecond timestamps, and implement timer APIs correctly: getTimerState must respect the requested TimerType and return the stored TimerState; toggleTimer must actually toggle the stored TimerState for the requested TimerType (admin-only).",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Fix Market Intel passcode logic in the backend so Market Intel access is granted only when the provided password matches the configured Market Intel passcode, and access revocation requires the correct passcode as well.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Fix the poll system so voting is open to authenticated users, poll creation is restricted by the Market Intel passcode (not by admin permission), votes are stored persistently, duplicate voting per Principal is prevented, and poll results update correctly when re-fetched.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Implement a real-time backend price engine for BTC/ETH/BNB/XAU/XAG using HTTP outcalls with throttling/caching, persisting the latest snapshot and a bounded recent history per asset, and exposing query APIs suitable for frontend polling.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "Implement a backend Market Pulse engine that computes RSI, MACD, and Moving Averages using the backend’s stored price history, caches computed results, and exposes query APIs suitable for frontend polling.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-30",
+      "summary": "Complete the Persistent Alerts System by ensuring per-Principal alert storage is persistent across upgrades and by providing a safe-to-poll trigger/check endpoint that can generate automatic alerts based on backend-computed conditions (e.g., price/indicator thresholds).",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-31",
+      "summary": "Rebuild the Market Intel backend to generate and persist live signals for a selected asset/timeframe using technical indicators, updating at a seconds-level cadence via throttled refresh logic, and expose query endpoints suitable for frontend polling to replace the current mocked implementation.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Complete the crypto news feed by implementing backend fetching/caching of crypto news items (CryptoPanic-style fields: title, source, url, published_at/timestamp), exposing a query API for frontend polling with rate limiting/caching to prevent excessive outcalls.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-33",
+      "summary": "Complete the advanced analytics engine in the backend to compute and return trend, risk, volatility, and strength metrics efficiently (cached where appropriate), using backend price history and/or market intel results, and expose a query API for authenticated clients.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-34",
+      "summary": "Fix login/authentication issues (ensure users can log in reliably without regressions)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-36",
+      "summary": "Ensure the Acquisition Portal presale and airdrop countdown timers unlock at the correct UTC times for Q1 2027 (presale) and Q1 2029 (airdrop), and that the backend exposes correct remaining time values in nanoseconds.",
+      "reqIds": [
+        "REQ-25"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Redesign site UI and fix social redirects, forms, timers, and search",
+  "projectName": "RBS Protocol",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

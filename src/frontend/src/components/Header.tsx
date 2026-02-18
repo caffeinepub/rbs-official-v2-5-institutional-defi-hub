@@ -1,6 +1,6 @@
-import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { Menu, X, ChevronDown, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Link, useLocation } from '@tanstack/react-router';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,121 +8,96 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SiteSearch } from './SiteSearch';
+import { useReliableAuth } from '@/hooks/useReliableAuth';
 
-export function Header() {
-  const navigate = useNavigate();
-  const routerState = useRouterState();
-  const currentPath = routerState.location.pathname;
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+export default function Header() {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const { handleAuth, isAuthenticated, isDisabled, loginStatus } = useReliableAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+  const text = loginStatus === 'logging-in' ? 'Logging in...' : isAuthenticated ? 'Logout' : 'Login';
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const isActive = (path: string) => location.pathname === path;
 
-  const mainNavItems = [
+  const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/tokenomics', label: 'Tokenomics' },
-    { path: '/roadmap', label: 'Roadmap' },
+    { path: '/about', label: 'About' },
     { path: '/whitepaper', label: 'Whitepaper' },
+    { path: '/roadmap', label: 'Roadmap' },
+    { path: '/tokenomics', label: 'Tokenomics' },
   ];
 
-  const communityItems = [
+  const resourcesLinks = [
+    { path: '/acquisition', label: 'Acquisition Portal' },
+    { path: '/adult-form', label: 'Adult Form' },
+    { path: '/faq', label: 'FAQ' },
+    { path: '/contact', label: 'Contact' },
+  ];
+
+  const communityLinks = [
     { path: '/community-governance', label: 'Governance' },
     { path: '/community-voting', label: 'Voting' },
     { path: '/community-highlights', label: 'Highlights' },
+    { path: '/ecosystem-growth', label: 'Ecosystem' },
+    { path: '/security-transparency', label: 'Security' },
     { path: '/testimonials', label: 'Testimonials' },
   ];
 
-  const resourcesItems = [
+  const analyticsLinks = [
     { path: '/market-intel', label: 'Market Intel' },
     { path: '/market-pulse', label: 'Market Pulse' },
-    { path: '/insights', label: 'Insights' },
-    { path: '/faq', label: 'FAQ' },
-  ];
-
-  const moreItems = [
-    { path: '/about', label: 'About' },
-    { path: '/ecosystem-growth', label: 'Ecosystem' },
-    { path: '/security-transparency', label: 'Security' },
-    { path: '/contact', label: 'Contact' },
+    { path: '/live-price', label: 'Live Price' },
+    { path: '/crypto-news', label: 'Crypto News' },
+    { path: '/advanced-analytics', label: 'Advanced Analytics' },
     { path: '/alerts-center', label: 'Alerts Center' },
+    { path: '/insights', label: 'Insights' },
   ];
-
-  const isActive = (path: string) => currentPath === path;
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white/98 backdrop-blur-xl shadow-lg border-b border-primary/10'
-          : 'bg-white/95 backdrop-blur-md border-b border-primary/5'
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          <button
-            onClick={() => navigate({ to: '/' })}
-            className="flex items-center gap-3 group"
-            aria-label="RBS Home"
-          >
-            <div className="relative h-12 w-12 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-              <img
-                src="/assets/IMG_20250821_154306_073.jpg"
-                alt="RBS Logo"
-                className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
-              />
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gold/20">
+      <nav className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2 mex-hover-lift">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gold to-gold/60 flex items-center justify-center">
+              <span className="text-white font-bold text-xl">R</span>
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                RBS
-              </h1>
-              <p className="text-xs text-muted-foreground">Return. Be Superior.</p>
-            </div>
-          </button>
+            <span className="text-2xl font-poppins font-bold metallic-text-hero">RBS</span>
+          </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {mainNavItems.map((item) => (
-              <Button
-                key={item.path}
-                onClick={() => navigate({ to: item.path })}
-                variant="ghost"
-                className={`font-semibold transition-all ${
-                  isActive(item.path)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-foreground hover:text-primary hover:bg-primary/5'
+          <div className="hidden lg:flex items-center space-x-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 font-medium mex-hover-lift ${
+                  isActive(link.path)
+                    ? 'bg-gold/10 text-gold'
+                    : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
                 }`}
               >
-                {item.label}
-              </Button>
+                {link.label}
+              </Link>
             ))}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="font-semibold text-foreground hover:text-primary hover:bg-primary/5"
+                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
                 >
-                  Community <ChevronDown className="ml-1 h-4 w-4" />
+                  Resources
+                  <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {communityItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onClick={() => navigate({ to: item.path })}
-                    className={`cursor-pointer ${
-                      isActive(item.path) ? 'bg-primary/10 text-primary' : ''
-                    }`}
-                  >
-                    {item.label}
+              <DropdownMenuContent align="end" className="w-56">
+                {resourcesLinks.map((link) => (
+                  <DropdownMenuItem key={link.path} asChild>
+                    <Link
+                      to={link.path}
+                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
+                    >
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -132,21 +107,21 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="font-semibold text-foreground hover:text-primary hover:bg-primary/5"
+                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
                 >
-                  Resources <ChevronDown className="ml-1 h-4 w-4" />
+                  Community
+                  <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {resourcesItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onClick={() => navigate({ to: item.path })}
-                    className={`cursor-pointer ${
-                      isActive(item.path) ? 'bg-primary/10 text-primary' : ''
-                    }`}
-                  >
-                    {item.label}
+              <DropdownMenuContent align="end" className="w-56">
+                {communityLinks.map((link) => (
+                  <DropdownMenuItem key={link.path} asChild>
+                    <Link
+                      to={link.path}
+                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
+                    >
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -156,99 +131,131 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="font-semibold text-foreground hover:text-primary hover:bg-primary/5"
+                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
                 >
-                  More <ChevronDown className="ml-1 h-4 w-4" />
+                  Analytics
+                  <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {moreItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onClick={() => navigate({ to: item.path })}
-                    className={`cursor-pointer ${
-                      isActive(item.path) ? 'bg-primary/10 text-primary' : ''
-                    }`}
-                  >
-                    {item.label}
+              <DropdownMenuContent align="end" className="w-56">
+                {analyticsLinks.map((link) => (
+                  <DropdownMenuItem key={link.path} asChild>
+                    <Link
+                      to={link.path}
+                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
+                    >
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
             <Button
-              onClick={() => setIsSearchOpen(true)}
-              variant="ghost"
-              size="icon"
-              className="text-foreground hover:text-primary hover:bg-primary/5"
-              aria-label="Search"
+              onClick={handleAuth}
+              disabled={isDisabled}
+              className={`ml-4 mex-hover-lift transition-all duration-300 ${
+                isAuthenticated
+                  ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  : 'bg-gold hover:bg-gold/90 text-black'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <Search className="h-5 w-5" />
+              {text}
             </Button>
-
-            <Button
-              onClick={() => navigate({ to: '/acquisition' })}
-              className="ml-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg hover:shadow-xl transition-all"
-            >
-              Get RBS
-            </Button>
-          </nav>
-
-          <div className="flex items-center gap-2 lg:hidden">
-            <Button
-              onClick={() => setIsSearchOpen(true)}
-              variant="ghost"
-              size="icon"
-              className="text-foreground hover:text-primary"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-foreground hover:text-primary transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden p-2 rounded-lg hover:bg-gold/10 transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="h-6 w-6 text-gold" /> : <Menu className="h-6 w-6 text-gold" />}
+          </button>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-primary/10 bg-white/98 backdrop-blur-xl">
-            <nav className="flex flex-col gap-2">
-              {[...mainNavItems, ...communityItems, ...resourcesItems, ...moreItems].map((item) => (
-                <Button
-                  key={item.path}
-                  onClick={() => {
-                    navigate({ to: item.path });
-                    setIsMobileMenuOpen(false);
-                  }}
-                  variant="ghost"
-                  className={`justify-start font-semibold ${
-                    isActive(item.path)
-                      ? 'text-primary bg-primary/10'
-                      : 'text-foreground hover:text-primary hover:bg-primary/5'
+        {isOpen && (
+          <div className="lg:hidden mt-4 pb-4 space-y-2 animate-fade-in">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-2 rounded-lg transition-colors ${
+                  isActive(link.path)
+                    ? 'bg-gold/10 text-gold'
+                    : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-2 border-t border-gold/20">
+              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Resources</p>
+              {resourcesLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-gold/10 text-gold'
+                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
                   }`}
                 >
-                  {item.label}
-                </Button>
+                  {link.label}
+                </Link>
               ))}
+            </div>
+            <div className="pt-2 border-t border-gold/20">
+              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Community</p>
+              {communityLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-gold/10 text-gold'
+                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-gold/20">
+              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Analytics</p>
+              {analyticsLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive(link.path)
+                      ? 'bg-gold/10 text-gold'
+                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div className="pt-4">
               <Button
-                onClick={() => {
-                  navigate({ to: '/acquisition' });
-                  setIsMobileMenuOpen(false);
-                }}
-                className="mt-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                onClick={handleAuth}
+                disabled={isDisabled}
+                className={`w-full transition-all duration-300 ${
+                  isAuthenticated
+                    ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                    : 'bg-gold hover:bg-gold/90 text-black'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Get RBS
+                {text}
               </Button>
-            </nav>
+            </div>
           </div>
         )}
-      </div>
-
-      <SiteSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      </nav>
     </header>
   );
 }
