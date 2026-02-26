@@ -1,0 +1,211 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T15:12:35.841Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 12,
+    "implemented": 11,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Fix the Market Intel page to compute and display genuine trading signals (Buy/Sell/Hold with confidence scores) derived from live RSI, MACD, and moving average calculations fetched from the CoinGecko public API (/coins/{id}/ohlc and /coins/{id}/market_chart). Ensure signals update on every data refresh and display the underlying indicator values (RSI value, MACD histogram, MA crossover status) alongside the signal badge. Do not change any visual styling.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useMarketIntelLive.ts",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useMarketIntelLive.ts",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-10",
+        "summary": "Make community voting persistent by ensuring all Poll records and vote counts are stored in the ICP backend actor and survive page reloads. The useCommunityVoting hook must correctly call backend actor methods to fetch polls by join code, cast votes (storing voter principal to prevent double-voting), and create new polls. Confirm that vote totals update in real-time via the existing 10-second polling interval and that previously cast votes are reflected correctly on reload.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useCommunityVoting.ts",
+          "frontend/src/pages/CommunityVotingPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useCommunityVoting.ts",
+          "frontend/src/pages/CommunityVotingPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-11",
+        "summary": "Audit and fix all page-level animations and transitions across the second half of the site (pages not on the home screen): AcquisitionPage, AlertsCenterPage, AdvancedAnalyticsPage, MarketIntelPage, MarketPulsePage, InsightsPage, CommunityVotingPage, AISentimentPage, LivePricePage. Ensure SmokySectionTransition, parallax hooks, and entry animations all trigger correctly on scroll. Fix any broken IntersectionObserver callbacks or CSS keyframe animations. Do not add new visual effects or change existing design tokens.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx",
+          "frontend/src/pages/AlertsCenterPage.tsx",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx",
+          "frontend/src/pages/MarketPulsePage.tsx",
+          "frontend/src/pages/InsightsPage.tsx",
+          "frontend/src/pages/CommunityVotingPage.tsx",
+          "frontend/src/pages/AISentimentPage.tsx",
+          "frontend/src/pages/LivePricePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx",
+          "frontend/src/pages/AlertsCenterPage.tsx",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx",
+          "frontend/src/pages/MarketPulsePage.tsx",
+          "frontend/src/pages/InsightsPage.tsx",
+          "frontend/src/pages/CommunityVotingPage.tsx",
+          "frontend/src/pages/AISentimentPage.tsx",
+          "frontend/src/pages/LivePricePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-12",
+        "summary": "Ensure the backend actor in backend/main.mo has all required persistent state for: (1) Alert records keyed by user principal with full CRUD, (2) Poll records with vote tallies and voter deduplication by principal, (3) Pre-sale and airdrop timer target timestamps aligned to the roadmap phases. If any of these are missing, incomplete, or returning placeholder data, add or complete the implementation. Generate migration.mo to safely upgrade existing canister state.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Fix the Market Pulse page to display real-time market trends derived from live Bitcoin price history fetched from the CoinGecko public API. Ensure the Bullish/Bearish/Neutral status, RSI value, and MACD histogram are recomputed on every 20-second refresh and displayed prominently. The useMarketPulse hook must use the live CoinGecko /coins/bitcoin/market_chart endpoint. Do not change page visuals.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useMarketPulse.ts",
+          "frontend/src/pages/MarketPulsePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useMarketPulse.ts",
+          "frontend/src/pages/MarketPulsePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure the Live Price page displays real-time USD prices and 24-hour percentage change for exactly the top 5 cryptocurrencies (BTC, ETH, BNB, SOL, XRP) fetched from the CoinGecko public API every 7 seconds. Fix the useLivePrice hook if it currently fails or returns stale data. Show a live indicator animation while data is refreshing. Do not change any visual styling.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useLivePrice.ts",
+          "frontend/src/pages/LivePricePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useLivePrice.ts",
+          "frontend/src/pages/LivePricePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Fix the Crypto News / AI Sentiment page to fetch real news articles from the CryptoPanic public API (no API key required for basic access: https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true). Cache results for 12 hours so the feed refreshes every 12 hours, not on every page load. Display article title, source, published timestamp, and sentiment badge. Show a 'Next refresh in X hours' countdown. Do not change page visuals.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useCryptoNews.ts",
+          "frontend/src/pages/AISentimentPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useCryptoNews.ts",
+          "frontend/src/pages/AISentimentPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Enhance the Advanced Analytics page with additional real-time indicators fetched from CoinGecko for any searched token: Bollinger Bands (upper/lower/middle), Volume trend (rising/falling), 7-day and 30-day price change percentages, and a composite Market Strength score (0–100). Display these in the existing card-based layout without changing the page's visual design. Update the useTokenAdvancedAnalytics hook to compute these new metrics.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+          "frontend/src/pages/AdvancedAnalyticsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Make the Alerts Centre persistent by storing all alerts in the ICP backend actor so they survive page refreshes and re-logins. Ensure the backend already has the Alert data type and CRUD methods; if any are missing or incomplete in backend/main.mo, add them. The frontend AlertsCenterPage must read from and write to the backend actor via the existing React Query hooks in useQueries.ts. Confirm create, mark-as-read, delete, and toggle-trigger all persist correctly.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AlertsCenterPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AlertsCenterPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Upgrade the Insights page to display real-time cryptocurrency market data instead of mock/static values. Fetch live total crypto market cap, BTC dominance, ETH gas price (from Etherscan public API or fallback), and top DeFi TVL estimate from CoinGecko public endpoints. Update displayed metric cards with live values, last-updated timestamps, and trend indicators. Do not change the page's visual layout, card design, or color scheme.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useRealWorldAnalytics.ts",
+          "frontend/src/pages/InsightsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useRealWorldAnalytics.ts",
+          "frontend/src/pages/InsightsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Fix the countdown timers on both the Pre-Sale and Airdrop forms in AcquisitionPage.tsx. The useCountdownTimer hook must correctly fetch timer state from the backend actor (presale and airdrop timer endpoints), convert nanosecond bigints using the timers.ts utility, and tick down every second via a local setInterval. When the timer reaches zero the 'unlocked' flag must become true and the form submission button must become active. Verify both timers independently for pre-sale and airdrop tabs.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useCountdownTimer.ts",
+          "frontend/src/pages/AcquisitionPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useCountdownTimer.ts",
+          "frontend/src/pages/AcquisitionPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-9",
+        "summary": "Ensure both the Pre-Sale and Airdrop forms in AcquisitionPage.tsx work fully after the timer unlocks. After unlock: the form fields must be editable, validation must pass correctly, and on successful submit the WhatsApp redirect must fire with correctly prefilled form data (name, email, wallet address, amount for pre-sale; name, email, wallet address for airdrop). Ensure the roadmap-aligned unlock dates are stored in the backend actor and returned by the timer endpoints.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AcquisitionPage.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useAdvancedAnalytics.ts",
+    "frontend/src/hooks/useCommunityVoting.ts",
+    "frontend/src/hooks/useCountdownTimer.ts",
+    "frontend/src/hooks/useCryptoNews.ts",
+    "frontend/src/hooks/useLivePrice.ts",
+    "frontend/src/hooks/useMarketIntelLive.ts",
+    "frontend/src/hooks/useMarketPulse.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useRealWorldAnalytics.ts",
+    "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+    "frontend/src/pages/AISentimentPage.tsx",
+    "frontend/src/pages/AcquisitionPage.tsx",
+    "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+    "frontend/src/pages/AlertsCenterPage.tsx",
+    "frontend/src/pages/CommunityVotingPage.tsx",
+    "frontend/src/pages/InsightsPage.tsx",
+    "frontend/src/pages/LivePricePage.tsx",
+    "frontend/src/pages/MarketIntelPage.tsx",
+    "frontend/src/pages/MarketPulsePage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

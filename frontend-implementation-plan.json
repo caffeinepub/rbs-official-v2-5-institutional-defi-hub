@@ -1,0 +1,290 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Complete Functional Upgrade: Real-Time Data, Persistent Features, Fixed Forms & Timers (Part 2) - Frontend Only",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Fix Market Intel page to compute and display genuine trading signals derived from live CoinGecko API data with RSI, MACD, and moving average calculations",
+      "acceptanceCriteria": [
+        "Signal badges show Buy, Sell, or Hold with a numeric confidence percentage",
+        "RSI, MACD, and MA values are computed from real CoinGecko OHLCV data",
+        "Signals refresh automatically on each polling cycle",
+        "No visual design change to the page layout or color scheme"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useMarketIntelLive.ts",
+          "operation": "modify",
+          "description": "Update the useMarketIntelLive hook to fetch OHLCV data from CoinGecko /coins/{id}/ohlc endpoint (30 days) and compute real RSI, MACD histogram, and moving average crossover values. Ensure the hook returns computed indicator values (RSI number, MACD histogram number, MA crossover boolean) alongside the signal and confidence score. Enable automatic refetch on a polling interval to keep signals updated."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Update the MarketIntelPage component to display the underlying indicator values (RSI value, MACD histogram, MA crossover status) returned by useMarketIntelLive alongside each signal badge. Render numeric confidence percentages with the Buy/Sell/Hold badges. Preserve all existing visual styling, layout, and color scheme."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Fix Market Pulse page to display real-time market trends with live Bitcoin price history from CoinGecko, recomputing RSI and MACD every 20 seconds",
+      "acceptanceCriteria": [
+        "Market status (Bullish/Bearish/Neutral) updates every 20 seconds from live data",
+        "RSI and MACD values reflect real computed results, not placeholders",
+        "A last-updated timestamp is shown on the page",
+        "No visual design changes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useMarketPulse.ts",
+          "operation": "modify",
+          "description": "Ensure the useMarketPulse hook fetches Bitcoin price history from the CoinGecko /coins/bitcoin/market_chart endpoint and computes real RSI and MACD histogram values from that data. Configure React Query to refetch every 20 seconds (refetchInterval: 20000). Return computed RSI and MACD values along with the market status."
+        },
+        {
+          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "operation": "modify",
+          "description": "Update MarketPulsePage to display the computed RSI value and MACD histogram prominently alongside the Bullish/Bearish/Neutral status. Add a last-updated timestamp display showing when the data was last refreshed. Preserve all existing visual design, layout, and styling."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Ensure Live Price page displays real-time USD prices and 24-hour percentage change for the top 5 cryptocurrencies with 7-second refresh and live indicator animation",
+      "acceptanceCriteria": [
+        "All 5 coins show a live USD price updated every 7 seconds",
+        "24-hour change percentages are displayed with correct sign and color",
+        "A loading/refresh indicator is visible during each fetch cycle",
+        "Errors fall back gracefully without crashing the page"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useLivePrice.ts",
+          "operation": "modify",
+          "description": "Verify the useLivePrice hook correctly fetches prices for BTC, ETH, BNB, SOL, and XRP from CoinGecko /simple/price endpoint every 7 seconds. Ensure the hook returns live USD prices and 24-hour change percentages. Add proper error handling with fallback state to prevent crashes. Confirm React Query refetchInterval is set to 7000ms."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "modify",
+          "description": "Update LivePricePage to display a live loading/refresh indicator animation during each fetch cycle (use isRefetching state from React Query). Ensure 24-hour change percentages are displayed with correct positive/negative sign and appropriate color styling. Add error boundary or graceful error display for fetch failures. Preserve all existing visual styling."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Fix Crypto News / AI Sentiment page to fetch real news from CryptoPanic public API with 12-hour caching and countdown display",
+      "acceptanceCriteria": [
+        "News articles are fetched from CryptoPanic public endpoint",
+        "Results are cached and only re-fetched after 12 hours (staleTime: 12 * 60 * 60 * 1000)",
+        "A countdown showing time until next refresh is displayed",
+        "Sentiment badges (positive/negative/neutral) are derived from article vote data",
+        "No visual design changes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useCryptoNews.ts",
+          "operation": "modify",
+          "description": "Verify the useCryptoNews hook fetches from CryptoPanic public API endpoint (https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true). Configure React Query with staleTime set to 12 hours (12 * 60 * 60 * 1000) so results are cached and only re-fetched after 12 hours. Ensure sentiment badges (positive/negative/neutral) are derived from article vote data in the API response."
+        },
+        {
+          "path": "frontend/src/pages/AISentimentPage.tsx",
+          "operation": "modify",
+          "description": "Add a countdown timer display to AISentimentPage showing 'Next refresh in X hours' based on the last data fetch timestamp and 12-hour staleTime. Display article title, source, published timestamp, and sentiment badge for each news item. Preserve all existing visual styling and layout."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Enhance Advanced Analytics page with additional real-time indicators: Bollinger Bands, Volume trend, 7-day and 30-day price change percentages, and composite Market Strength score",
+      "acceptanceCriteria": [
+        "Bollinger Bands values are computed and displayed for the searched token",
+        "Volume trend (rising/falling) is shown with an indicator",
+        "7-day and 30-day price change percentages are displayed",
+        "Composite Market Strength score (0–100) is shown",
+        "All new metrics use real CoinGecko data",
+        "No visual layout or styling changes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+          "operation": "modify",
+          "description": "Update useTokenAdvancedAnalytics to compute Bollinger Bands (upper, lower, middle) from 30-day price history. Add Volume trend analysis (rising/falling) by comparing recent volume averages. Calculate 7-day and 30-day price change percentages from CoinGecko market_chart data. Compute a composite Market Strength score (0–100) based on trend, RSI, volume, and volatility. All metrics must use real CoinGecko data."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "modify",
+          "description": "Update AdvancedAnalyticsPage to display Bollinger Bands values (upper/lower/middle), Volume trend indicator (rising/falling), 7-day and 30-day price change percentages, and the composite Market Strength score (0–100) in the existing card-based layout. Preserve all existing visual design, layout, and styling."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Make Alerts Centre persistent by integrating with ICP backend actor for CRUD operations so alerts survive page refreshes and re-logins",
+      "acceptanceCriteria": [
+        "Alerts created by a user are visible after page reload",
+        "Mark-as-read and delete operations persist to backend",
+        "Toggle trigger settings persist across sessions",
+        "Backend actor stores Alert records keyed by user principal",
+        "No visual changes to the Alerts Centre page"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify the alerts-related React Query hooks in useQueries.ts correctly call backend actor methods: getAlerts (fetch), createAlert (create), markAlertAsRead (mark read), deleteAlert (delete), and toggleAlertTrigger (toggle). Ensure all mutations invalidate the 'alerts' query key to refresh the list after each operation. Confirm the hooks handle backend response types correctly."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "modify",
+          "description": "Verify AlertsCenterPage uses the alerts hooks from useQueries.ts to read from and write to the backend actor. Ensure create, mark-as-read, delete, and toggle-trigger operations all trigger backend calls and correctly persist. Confirm the page displays alerts correctly after reload. Preserve all existing visual styling and layout."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Upgrade Insights page to display real-time cryptocurrency market data instead of mock/static values, fetching live total market cap, BTC dominance, and ETH gas price",
+      "acceptanceCriteria": [
+        "Total crypto market cap is fetched live from CoinGecko /global endpoint",
+        "BTC dominance percentage is shown with live data",
+        "Each metric card shows a last-updated timestamp",
+        "Trend arrows (up/down) reflect real directional change",
+        "No visual design or layout changes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useRealWorldAnalytics.ts",
+          "operation": "modify",
+          "description": "Update useRealWorldAnalytics to fetch live total crypto market cap and BTC dominance from CoinGecko /global endpoint. Add ETH gas price fetch from Etherscan public API or a CoinGecko fallback. Return last-updated timestamps and trend indicators (up/down) based on historical comparison. Replace any mock/static values with live data."
+        },
+        {
+          "path": "frontend/src/pages/InsightsPage.tsx",
+          "operation": "modify",
+          "description": "Update InsightsPage to display live total crypto market cap, BTC dominance percentage, and ETH gas price from useRealWorldAnalytics. Show a last-updated timestamp on each metric card. Display trend arrows (up/down) reflecting real directional change from the hook. Preserve all existing visual layout, card design, and color scheme."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Fix countdown timers on Pre-Sale and Airdrop forms, correctly fetching backend timer state and ticking down every second with zero-padded display",
+      "acceptanceCriteria": [
+        "Pre-sale timer counts down correctly from the backend-stored target timestamp",
+        "Airdrop timer counts down correctly from its own backend-stored target timestamp",
+        "Both timers display days, hours, minutes, seconds in zero-padded format",
+        "The submit button is disabled while the timer is active and enabled when unlocked",
+        "Timer state is fetched fresh on mount and does not show NaN or undefined",
+        "No visual styling changes to the forms"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useCountdownTimer.ts",
+          "operation": "modify",
+          "description": "Fix the useCountdownTimer hook to correctly fetch timer state from the backend actor using getTimerState(presale) or getTimerState(airdrop). Convert nanosecond bigint endTime using the timers.ts utility function. Run a local setInterval to tick down every second and update days, hours, minutes, seconds in zero-padded format. Set unlocked flag to true when timer reaches zero. Ensure no NaN or undefined values are returned."
+        },
+        {
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "operation": "modify",
+          "description": "Update AcquisitionPage to use the fixed useCountdownTimer hook for both presale and airdrop tabs independently. Display days, hours, minutes, seconds in zero-padded format. Disable the submit button while the timer is active (unlocked === false) and enable it when unlocked === true. Preserve all existing visual styling of the forms."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Ensure Pre-Sale and Airdrop forms work fully after timer unlock with editable fields, validation, and WhatsApp redirect with prefilled data",
+      "acceptanceCriteria": [
+        "Pre-sale form fields are fully interactive after timer reaches zero",
+        "Airdrop form fields are fully interactive after timer reaches zero",
+        "Form validation highlights missing/invalid fields correctly",
+        "On submit, WhatsApp opens with all form fields included in the prefilled message",
+        "Backend timer endpoints return the correct roadmap-aligned target timestamps",
+        "No visual design changes to the form UI"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "operation": "modify",
+          "description": "Ensure AcquisitionPage form fields (name, email, wallet address, amount for presale; name, email, wallet address for airdrop) become fully editable after the timer unlocked flag is true. Verify form validation logic correctly highlights missing/invalid fields. On successful submit, call the openWhatsApp utility from whatsapp.ts with all form fields correctly prefilled in the message (name, email, wallet address, amount for presale; name, email, wallet address for airdrop). Preserve all existing form UI styling."
+        }
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "summary": "Make community voting persistent by integrating with ICP backend actor for Poll storage and vote counting with 10-second polling refresh",
+      "acceptanceCriteria": [
+        "Polls and vote counts persist after page reload",
+        "A user cannot vote twice on the same poll (principal-based deduplication in backend)",
+        "Vote counts update every 10 seconds via React Query refetch",
+        "New polls created by users are immediately visible to others with the join code",
+        "No visual changes to the Community Voting page"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useCommunityVoting.ts",
+          "operation": "modify",
+          "description": "Verify the useCommunityVoting hook correctly calls backend actor methods: getPollsByCode (fetch polls by join code), submitVote or vote (cast vote), and createPoll (create new poll). Configure React Query with a 10-second refetchInterval to update vote counts in real-time. Ensure the hooks handle backend response types correctly and that vote deduplication is enforced by the backend (principal-based)."
+        },
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Verify CommunityVotingPage uses the voting hooks from useCommunityVoting.ts to fetch polls by join code, cast votes, and create new polls. Ensure vote counts update every 10 seconds via the refetch interval. Confirm that polls and vote counts persist correctly after page reload and that previously cast votes are reflected. Preserve all existing visual styling and layout."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Audit and fix all page-level animations and transitions across the second half of the site to ensure smooth entry animations and parallax effects",
+      "acceptanceCriteria": [
+        "Smoky section transitions animate in correctly when sections enter the viewport",
+        "Parallax offsets apply correctly on scroll without jitter",
+        "No animation-related console errors or failed IntersectionObserver callbacks",
+        "Reduced-motion preference is respected on all animated pages",
+        "No new visual effects added; existing design tokens unchanged"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AcquisitionPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AlertsCenterPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AdvancedAnalyticsPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in MarketIntelPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in MarketPulsePage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/InsightsPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in InsightsPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in CommunityVotingPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/AISentimentPage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AISentimentPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "modify",
+          "description": "Audit and fix SmokySectionTransition and parallax hook usage in LivePricePage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+        }
+      ]
+    }
+  ]
+}

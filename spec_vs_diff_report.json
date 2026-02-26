@@ -1,0 +1,80 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T15:12:35.835Z",
+  "summary": "The diff implements most of the 12 requirements but has several gaps. REQ-7 (ETH gas price / DefiLlama TVL) is partially missing, REQ-11 (animation audit across all listed pages) is only superficially addressed via SmokySectionTransition usage without a dedicated audit/fix of IntersectionObserver/parallax/reduced-motion, REQ-12 requires migration.mo which is absent from the diff, and the backend main.mo is truncated so full verification of all CRUD methods and stable-state declarations is uncertain.",
+  "missing_requirements": [
+    {
+      "id": "REQ-7",
+      "requirement": "Fetch ETH gas price (from Etherscan public API or fallback) and top DeFi TVL estimate from CoinGecko public endpoints for the Insights page",
+      "reason": "The useRealWorldAnalytics hook only fetches from CoinGecko /global endpoint. There is no ETH gas price fetch (Etherscan or fallback) and no DeFi TVL fetch in the diff.",
+      "evidence": [
+        "frontend/src/hooks/useRealWorldAnalytics.ts",
+        "frontend/src/pages/InsightsPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "requirement": "Audit and fix all page-level animations: SmokySectionTransition, parallax hooks, IntersectionObserver callbacks, CSS keyframe animations, and reduced-motion preference across AcquisitionPage, AlertsCenterPage, AdvancedAnalyticsPage, MarketIntelPage, MarketPulsePage, InsightsPage, CommunityVotingPage, AISentimentPage, LivePricePage",
+      "reason": "Pages wrap content in SmokySectionTransition but there is no evidence of a dedicated animation audit, parallax hook fixes, IntersectionObserver callback repairs, or reduced-motion media query handling being added or fixed. No animation utility files were modified.",
+      "evidence": [
+        "frontend/src/pages/AcquisitionPage.tsx",
+        "frontend/src/pages/AlertsCenterPage.tsx",
+        "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+        "frontend/src/pages/MarketIntelPage.tsx",
+        "frontend/src/pages/MarketPulsePage.tsx",
+        "frontend/src/pages/InsightsPage.tsx",
+        "frontend/src/pages/CommunityVotingPage.tsx",
+        "frontend/src/pages/AISentimentPage.tsx",
+        "frontend/src/pages/LivePricePage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "requirement": "Generate migration.mo to safely upgrade existing canister state without data loss",
+      "reason": "No migration.mo file appears in the diff (neither added nor modified). This is an explicit acceptance criterion.",
+      "evidence": []
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "AcquisitionPage auto-submits pending sessionStorage form data to WhatsApp when the timer unlocks on mount",
+      "reason": "REQ-9 requires WhatsApp redirect on manual form submit after unlock, not automatic submission of previously saved sessionStorage data on timer unlock. The auto-submit behavior using sessionStorage was not requested.",
+      "evidence": [
+        "frontend/src/pages/AcquisitionPage.tsx"
+      ]
+    },
+    {
+      "description": "CommunityVotingPage enforces a hardcoded MARKET_INTEL_PASSCODE to create polls",
+      "reason": "REQ-10 does not mention any passcode requirement for poll creation. This gate was not requested.",
+      "evidence": [
+        "frontend/src/pages/CommunityVotingPage.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "changed_files": [
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/hooks/useAdvancedAnalytics.ts",
+    "frontend/src/hooks/useCommunityVoting.ts",
+    "frontend/src/hooks/useCountdownTimer.ts",
+    "frontend/src/hooks/useCryptoNews.ts",
+    "frontend/src/hooks/useLivePrice.ts",
+    "frontend/src/hooks/useMarketIntelLive.ts",
+    "frontend/src/hooks/useMarketPulse.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useRealWorldAnalytics.ts",
+    "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+    "frontend/src/pages/AISentimentPage.tsx",
+    "frontend/src/pages/AcquisitionPage.tsx",
+    "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+    "frontend/src/pages/AlertsCenterPage.tsx",
+    "frontend/src/pages/CommunityVotingPage.tsx",
+    "frontend/src/pages/InsightsPage.tsx",
+    "frontend/src/pages/LivePricePage.tsx",
+    "frontend/src/pages/MarketIntelPage.tsx",
+    "frontend/src/pages/MarketPulsePage.tsx",
+    "project_state.json"
+  ]
+}

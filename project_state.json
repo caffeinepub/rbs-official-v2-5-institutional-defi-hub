@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Crypto dashboard/website with real-time market data, signals, alerts, analytics, pre-sale and airdrop forms, and voting features. Focus on upgrading functionality without changing visual design.",
+  "architectural_notes": [
+    "Use public APIs (e.g., CoinGecko, CryptoCompare, NewsAPI) for real-time crypto prices, signals, and news",
+    "Visual design must remain unchanged — only functionality and data integrations are to be upgraded"
+  ],
+  "known_issues": [
+    "Pre-sale and airdrop form timers are broken and need fixing",
+    "Forms do not work properly after unlock — needs fix per roadmap"
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-fix-the-market-intel-page-to-compute-and-display-genuine-trading-signals-buy-sell-hold-with-confidence-scores-derived-from-live-rsi-macd-and-moving-average-calculations-fetched-from-the-coingecko-public-api-coins-id-ohlc-and-coins-id-market-chart-ensure-signals-update-on-every-data-refresh-and-display-the-underlying-indicator-values-rsi-value-macd-histogram-ma-crossover-status-alongside-the-signal-badge-do-not-change-any-visual-styling",
+      "title": "Fix the Market Intel page to compute and display genuine trading signals (Buy/Sell/Hold with confidence scores) derived from live RSI, MACD, and moving average calculations fetched from the CoinGecko public API (/coins/{id}/ohlc and /coins/{id}/market_chart). Ensure signals update on every data refresh and display the underlying indicator values (RSI value, MACD histogram, MA crossover status) alongside the signal badge. Do not change any visual styling.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-market-pulse-page-to-display-real-time-market-trends-derived-from-live-bitcoin-price-history-fetched-from-the-coingecko-public-api-ensure-the-bullish-bearish-neutral-status-rsi-value-and-macd-histogram-are-recomputed-on-every-20-second-refresh-and-displayed-prominently-the-usemarketpulse-hook-must-use-the-live-coingecko-coins-bitcoin-market-chart-endpoint-do-not-change-page-visuals",
+      "title": "Fix the Market Pulse page to display real-time market trends derived from live Bitcoin price history fetched from the CoinGecko public API. Ensure the Bullish/Bearish/Neutral status, RSI value, and MACD histogram are recomputed on every 20-second refresh and displayed prominently. The useMarketPulse hook must use the live CoinGecko /coins/bitcoin/market_chart endpoint. Do not change page visuals.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-live-price-page-displays-real-time-usd-prices-and-24-hour-percentage-change-for-exactly-the-top-5-cryptocurrencies-btc-eth-bnb-sol-xrp-fetched-from-the-coingecko-public-api-every-7-seconds-fix-the-useliveprice-hook-if-it-currently-fails-or-returns-stale-data-show-a-live-indicator-animation-while-data-is-refreshing-do-not-change-any-visual-styling",
+      "title": "Ensure the Live Price page displays real-time USD prices and 24-hour percentage change for exactly the top 5 cryptocurrencies (BTC, ETH, BNB, SOL, XRP) fetched from the CoinGecko public API every 7 seconds. Fix the useLivePrice hook if it currently fails or returns stale data. Show a live indicator animation while data is refreshing. Do not change any visual styling.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-crypto-news-ai-sentiment-page-to-fetch-real-news-articles-from-the-cryptopanic-public-api-no-api-key-required-for-basic-access-https-cryptopanic-com-api-v1-posts-auth-token-public-public-true-cache-results-for-12-hours-so-the-feed-refreshes-every-12-hours-not-on-every-page-load-display-article-title-source-published-timestamp-and-sentiment-badge-show-a-next-refresh-in-x-hours-countdown-do-not-change-page-visuals",
+      "title": "Fix the Crypto News / AI Sentiment page to fetch real news articles from the CryptoPanic public API (no API key required for basic access: https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true). Cache results for 12 hours so the feed refreshes every 12 hours, not on every page load. Display article title, source, published timestamp, and sentiment badge. Show a 'Next refresh in X hours' countdown. Do not change page visuals.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-the-advanced-analytics-page-with-additional-real-time-indicators-fetched-from-coingecko-for-any-searched-token-bollinger-bands-upper-lower-middle-volume-trend-rising-falling-7-day-and-30-day-price-change-percentages-and-a-composite-market-strength-score-0-100-display-these-in-the-existing-card-based-layout-without-changing-the-page-s-visual-design-update-the-usetokenadvancedanalytics-hook-to-compute-these-new-metrics",
+      "title": "Enhance the Advanced Analytics page with additional real-time indicators fetched from CoinGecko for any searched token: Bollinger Bands (upper/lower/middle), Volume trend (rising/falling), 7-day and 30-day price change percentages, and a composite Market Strength score (0–100). Display these in the existing card-based layout without changing the page's visual design. Update the useTokenAdvancedAnalytics hook to compute these new metrics.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-alerts-centre-persistent-by-storing-all-alerts-in-the-icp-backend-actor-so-they-survive-page-refreshes-and-re-logins-ensure-the-backend-already-has-the-alert-data-type-and-crud-methods-if-any-are-missing-or-incomplete-in-backend-main-mo-add-them-the-frontend-alertscenterpage-must-read-from-and-write-to-the-backend-actor-via-the-existing-react-query-hooks-in-usequeries-ts-confirm-create-mark-as-read-delete-and-toggle-trigger-all-persist-correctly",
+      "title": "Make the Alerts Centre persistent by storing all alerts in the ICP backend actor so they survive page refreshes and re-logins. Ensure the backend already has the Alert data type and CRUD methods; if any are missing or incomplete in backend/main.mo, add them. The frontend AlertsCenterPage must read from and write to the backend actor via the existing React Query hooks in useQueries.ts. Confirm create, mark-as-read, delete, and toggle-trigger all persist correctly.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-upgrade-the-insights-page-to-display-real-time-cryptocurrency-market-data-instead-of-mock-static-values-fetch-live-total-crypto-market-cap-btc-dominance-eth-gas-price-from-etherscan-public-api-or-fallback-and-top-defi-tvl-estimate-from-coingecko-public-endpoints-update-displayed-metric-cards-with-live-values-last-updated-timestamps-and-trend-indicators-do-not-change-the-page-s-visual-layout-card-design-or-color-scheme",
+      "title": "Upgrade the Insights page to display real-time cryptocurrency market data instead of mock/static values. Fetch live total crypto market cap, BTC dominance, ETH gas price (from Etherscan public API or fallback), and top DeFi TVL estimate from CoinGecko public endpoints. Update displayed metric cards with live values, last-updated timestamps, and trend indicators. Do not change the page's visual layout, card design, or color scheme.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-countdown-timers-on-both-the-pre-sale-and-airdrop-forms-in-acquisitionpage-tsx-the-usecountdowntimer-hook-must-correctly-fetch-timer-state-from-the-backend-actor-presale-and-airdrop-timer-endpoints-convert-nanosecond-bigints-using-the-timers-ts-utility-and-tick-down-every-second-via-a-local-setinterval-when-the-timer-reaches-zero-the-unlocked-flag-must-become-true-and-the-form-submission-button-must-become-active-verify-both-timers-independently-for-pre-sale-and-airdrop-tabs",
+      "title": "Fix the countdown timers on both the Pre-Sale and Airdrop forms in AcquisitionPage.tsx. The useCountdownTimer hook must correctly fetch timer state from the backend actor (presale and airdrop timer endpoints), convert nanosecond bigints using the timers.ts utility, and tick down every second via a local setInterval. When the timer reaches zero the 'unlocked' flag must become true and the form submission button must become active. Verify both timers independently for pre-sale and airdrop tabs.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-both-the-pre-sale-and-airdrop-forms-in-acquisitionpage-tsx-work-fully-after-the-timer-unlocks-after-unlock-the-form-fields-must-be-editable-validation-must-pass-correctly-and-on-successful-submit-the-whatsapp-redirect-must-fire-with-correctly-prefilled-form-data-name-email-wallet-address-amount-for-pre-sale-name-email-wallet-address-for-airdrop-ensure-the-roadmap-aligned-unlock-dates-are-stored-in-the-backend-actor-and-returned-by-the-timer-endpoints",
+      "title": "Ensure both the Pre-Sale and Airdrop forms in AcquisitionPage.tsx work fully after the timer unlocks. After unlock: the form fields must be editable, validation must pass correctly, and on successful submit the WhatsApp redirect must fire with correctly prefilled form data (name, email, wallet address, amount for pre-sale; name, email, wallet address for airdrop). Ensure the roadmap-aligned unlock dates are stored in the backend actor and returned by the timer endpoints.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-community-voting-persistent-by-ensuring-all-poll-records-and-vote-counts-are-stored-in-the-icp-backend-actor-and-survive-page-reloads-the-usecommunityvoting-hook-must-correctly-call-backend-actor-methods-to-fetch-polls-by-join-code-cast-votes-storing-voter-principal-to-prevent-double-voting-and-create-new-polls-confirm-that-vote-totals-update-in-real-time-via-the-existing-10-second-polling-interval-and-that-previously-cast-votes-are-reflected-correctly-on-reload",
+      "title": "Make community voting persistent by ensuring all Poll records and vote counts are stored in the ICP backend actor and survive page reloads. The useCommunityVoting hook must correctly call backend actor methods to fetch polls by join code, cast votes (storing voter principal to prevent double-voting), and create new polls. Confirm that vote totals update in real-time via the existing 10-second polling interval and that previously cast votes are reflected correctly on reload.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-audit-and-fix-all-page-level-animations-and-transitions-across-the-second-half-of-the-site-pages-not-on-the-home-screen-acquisitionpage-alertscenterpage-advancedanalyticspage-marketintelpage-marketpulsepage-insightspage-communityvotingpage-aisentimentpage-livepricepage-ensure-smokysectiontransition-parallax-hooks-and-entry-animations-all-trigger-correctly-on-scroll-fix-any-broken-intersectionobserver-callbacks-or-css-keyframe-animations-do-not-add-new-visual-effects-or-change-existing-design-tokens",
+      "title": "Audit and fix all page-level animations and transitions across the second half of the site (pages not on the home screen): AcquisitionPage, AlertsCenterPage, AdvancedAnalyticsPage, MarketIntelPage, MarketPulsePage, InsightsPage, CommunityVotingPage, AISentimentPage, LivePricePage. Ensure SmokySectionTransition, parallax hooks, and entry animations all trigger correctly on scroll. Fix any broken IntersectionObserver callbacks or CSS keyframe animations. Do not add new visual effects or change existing design tokens.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Market Intel section with real signals using public APIs",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Market Pulse with real-time market trends and live prices for top 5 cryptocurrencies",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Crypto news section refreshing every 12 hours via public API",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Enhanced advanced analytics section",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Persistent alerts centre",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Insights section with real-time crypto info",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Fix timers and functional pre-sale and airdrop forms working correctly after unlock per roadmap",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Persistent voting feature",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Fix all features, functions, and animations in second part of the website",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Ensure the backend actor in backend/main.mo has all required persistent state for: (1) Alert records keyed by user principal with full CRUD, (2) Poll records with vote tallies and voter deduplication by principal, (3) Pre-sale and airdrop timer target timestamps aligned to the roadmap phases. If any of these are missing, incomplete, or returning placeholder data, add or complete the implementation. Generate migration.mo to safely upgrade existing canister state.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Crypto Dashboard",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
