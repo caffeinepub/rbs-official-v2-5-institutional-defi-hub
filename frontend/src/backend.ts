@@ -233,6 +233,7 @@ export interface backendInterface {
     deleteAlert(alertId: bigint): Promise<boolean>;
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
+    getAirdropTimerEnd(): Promise<bigint>;
     getAlerts(): Promise<Array<Alert>>;
     getAllCryptoCurrencies(): Promise<Array<CryptoCurrency>>;
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
@@ -248,6 +249,7 @@ export interface backendInterface {
     getPoll(id: bigint): Promise<PollView | null>;
     getPollsByCode(code: string): Promise<Array<PollView>>;
     getPresaleRemainingTime(): Promise<bigint>;
+    getPresaleTimerEnd(): Promise<bigint>;
     getScheduledTasks(): Promise<Array<ScheduledTask>>;
     getTimerState(timerType: TimerType): Promise<TimerState>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
@@ -258,6 +260,7 @@ export interface backendInterface {
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;
     storeMarketIntelligence(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<MarketIntelligence>;
     submitAirdropForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
     submitPresaleForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
@@ -465,6 +468,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAirdropRemainingTime();
+            return result;
+        }
+    }
+    async getAirdropTimerEnd(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAirdropTimerEnd();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAirdropTimerEnd();
             return result;
         }
     }
@@ -678,6 +695,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getPresaleTimerEnd(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPresaleTimerEnd();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPresaleTimerEnd();
+            return result;
+        }
+    }
     async getScheduledTasks(): Promise<Array<ScheduledTask>> {
         if (this.processError) {
             try {
@@ -815,6 +846,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n32(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async setTimerEnd(arg0: TimerType, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setTimerEnd(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0), arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setTimerEnd(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0), arg1);
             return result;
         }
     }

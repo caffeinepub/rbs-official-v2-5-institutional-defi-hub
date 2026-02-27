@@ -1,80 +1,79 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-25T15:12:35.835Z",
-  "summary": "The diff implements most of the 12 requirements but has several gaps. REQ-7 (ETH gas price / DefiLlama TVL) is partially missing, REQ-11 (animation audit across all listed pages) is only superficially addressed via SmokySectionTransition usage without a dedicated audit/fix of IntersectionObserver/parallax/reduced-motion, REQ-12 requires migration.mo which is absent from the diff, and the backend main.mo is truncated so full verification of all CRUD methods and stable-state declarations is uncertain.",
+  "generatedAt": "2026-02-27T23:52:26.197Z",
+  "summary": "The diff contains only 3 file changes: a new backend/migration.mo file, a modified backend/main.mo, and an updated project_state.json. The project_state.json only records intent with all items still 'pending'. The backend files show data structure definitions and map initializations but the diff is truncated and does not show the actual getPresaleTimerEnd, getAirdropTimerEnd, or setTimerEnd implementations. No frontend files are present in the diff at all. The vast majority of requirements (REQ-1 through REQ-9) are frontend-focused and completely unimplemented based on the diff evidence.",
   "missing_requirements": [
     {
+      "id": "REQ-1",
+      "requirement": "Implement passcode lock in MarketIntelPage.tsx with exact passcode 'BO2420075112009BP', styled unlock form, sessionStorage persistence, and error message on incorrect passcode.",
+      "reason": "No frontend file changes are present in the diff. MarketIntelPage.tsx is not modified or created.",
+      "evidence": []
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "After unlocking Market Intel page, display trading signals dashboard with timeframe selector, asset selector, live BUY/SELL/HOLD signals from CoinGecko OHLC API, price ticker, and indicator cards.",
+      "reason": "No frontend file changes are present in the diff. Neither MarketIntelPage.tsx nor useMarketIntelLive hook is modified.",
+      "evidence": []
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Backend getPresaleTimerEnd returns 2027-03-31T23:59:59Z in nanoseconds, getAirdropTimerEnd returns 2029-03-31T23:59:59Z in nanoseconds, setTimerEnd admin method exposed, values survive upgrades.",
+      "reason": "The backend/main.mo diff is truncated and does not show these method implementations. No stable variable declarations or the required query/update methods are visible in the diff content.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Implement Pre-Sale tab in AcquisitionPage.tsx with live countdown timer, locked state, registration form, WhatsApp redirect, and sessionStorage persistence.",
+      "reason": "No frontend file changes are present in the diff. AcquisitionPage.tsx is not modified.",
+      "evidence": []
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Implement Airdrop tab in AcquisitionPage.tsx with live countdown timer, locked state, airdrop registration form, WhatsApp redirect, and sessionStorage persistence.",
+      "reason": "No frontend file changes are present in the diff. AcquisitionPage.tsx is not modified.",
+      "evidence": []
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Complete FormsSection.tsx, HeroSection.tsx, OracleSection.tsx, WhitepaperSection.tsx, DeveloperBlogPage.tsx, and DeveloperToolsPage.tsx with full implementations.",
+      "reason": "No frontend file changes are present in the diff. None of these files are created or modified.",
+      "evidence": []
+    },
+    {
       "id": "REQ-7",
-      "requirement": "Fetch ETH gas price (from Etherscan public API or fallback) and top DeFi TVL estimate from CoinGecko public endpoints for the Insights page",
-      "reason": "The useRealWorldAnalytics hook only fetches from CoinGecko /global endpoint. There is no ETH gas price fetch (Etherscan or fallback) and no DeFi TVL fetch in the diff.",
-      "evidence": [
-        "frontend/src/hooks/useRealWorldAnalytics.ts",
-        "frontend/src/pages/InsightsPage.tsx"
-      ]
+      "requirement": "Fix useCountdownTimer, LivePricePage login prompt, AlertsCenterPage login prompt, AdvancedAnalyticsPage empty search handling, AISentimentPage skeleton/retry, and CommunityVotingPage flow.",
+      "reason": "No frontend file changes are present in the diff. None of these hooks or page components are modified.",
+      "evidence": []
     },
     {
-      "id": "REQ-11",
-      "requirement": "Audit and fix all page-level animations: SmokySectionTransition, parallax hooks, IntersectionObserver callbacks, CSS keyframe animations, and reduced-motion preference across AcquisitionPage, AlertsCenterPage, AdvancedAnalyticsPage, MarketIntelPage, MarketPulsePage, InsightsPage, CommunityVotingPage, AISentimentPage, LivePricePage",
-      "reason": "Pages wrap content in SmokySectionTransition but there is no evidence of a dedicated animation audit, parallax hook fixes, IntersectionObserver callback repairs, or reduced-motion media query handling being added or fixed. No animation utility files were modified.",
-      "evidence": [
-        "frontend/src/pages/AcquisitionPage.tsx",
-        "frontend/src/pages/AlertsCenterPage.tsx",
-        "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-        "frontend/src/pages/MarketIntelPage.tsx",
-        "frontend/src/pages/MarketPulsePage.tsx",
-        "frontend/src/pages/InsightsPage.tsx",
-        "frontend/src/pages/CommunityVotingPage.tsx",
-        "frontend/src/pages/AISentimentPage.tsx",
-        "frontend/src/pages/LivePricePage.tsx"
-      ]
+      "id": "REQ-8",
+      "requirement": "Apply consistent gold/dark visual design system across all pages with glass-card styles, gold gradient buttons, segmented countdown digit blocks, lock icons, gold-toned skeletons, and consistent typography.",
+      "reason": "No frontend file changes are present in the diff.",
+      "evidence": []
     },
     {
-      "id": "REQ-12",
-      "requirement": "Generate migration.mo to safely upgrade existing canister state without data loss",
-      "reason": "No migration.mo file appears in the diff (neither added nor modified). This is an explicit acceptance criterion.",
+      "id": "REQ-9",
+      "requirement": "Integrate real public CoinGecko and CryptoPanic API data for InsightsPage, MarketPulsePage, and AISentimentPage with error handling and retry buttons.",
+      "reason": "No frontend file changes are present in the diff. None of the relevant hooks or pages are modified.",
       "evidence": []
     }
   ],
   "hallucinated_features": [
     {
-      "description": "AcquisitionPage auto-submits pending sessionStorage form data to WhatsApp when the timer unlocks on mount",
-      "reason": "REQ-9 requires WhatsApp redirect on manual form submit after unlock, not automatic submission of previously saved sessionStorage data on timer unlock. The auto-submit behavior using sessionStorage was not requested.",
+      "description": "A backend/migration.mo module was added containing detailed type definitions and an OldActor structure for canister state migration.",
+      "reason": "The build request does not mention a migration module or migration.mo file. The requirement only states that stable variables should be used to survive upgrades, not that a separate migration module should be created.",
       "evidence": [
-        "frontend/src/pages/AcquisitionPage.tsx"
-      ]
-    },
-    {
-      "description": "CommunityVotingPage enforces a hardcoded MARKET_INTEL_PASSCODE to create polls",
-      "reason": "REQ-10 does not mention any passcode requirement for poll creation. This gate was not requested.",
-      "evidence": [
-        "frontend/src/pages/CommunityVotingPage.tsx"
+        "backend/migration.mo"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.88,
   "changed_files": [
     "backend/main.mo",
-    "frontend-file-summaries.txt",
-    "frontend/src/hooks/useAdvancedAnalytics.ts",
-    "frontend/src/hooks/useCommunityVoting.ts",
-    "frontend/src/hooks/useCountdownTimer.ts",
-    "frontend/src/hooks/useCryptoNews.ts",
-    "frontend/src/hooks/useLivePrice.ts",
-    "frontend/src/hooks/useMarketIntelLive.ts",
-    "frontend/src/hooks/useMarketPulse.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useRealWorldAnalytics.ts",
-    "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
-    "frontend/src/pages/AISentimentPage.tsx",
-    "frontend/src/pages/AcquisitionPage.tsx",
-    "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-    "frontend/src/pages/AlertsCenterPage.tsx",
-    "frontend/src/pages/CommunityVotingPage.tsx",
-    "frontend/src/pages/InsightsPage.tsx",
-    "frontend/src/pages/LivePricePage.tsx",
-    "frontend/src/pages/MarketIntelPage.tsx",
-    "frontend/src/pages/MarketPulsePage.tsx",
+    "backend/migration.mo",
     "project_state.json"
   ]
 }

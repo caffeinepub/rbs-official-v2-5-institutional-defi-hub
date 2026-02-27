@@ -1,20 +1,24 @@
 # Specification
 
 ## Summary
-**Goal:** Upgrade the RBS Institutional DeFi Hub with real-time data feeds, persistent backend state, fixed countdown timers, working forms, and corrected animations across all secondary pages — without changing any visual design.
+**Goal:** Complete all remaining UI-only sections, implement passcode-locked Market Intel trading signals, lock Pre-Sale and Airdrop forms behind countdown timers with WhatsApp submission, integrate live public API data throughout, and enforce a consistent gold/dark visual design system across the entire RBS Institutional Hub.
 
 **Planned changes:**
-- **Market Intel page:** Compute genuine Buy/Sell/Hold signals with confidence scores from live RSI, MACD, and moving average calculations using CoinGecko OHLCV data; display underlying indicator values alongside signal badges; auto-refresh on each polling cycle.
-- **Market Pulse page:** Fetch live Bitcoin price history from CoinGecko every 20 seconds; recompute Bullish/Bearish/Neutral status, RSI, and MACD histogram from real data; show last-updated timestamp.
-- **Live Price page:** Fix `useLivePrice` hook to fetch real-time USD prices and 24h change for BTC, ETH, BNB, SOL, XRP from CoinGecko every 7 seconds; show live refresh indicator and graceful error fallback.
-- **Crypto News / AI Sentiment page:** Fetch real articles from CryptoPanic public API; cache results for 12 hours; show article title, source, published timestamp, sentiment badge (from vote data), and a countdown to next refresh.
-- **Advanced Analytics page:** Add Bollinger Bands, volume trend, 7-day and 30-day price change percentages, and a composite Market Strength score (0–100) to `useTokenAdvancedAnalytics` hook using real CoinGecko data; display in existing card layout.
-- **Alerts Centre:** Store all alert records in the ICP backend actor keyed by user principal; implement full CRUD (`createAlert`, `getAlerts`, `markAlertRead`, `deleteAlert`, `toggleAlertTrigger`); wire frontend hooks to backend so alerts persist across reloads.
-- **Insights page:** Fetch live total crypto market cap, BTC dominance, and top DeFi TVL from CoinGecko `/global` endpoint; show last-updated timestamps and trend arrows on metric cards.
-- **Acquisition page timers:** Fix `useCountdownTimer` hook to fetch presale and airdrop timer target timestamps from backend actor, convert nanosecond bigints correctly, tick down every second via `setInterval`; disable submit button while active, enable on unlock.
-- **Acquisition page forms:** After timer unlock, make form fields fully editable with correct validation; on submit, fire WhatsApp redirect with all form fields prefilled (name, email, wallet address, amount for pre-sale; name, email, wallet address for airdrop).
-- **Community Voting:** Store all Poll records and vote tallies in backend actor with principal-based double-vote prevention; wire `useCommunityVoting` hook to backend CRUD methods; refresh vote counts every 10 seconds.
-- **Animations:** Audit and fix `SmokySectionTransition`, parallax hooks, and entry animations on AcquisitionPage, AlertsCenterPage, AdvancedAnalyticsPage, MarketIntelPage, MarketPulsePage, InsightsPage, CommunityVotingPage, AISentimentPage, and LivePricePage; fix broken IntersectionObserver callbacks and CSS keyframe animations; respect reduced-motion preference.
-- **Backend (`backend/main.mo`):** Implement or complete stable storage for Alert CRUD, Poll CRUD with voter deduplication, and presale/airdrop timer target timestamps aligned to roadmap phases; generate `migration.mo` for safe canister state upgrade.
+- Add passcode lock (`BO2420075112009BP`) to MarketIntelPage with sessionStorage persistence and error feedback on incorrect entry
+- After unlock, display a fully functional trading signals dashboard with asset selector (BTC, ETH, BNB, SOL, XRP), timeframe selector (1H, 4H, 1D, 1W), BUY/SELL/HOLD signals with confidence scores, live price ticker, and RSI/MACD/MA indicator cards sourced from CoinGecko public OHLC API
+- In backend (main.mo), hardcode presale timer end (2027-03-31T23:59:59Z) and airdrop timer end (2029-03-31T23:59:59Z) as stable nanosecond timestamps with an admin `setTimerEnd` method
+- Implement Pre-Sale tab in AcquisitionPage with live countdown timer; reveal full registration form (name, email, phone, wallet, invest amount, country) on expiry; submit via WhatsApp using REDIRECT_CONFIG number; persist partial form in sessionStorage
+- Implement Airdrop tab in AcquisitionPage with live countdown timer; reveal airdrop form (name, email, wallet, country, optional referral) on expiry; submit via WhatsApp; persist partial form in sessionStorage
+- Complete FormsSection.tsx (presale + airdrop countdown/form panels), HeroSection.tsx (animated hero with RBS logo, tagline, CTA buttons), OracleSection.tsx (live CoinGecko global market data cards), and WhitepaperSection.tsx (chapter teasers with link to WhitepaperPage)
+- Implement DeveloperBlogPage.tsx and DeveloperToolsPage.tsx each with at least 3 content cards about RBS/DeFi dev resources
+- Fix useCountdownTimer to show `00:00:00:00` on expiry without errors
+- Add styled login prompts on LivePricePage and AlertsCenterPage for unauthenticated users
+- Fix AdvancedAnalyticsPage empty search handling with example symbol hints
+- Add loading skeleton and error retry button to AISentimentPage
+- Fix CommunityVotingPage join/vote/create flows with visible success/failure feedback toasts
+- Wire InsightsPage to live CoinGecko `/global` endpoint via useRealWorldAnalytics (market cap, BTC dominance, ETH dominance, 24h volume, active coins)
+- Wire MarketPulsePage to live CoinGecko OHLC data for real BTC RSI and MACD via useMarketPulse
+- Wire AISentimentPage to CryptoPanic public API via useCryptoNews with sentiment derived from vote counts
+- Enforce consistent gold/dark theme across all pages: glass-card style with gold borders, gold gradient buttons, large segmented countdown digit blocks, lock icon on locked screens, animated gold-toned skeletons, consistent Inter/Poppins typography
 
-**User-visible outcome:** All data-driven pages show live, accurate cryptocurrency data refreshed automatically; alerts and community votes persist after page reload; presale and airdrop countdown timers count down correctly and unlock their forms; form submission sends correctly prefilled WhatsApp messages; all page animations and transitions work smoothly.
+**User-visible outcome:** Users can access a passcode-protected trading signals dashboard, view live pre-sale and airdrop countdown timers with WhatsApp-integrated registration forms, and experience a fully consistent gold/dark themed interface with live market data throughout all sections.

@@ -146,6 +146,7 @@ export interface _SERVICE {
   'deleteAlert' : ActorMethod<[bigint], boolean>,
   'enableTrigger' : ActorMethod<[boolean], undefined>,
   'getAirdropRemainingTime' : ActorMethod<[], bigint>,
+  'getAirdropTimerEnd' : ActorMethod<[], bigint>,
   'getAlerts' : ActorMethod<[], Array<Alert>>,
   'getAllCryptoCurrencies' : ActorMethod<[], Array<CryptoCurrency>>,
   'getAllMarketIntelligence' : ActorMethod<[], Array<MarketIntelligence>>,
@@ -161,6 +162,7 @@ export interface _SERVICE {
   'getPoll' : ActorMethod<[bigint], [] | [PollView]>,
   'getPollsByCode' : ActorMethod<[string], Array<PollView>>,
   'getPresaleRemainingTime' : ActorMethod<[], bigint>,
+  'getPresaleTimerEnd' : ActorMethod<[], bigint>,
   'getScheduledTasks' : ActorMethod<[], Array<ScheduledTask>>,
   'getTimerState' : ActorMethod<[TimerType], TimerState>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
@@ -171,6 +173,7 @@ export interface _SERVICE {
   'markAlertAsRead' : ActorMethod<[bigint], boolean>,
   'revokeMarketIntelAccessWithPassword' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setTimerEnd' : ActorMethod<[TimerType, bigint], undefined>,
   'storeMarketIntelligence' : ActorMethod<
     [string, string, Array<TechnicalIndicator>, SignalConfidence, number],
     MarketIntelligence

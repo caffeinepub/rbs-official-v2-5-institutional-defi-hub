@@ -170,6 +170,7 @@ export const idlService = IDL.Service({
   'deleteAlert' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'enableTrigger' : IDL.Func([IDL.Bool], [], []),
   'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+  'getAirdropTimerEnd' : IDL.Func([], [IDL.Int], ['query']),
   'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
   'getAllCryptoCurrencies' : IDL.Func([], [IDL.Vec(CryptoCurrency)], ['query']),
   'getAllMarketIntelligence' : IDL.Func(
@@ -197,6 +198,7 @@ export const idlService = IDL.Service({
   'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
   'getPollsByCode' : IDL.Func([IDL.Text], [IDL.Vec(PollView)], ['query']),
   'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+  'getPresaleTimerEnd' : IDL.Func([], [IDL.Int], ['query']),
   'getScheduledTasks' : IDL.Func([], [IDL.Vec(ScheduledTask)], ['query']),
   'getTimerState' : IDL.Func([TimerType], [TimerState], ['query']),
   'getUserProfile' : IDL.Func(
@@ -211,6 +213,7 @@ export const idlService = IDL.Service({
   'markAlertAsRead' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'revokeMarketIntelAccessWithPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setTimerEnd' : IDL.Func([TimerType, IDL.Int], [], []),
   'storeMarketIntelligence' : IDL.Func(
       [
         IDL.Text,
@@ -404,6 +407,7 @@ export const idlFactory = ({ IDL }) => {
     'deleteAlert' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'enableTrigger' : IDL.Func([IDL.Bool], [], []),
     'getAirdropRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+    'getAirdropTimerEnd' : IDL.Func([], [IDL.Int], ['query']),
     'getAlerts' : IDL.Func([], [IDL.Vec(Alert)], ['query']),
     'getAllCryptoCurrencies' : IDL.Func(
         [],
@@ -435,6 +439,7 @@ export const idlFactory = ({ IDL }) => {
     'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
     'getPollsByCode' : IDL.Func([IDL.Text], [IDL.Vec(PollView)], ['query']),
     'getPresaleRemainingTime' : IDL.Func([], [IDL.Int], ['query']),
+    'getPresaleTimerEnd' : IDL.Func([], [IDL.Int], ['query']),
     'getScheduledTasks' : IDL.Func([], [IDL.Vec(ScheduledTask)], ['query']),
     'getTimerState' : IDL.Func([TimerType], [TimerState], ['query']),
     'getUserProfile' : IDL.Func(
@@ -453,6 +458,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setTimerEnd' : IDL.Func([TimerType, IDL.Int], [], []),
     'storeMarketIntelligence' : IDL.Func(
         [
           IDL.Text,

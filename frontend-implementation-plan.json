@@ -1,288 +1,260 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Complete Functional Upgrade: Real-Time Data, Persistent Features, Fixed Forms & Timers (Part 2) - Frontend Only",
+  "title": "Complete Market Intel, Pre-Sale, Airdrop & All UI-Only Sections",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Fix Market Intel page to compute and display genuine trading signals derived from live CoinGecko API data with RSI, MACD, and moving average calculations",
+      "summary": "Implement passcode lock for MarketIntelPage with sessionStorage persistence",
       "acceptanceCriteria": [
-        "Signal badges show Buy, Sell, or Hold with a numeric confidence percentage",
-        "RSI, MACD, and MA values are computed from real CoinGecko OHLCV data",
-        "Signals refresh automatically on each polling cycle",
-        "No visual design change to the page layout or color scheme"
+        "Entering 'BO2420075112009BP' unlocks the page",
+        "Entering any other string shows an error and keeps the page locked",
+        "Unlock state persists in sessionStorage across soft navigations"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useMarketIntelLive.ts",
-          "operation": "modify",
-          "description": "Update the useMarketIntelLive hook to fetch OHLCV data from CoinGecko /coins/{id}/ohlc endpoint (30 days) and compute real RSI, MACD histogram, and moving average crossover values. Ensure the hook returns computed indicator values (RSI number, MACD histogram number, MA crossover boolean) alongside the signal and confidence score. Enable automatic refetch on a polling interval to keep signals updated."
-        },
-        {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Update the MarketIntelPage component to display the underlying indicator values (RSI value, MACD histogram, MA crossover status) returned by useMarketIntelLive alongside each signal badge. Render numeric confidence percentages with the Buy/Sell/Hold badges. Preserve all existing visual styling, layout, and color scheme."
+          "description": "Add passcode lock UI with input form and 'Unlock' button before the existing authenticated content. On correct passcode 'BO2420075112009BP', set sessionStorage key 'marketIntelUnlocked' to 'true' and update component state. On incorrect passcode, display clear error message. Check sessionStorage on mount to restore unlocked state. Wrap the passcode form in a styled glass-card with gold borders and center the lock icon, title, and input field."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Fix Market Pulse page to display real-time market trends with live Bitcoin price history from CoinGecko, recomputing RSI and MACD every 20 seconds",
+      "summary": "Display fully functional trading signals dashboard in MarketIntelPage after unlock",
       "acceptanceCriteria": [
-        "Market status (Bullish/Bearish/Neutral) updates every 20 seconds from live data",
-        "RSI and MACD values reflect real computed results, not placeholders",
-        "A last-updated timestamp is shown on the page",
-        "No visual design changes"
+        "Time frame and asset selectors are visible and functional after unlock",
+        "Signal (BUY/SELL/HOLD) updates when asset or timeframe changes",
+        "RSI, MACD, and MA values are displayed",
+        "Data comes from public CoinGecko API with no placeholder values"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useMarketPulse.ts",
+          "path": "frontend/src/hooks/useMarketIntelLive.ts",
           "operation": "modify",
-          "description": "Ensure the useMarketPulse hook fetches Bitcoin price history from the CoinGecko /coins/bitcoin/market_chart endpoint and computes real RSI and MACD histogram values from that data. Configure React Query to refetch every 20 seconds (refetchInterval: 20000). Return computed RSI and MACD values along with the market status."
+          "description": "Extend the hook to accept asset (string) and timeframe (string) parameters. Map timeframe to CoinGecko days parameter (1H->1, 4H->2, 1D->7, 1W->30). Support at least BTC, ETH, BNB, SOL, XRP as selectable assets. Return computed RSI, MACD, MA crossover indicators, BUY/SELL/HOLD signal, confidence score, and live price for the selected asset and timeframe."
         },
         {
-          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Update MarketPulsePage to display the computed RSI value and MACD histogram prominently alongside the Bullish/Bearish/Neutral status. Add a last-updated timestamp display showing when the data was last refreshed. Preserve all existing visual design, layout, and styling."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Ensure Live Price page displays real-time USD prices and 24-hour percentage change for the top 5 cryptocurrencies with 7-second refresh and live indicator animation",
-      "acceptanceCriteria": [
-        "All 5 coins show a live USD price updated every 7 seconds",
-        "24-hour change percentages are displayed with correct sign and color",
-        "A loading/refresh indicator is visible during each fetch cycle",
-        "Errors fall back gracefully without crashing the page"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useLivePrice.ts",
-          "operation": "modify",
-          "description": "Verify the useLivePrice hook correctly fetches prices for BTC, ETH, BNB, SOL, and XRP from CoinGecko /simple/price endpoint every 7 seconds. Ensure the hook returns live USD prices and 24-hour change percentages. Add proper error handling with fallback state to prevent crashes. Confirm React Query refetchInterval is set to 7000ms."
-        },
-        {
-          "path": "frontend/src/pages/LivePricePage.tsx",
-          "operation": "modify",
-          "description": "Update LivePricePage to display a live loading/refresh indicator animation during each fetch cycle (use isRefetching state from React Query). Ensure 24-hour change percentages are displayed with correct positive/negative sign and appropriate color styling. Add error boundary or graceful error display for fetch failures. Preserve all existing visual styling."
+          "description": "After the passcode unlock guard, add UI for: (1) a timeframe selector (1H/4H/1D/1W) using tabs or radio buttons, (2) an asset dropdown for BTC/ETH/BNB/SOL/XRP, (3) a large signal card showing BUY/SELL/HOLD with confidence percentage using the extended useMarketIntelLive hook with selected asset and timeframe, (4) a live price ticker card for the selected asset, (5) three indicator cards displaying RSI value, MACD histogram, and MA trend direction. Use the existing glass-card styling with gold accents. Display loading skeletons and error states with retry buttons."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Fix Crypto News / AI Sentiment page to fetch real news from CryptoPanic public API with 12-hour caching and countdown display",
+      "summary": "Fully implement Pre-Sale tab in AcquisitionPage with countdown timer and WhatsApp redirect",
       "acceptanceCriteria": [
-        "News articles are fetched from CryptoPanic public endpoint",
-        "Results are cached and only re-fetched after 12 hours (staleTime: 12 * 60 * 60 * 1000)",
-        "A countdown showing time until next refresh is displayed",
-        "Sentiment badges (positive/negative/neutral) are derived from article vote data",
-        "No visual design changes"
+        "Countdown timer ticks in real time while locked",
+        "Form is hidden while timer is running",
+        "Form is revealed when unlocked flag is true",
+        "Submission opens WhatsApp with a pre-filled message containing all form fields",
+        "Partial form data survives page refresh via sessionStorage"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useCryptoNews.ts",
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
           "operation": "modify",
-          "description": "Verify the useCryptoNews hook fetches from CryptoPanic public API endpoint (https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true). Configure React Query with staleTime set to 12 hours (12 * 60 * 60 * 1000) so results are cached and only re-fetched after 12 hours. Ensure sentiment badges (positive/negative/neutral) are derived from article vote data in the API response."
-        },
-        {
-          "path": "frontend/src/pages/AISentimentPage.tsx",
-          "operation": "modify",
-          "description": "Add a countdown timer display to AISentimentPage showing 'Next refresh in X hours' based on the last data fetch timestamp and 12-hour staleTime. Display article title, source, published timestamp, and sentiment badge for each news item. Preserve all existing visual styling and layout."
+          "description": "In the Pre-Sale tab section: (1) Use useCountdownTimer('presale') to fetch the timer end and display a live countdown in large segmented digit blocks (DD:HH:MM:SS) with gold borders. (2) While countdown is running (unlocked flag false), render a locked state with lock icon, timer prominently centered, and explanatory text 'Pre-Sale opens Q1 2027'. (3) When unlocked flag is true, hide the countdown and reveal the Pre-Sale registration form collecting: full name, email, phone number, wallet address, amount to invest, country. (4) On form submission, use buildWhatsAppMessage from frontend/src/utils/whatsapp.ts to construct a pre-filled message with all field values and openWhatsAppRedirect to open WhatsApp with REDIRECT_CONFIG's number. (5) Persist partial form data in sessionStorage under key 'presaleFormDraft' and restore on mount. Use glass-card styling with gold accents throughout."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Enhance Advanced Analytics page with additional real-time indicators: Bollinger Bands, Volume trend, 7-day and 30-day price change percentages, and composite Market Strength score",
+      "summary": "Fully implement Airdrop tab in AcquisitionPage with countdown timer and WhatsApp redirect",
       "acceptanceCriteria": [
-        "Bollinger Bands values are computed and displayed for the searched token",
-        "Volume trend (rising/falling) is shown with an indicator",
-        "7-day and 30-day price change percentages are displayed",
-        "Composite Market Strength score (0–100) is shown",
-        "All new metrics use real CoinGecko data",
-        "No visual layout or styling changes"
+        "Countdown timer ticks in real time while locked",
+        "Airdrop form is hidden until timer expires",
+        "Submission redirects to WhatsApp with pre-filled airdrop registration message",
+        "Partial form data survives page refresh via sessionStorage"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useTokenAdvancedAnalytics.ts",
+          "path": "frontend/src/pages/AcquisitionPage.tsx",
           "operation": "modify",
-          "description": "Update useTokenAdvancedAnalytics to compute Bollinger Bands (upper, lower, middle) from 30-day price history. Add Volume trend analysis (rising/falling) by comparing recent volume averages. Calculate 7-day and 30-day price change percentages from CoinGecko market_chart data. Compute a composite Market Strength score (0–100) based on trend, RSI, volume, and volatility. All metrics must use real CoinGecko data."
-        },
-        {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "operation": "modify",
-          "description": "Update AdvancedAnalyticsPage to display Bollinger Bands values (upper/lower/middle), Volume trend indicator (rising/falling), 7-day and 30-day price change percentages, and the composite Market Strength score (0–100) in the existing card-based layout. Preserve all existing visual design, layout, and styling."
+          "description": "In the Airdrop tab section: (1) Use useCountdownTimer('airdrop') to fetch the timer end and display a live countdown in large segmented digit blocks (DD:HH:MM:SS) with gold borders. (2) While countdown is running (unlocked flag false), render a locked state with lock icon, timer prominently centered, and explanatory text 'Airdrop opens Q1 2029'. (3) When unlocked flag is true, hide the countdown and reveal the Airdrop registration form collecting: full name, email, wallet address, country, referral code (optional). (4) On form submission, use buildWhatsAppMessage and openWhatsAppRedirect from frontend/src/utils/whatsapp.ts with all field values. (5) Persist partial form data in sessionStorage under key 'airdropFormDraft' and restore on mount. Use glass-card styling with gold accents."
         }
       ]
     },
     {
       "id": "REQ-6",
-      "summary": "Make Alerts Centre persistent by integrating with ICP backend actor for CRUD operations so alerts survive page refreshes and re-logins",
+      "summary": "Complete all empty/placeholder frontend section and page components with full implementations",
       "acceptanceCriteria": [
-        "Alerts created by a user are visible after page reload",
-        "Mark-as-read and delete operations persist to backend",
-        "Toggle trigger settings persist across sessions",
-        "Backend actor stores Alert records keyed by user principal",
-        "No visual changes to the Alerts Centre page"
+        "FormsSection renders presale and airdrop countdown/form panels",
+        "HeroSection renders with RBS logo, tagline, and working CTA buttons",
+        "OracleSection renders live market data from CoinGecko",
+        "WhitepaperSection renders chapter teasers with link to WhitepaperPage",
+        "DeveloperBlogPage and DeveloperToolsPage each render at least 3 content cards"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/FormsSection.tsx",
           "operation": "modify",
-          "description": "Verify the alerts-related React Query hooks in useQueries.ts correctly call backend actor methods: getAlerts (fetch), createAlert (create), markAlertAsRead (mark read), deleteAlert (delete), and toggleAlertTrigger (toggle). Ensure all mutations invalidate the 'alerts' query key to refresh the list after each operation. Confirm the hooks handle backend response types correctly."
+          "description": "Implement a section rendering both Pre-Sale and Airdrop panels side-by-side (or stacked on mobile). Each panel includes a countdown timer using useCountdownTimer hook and a brief description. Link each panel to the respective tab on AcquisitionPage. Use glass-card styling with gold borders and the RBS logo asset from frontend/public/assets/generated/rbs-logo-transparent.dim_200x200.png. Apply smoky section transition animation."
         },
         {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "path": "frontend/src/components/HeroSection.tsx",
           "operation": "modify",
-          "description": "Verify AlertsCenterPage uses the alerts hooks from useQueries.ts to read from and write to the backend actor. Ensure create, mark-as-read, delete, and toggle-trigger operations all trigger backend calls and correctly persist. Confirm the page displays alerts correctly after reload. Preserve all existing visual styling and layout."
+          "description": "Implement an animated hero section with: (1) RBS logo using frontend/public/assets/generated/rbs-logo-hero-metallic.dim_400x400.png centered at top, (2) a bold tagline 'RBS Institutional Hub - Advanced DeFi Intelligence & Trading Signals', (3) two primary CTA buttons: 'Join Pre-Sale' linking to AcquisitionPage (presale tab) and 'Read Whitepaper' linking to WhitepaperPage. Use gold gradient buttons and apply parallax scrolling effect via useParallax hook. Background should use frontend/public/assets/generated/hero-bg.dim_1920x1080.png."
+        },
+        {
+          "path": "frontend/src/components/OracleSection.tsx",
+          "operation": "modify",
+          "description": "Implement a live oracle-style data feed section displaying real-time global crypto market metrics fetched via useRealWorldAnalytics hook: total market cap, BTC dominance, ETH dominance, 24h volume, and active cryptocurrencies count. Render these as animated metric cards in a grid layout with glass-card styling and gold accents. Show loading skeletons and error states with retry button. Apply smoky section transition animation."
+        },
+        {
+          "path": "frontend/src/components/WhitepaperSection.tsx",
+          "operation": "modify",
+          "description": "Implement a whitepaper teaser section with: (1) a section title 'Explore the RBS Whitepaper', (2) a grid of 4-6 chapter highlight cards showing chapter titles (e.g., 'Introduction', 'Tokenomics', 'Technology', 'Governance', 'Roadmap', 'Security') with brief descriptions and chapter icons, (3) a prominent CTA button 'Read Full Whitepaper' linking to WhitepaperPage. Use glass-card styling with gold borders and apply smoky section transition animation."
+        },
+        {
+          "path": "frontend/src/pages/DeveloperBlogPage.tsx",
+          "operation": "modify",
+          "description": "Implement a developer blog page with at least 3 blog post cards. Each card includes: post title (e.g., 'Building on ICP: Best Practices', 'Integrating RBS Oracles', 'Smart Contract Security Guide'), publication date, author, excerpt, and a 'Read More' link. Use glass-card styling with gold borders and apply fade-in animations on scroll. Include a page header with title 'Developer Blog' and subtitle 'Insights & Tutorials for RBS Builders'."
+        },
+        {
+          "path": "frontend/src/pages/DeveloperToolsPage.tsx",
+          "operation": "modify",
+          "description": "Implement a developer tools page with at least 3 tool/resource cards. Each card includes: tool name (e.g., 'RBS SDK', 'API Documentation', 'Smart Contract Templates'), description, key features list, and external link or download button. Use glass-card styling with gold borders and apply fade-in animations on scroll. Include a page header with title 'Developer Tools' and subtitle 'Resources & SDKs for Building on RBS'."
         }
       ]
     },
     {
       "id": "REQ-7",
-      "summary": "Upgrade Insights page to display real-time cryptocurrency market data instead of mock/static values, fetching live total market cap, BTC dominance, and ETH gas price",
+      "summary": "Audit and fix all broken/incomplete functionality across frontend pages",
       "acceptanceCriteria": [
-        "Total crypto market cap is fetched live from CoinGecko /global endpoint",
-        "BTC dominance percentage is shown with live data",
-        "Each metric card shows a last-updated timestamp",
-        "Trend arrows (up/down) reflect real directional change",
-        "No visual design or layout changes"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useRealWorldAnalytics.ts",
-          "operation": "modify",
-          "description": "Update useRealWorldAnalytics to fetch live total crypto market cap and BTC dominance from CoinGecko /global endpoint. Add ETH gas price fetch from Etherscan public API or a CoinGecko fallback. Return last-updated timestamps and trend indicators (up/down) based on historical comparison. Replace any mock/static values with live data."
-        },
-        {
-          "path": "frontend/src/pages/InsightsPage.tsx",
-          "operation": "modify",
-          "description": "Update InsightsPage to display live total crypto market cap, BTC dominance percentage, and ETH gas price from useRealWorldAnalytics. Show a last-updated timestamp on each metric card. Display trend arrows (up/down) reflecting real directional change from the hook. Preserve all existing visual layout, card design, and color scheme."
-        }
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "summary": "Fix countdown timers on Pre-Sale and Airdrop forms, correctly fetching backend timer state and ticking down every second with zero-padded display",
-      "acceptanceCriteria": [
-        "Pre-sale timer counts down correctly from the backend-stored target timestamp",
-        "Airdrop timer counts down correctly from its own backend-stored target timestamp",
-        "Both timers display days, hours, minutes, seconds in zero-padded format",
-        "The submit button is disabled while the timer is active and enabled when unlocked",
-        "Timer state is fetched fresh on mount and does not show NaN or undefined",
-        "No visual styling changes to the forms"
+        "useCountdownTimer displays 00:00:00:00 when expired without throwing errors",
+        "Unauthenticated users on LivePricePage see a clear login prompt",
+        "Unauthenticated users on AlertsCenterPage see a clear login prompt",
+        "AdvancedAnalyticsPage shows example symbols and handles empty input gracefully",
+        "AISentimentPage shows skeleton loader and retry button on error",
+        "Community voting join/vote/create flow provides visible feedback on success and failure"
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useCountdownTimer.ts",
           "operation": "modify",
-          "description": "Fix the useCountdownTimer hook to correctly fetch timer state from the backend actor using getTimerState(presale) or getTimerState(airdrop). Convert nanosecond bigint endTime using the timers.ts utility function. Run a local setInterval to tick down every second and update days, hours, minutes, seconds in zero-padded format. Set unlocked flag to true when timer reaches zero. Ensure no NaN or undefined values are returned."
+          "description": "Fix the hook to handle timer expiration gracefully: when the remaining time reaches zero or becomes negative, return formatted values '00:00:00:00' and set unlocked flag to true instead of throwing errors or returning invalid states. Ensure the timer stops ticking once expired and does not show negative values."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "modify",
+          "description": "Add an authentication guard at the top of the component. If the user is not authenticated (check via useInternetIdentity), render a styled login prompt screen using glass-card with lock icon, title 'Authentication Required', subtitle 'Please log in with Internet Identity to view live prices', and a visible 'Login' button that triggers the login flow. Only render the live price dashboard after authentication."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "modify",
+          "description": "Add an authentication guard at the top of the component. If the user is not authenticated (check via useInternetIdentity), render a styled login prompt screen using glass-card with lock icon, title 'Authentication Required', subtitle 'Please log in with Internet Identity to manage alerts', and a visible 'Login' button that triggers the login flow. Only render the alerts dashboard after authentication."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "modify",
+          "description": "Handle empty search input gracefully: when the search input is empty or whitespace-only, display a placeholder state with example symbol hints (e.g., 'Try searching: BTC, ETH, SOL') and a glass-card showing popular symbols as clickable suggestion chips. Prevent API calls until a valid symbol is entered. Show clear error messages for invalid symbols."
+        },
+        {
+          "path": "frontend/src/pages/AISentimentPage.tsx",
+          "operation": "modify",
+          "description": "Add a proper loading skeleton state while news data is fetching from useCryptoNews hook: display 5-6 animated skeleton cards in the news grid with gold-toned shimmer. On error, show a glass-card with error icon, error message, and a prominent 'Retry' button that refetches data. Ensure the 12-hour cache countdown timer is visible and updates in real-time."
+        },
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Ensure the poll join, vote, and create flows provide clear user feedback: (1) On successful poll join, show a success toast message 'Successfully joined poll!'. (2) On successful vote submission, show 'Vote recorded!' toast and refresh poll data. (3) On successful poll creation, show 'Poll created!' toast and navigate to the new poll. (4) On errors (invalid code, already voted, passcode incorrect), show inline error messages or error toasts with specific failure reasons. Use glass-card styling for all feedback elements."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Apply consistent gold/dark theme visual design system across all pages",
+      "acceptanceCriteria": [
+        "All pages use glass-card style with gold border accents",
+        "Countdown timers display as large segmented digit blocks",
+        "Locked screens all show a lock icon with consistent title/subtitle layout",
+        "Loading skeletons are gold-toned and animated",
+        "No page uses default unstyled HTML or off-theme colors"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all cards and containers use the glass-card class with gold border accents from frontend/src/index.css. Countdown timer digits must be displayed as large, bold segmented blocks with gold borders. Locked state screen must show a prominent lock icon (use Lucide Lock icon), title, and subtitle in the established theme. Loading states must use animated gold-toned skeletons. Verify all text uses Inter/Poppins typography scale."
         },
         {
           "path": "frontend/src/pages/AcquisitionPage.tsx",
           "operation": "modify",
-          "description": "Update AcquisitionPage to use the fixed useCountdownTimer hook for both presale and airdrop tabs independently. Display days, hours, minutes, seconds in zero-padded format. Disable the submit button while the timer is active (unlocked === false) and enable it when unlocked === true. Preserve all existing visual styling of the forms."
+          "description": "Audit all UI elements: ensure tabs, form inputs, buttons, and countdown timers use glass-card styling with gold accents. Countdown timers must display as large segmented digit blocks with gold borders. Locked state screens for both Pre-Sale and Airdrop tabs must show lock icon, consistent title/subtitle layout. All loading states use gold-toned animated skeletons. Primary buttons use gold gradient."
+        },
+        {
+          "path": "frontend/src/pages/LivePricePage.tsx",
+          "operation": "modify",
+          "description": "Ensure all price cards use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. The authentication prompt screen must use glass-card with lock icon and consistent title/subtitle layout. Verify typography consistency using Inter/Poppins scale."
+        },
+        {
+          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all alert cards and panels use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. The authentication prompt screen must use glass-card with lock icon and consistent title/subtitle layout. All buttons use gold gradient for primary actions."
+        },
+        {
+          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all metric cards use glass-card styling with gold border accents. Loading skeletons for analytics data must be gold-toned and animated. Placeholder state with symbol hints must use glass-card. Verify all typography uses Inter/Poppins scale."
+        },
+        {
+          "path": "frontend/src/pages/AISentimentPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all news article cards use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated with shimmer effect. Error state card must use glass-card with consistent styling. Countdown timer for cache expiry must be styled with gold accents."
+        },
+        {
+          "path": "frontend/src/pages/CommunityVotingPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all poll cards, voting panels, and form elements use glass-card styling with gold border accents. Loading states must use gold-toned animated skeletons. Success and error feedback toasts/messages must follow the gold/dark theme. All primary buttons use gold gradient."
+        },
+        {
+          "path": "frontend/src/pages/MarketPulsePage.tsx",
+          "operation": "modify",
+          "description": "Ensure all indicator cards and sentiment display use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. Verify all typography uses Inter/Poppins scale and that the overall market status indicator is prominent with gold highlights."
         }
       ]
     },
     {
       "id": "REQ-9",
-      "summary": "Ensure Pre-Sale and Airdrop forms work fully after timer unlock with editable fields, validation, and WhatsApp redirect with prefilled data",
+      "summary": "Integrate real public API data for all sections showing placeholder or static data",
       "acceptanceCriteria": [
-        "Pre-sale form fields are fully interactive after timer reaches zero",
-        "Airdrop form fields are fully interactive after timer reaches zero",
-        "Form validation highlights missing/invalid fields correctly",
-        "On submit, WhatsApp opens with all form fields included in the prefilled message",
-        "Backend timer endpoints return the correct roadmap-aligned target timestamps",
-        "No visual design changes to the form UI"
+        "InsightsPage shows live global market cap from CoinGecko",
+        "MarketPulsePage shows live BTC RSI and MACD computed from real data",
+        "AISentimentPage shows real news from CryptoPanic with sentiment labels",
+        "All API error states are handled with retry buttons and user-friendly messages"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "path": "frontend/src/pages/InsightsPage.tsx",
           "operation": "modify",
-          "description": "Ensure AcquisitionPage form fields (name, email, wallet address, amount for presale; name, email, wallet address for airdrop) become fully editable after the timer unlocked flag is true. Verify form validation logic correctly highlights missing/invalid fields. On successful submit, call the openWhatsApp utility from whatsapp.ts with all form fields correctly prefilled in the message (name, email, wallet address, amount for presale; name, email, wallet address for airdrop). Preserve all existing form UI styling."
-        }
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "summary": "Make community voting persistent by integrating with ICP backend actor for Poll storage and vote counting with 10-second polling refresh",
-      "acceptanceCriteria": [
-        "Polls and vote counts persist after page reload",
-        "A user cannot vote twice on the same poll (principal-based deduplication in backend)",
-        "Vote counts update every 10 seconds via React Query refetch",
-        "New polls created by users are immediately visible to others with the join code",
-        "No visual changes to the Community Voting page"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useCommunityVoting.ts",
-          "operation": "modify",
-          "description": "Verify the useCommunityVoting hook correctly calls backend actor methods: getPollsByCode (fetch polls by join code), submitVote or vote (cast vote), and createPoll (create new poll). Configure React Query with a 10-second refetchInterval to update vote counts in real-time. Ensure the hooks handle backend response types correctly and that vote deduplication is enforced by the backend (principal-based)."
-        },
-        {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
-          "operation": "modify",
-          "description": "Verify CommunityVotingPage uses the voting hooks from useCommunityVoting.ts to fetch polls by join code, cast votes, and create new polls. Ensure vote counts update every 10 seconds via the refetch interval. Confirm that polls and vote counts persist correctly after page reload and that previously cast votes are reflected. Preserve all existing visual styling and layout."
-        }
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "summary": "Audit and fix all page-level animations and transitions across the second half of the site to ensure smooth entry animations and parallax effects",
-      "acceptanceCriteria": [
-        "Smoky section transitions animate in correctly when sections enter the viewport",
-        "Parallax offsets apply correctly on scroll without jitter",
-        "No animation-related console errors or failed IntersectionObserver callbacks",
-        "Reduced-motion preference is respected on all animated pages",
-        "No new visual effects added; existing design tokens unchanged"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/AcquisitionPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AcquisitionPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
-        },
-        {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AlertsCenterPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
-        },
-        {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AdvancedAnalyticsPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
-        },
-        {
-          "path": "frontend/src/pages/MarketIntelPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in MarketIntelPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+          "description": "Ensure the page uses useRealWorldAnalytics hook to fetch live global market data from CoinGecko public /global endpoint. Display metrics: total market cap, BTC dominance, ETH dominance, 24h volume, and active cryptocurrencies count. Remove any hardcoded or placeholder values. Implement error handling with retry button and user-friendly error messages in glass-card style. Show loading skeletons while fetching."
         },
         {
           "path": "frontend/src/pages/MarketPulsePage.tsx",
           "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in MarketPulsePage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
-        },
-        {
-          "path": "frontend/src/pages/InsightsPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in InsightsPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
-        },
-        {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
-          "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in CommunityVotingPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+          "description": "Ensure the page uses useMarketPulse hook to fetch live BTC price history and compute RSI and MACD from real CoinGecko OHLC data. Display computed RSI value, MACD histogram, current BTC price, and 24h change. Remove any hardcoded or placeholder values. Implement error handling with retry button and user-friendly error messages in glass-card style. Show loading skeletons while fetching."
         },
         {
           "path": "frontend/src/pages/AISentimentPage.tsx",
           "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in AISentimentPage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+          "description": "Ensure the page uses useCryptoNews hook to fetch real news articles from CryptoPanic public API. Display articles with sentiment labels (positive/negative/neutral) derived from vote counts. Remove any static or placeholder news data. Implement rate limiting error handling with clear error messages and retry button. Show loading skeletons while fetching. Display the 12-hour cache countdown timer."
         },
         {
-          "path": "frontend/src/pages/LivePricePage.tsx",
+          "path": "frontend/src/hooks/useRealWorldAnalytics.ts",
           "operation": "modify",
-          "description": "Audit and fix SmokySectionTransition and parallax hook usage in LivePricePage. Ensure IntersectionObserver callbacks trigger correctly and parallax offsets apply smoothly on scroll. Verify reduced-motion preference is respected. Fix any broken animations or console errors. Do not add new visual effects or change design tokens."
+          "description": "Verify the hook fetches from CoinGecko public /global endpoint (no authentication required) with proper error handling. Ensure the returned data includes: total_market_cap.usd, market_cap_percentage.btc, market_cap_percentage.eth, total_volume.usd, and active_cryptocurrencies. Handle API rate limiting gracefully with exponential backoff and clear error states."
+        },
+        {
+          "path": "frontend/src/hooks/useMarketPulse.ts",
+          "operation": "modify",
+          "description": "Verify the hook fetches Bitcoin 30-day OHLC data and current price from CoinGecko public API (no authentication required). Ensure RSI and MACD are computed from real price data. Handle API errors and rate limiting gracefully with clear error states and retry capability."
+        },
+        {
+          "path": "frontend/src/hooks/useCryptoNews.ts",
+          "operation": "modify",
+          "description": "Verify the hook fetches from CryptoPanic public API (no authentication required) and derives sentiment from vote counts. Ensure the 12-hour cache mechanism works correctly. Handle API errors and rate limiting gracefully with clear error states and retry capability."
         }
       ]
     }

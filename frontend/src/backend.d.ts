@@ -133,6 +133,7 @@ export interface backendInterface {
     deleteAlert(alertId: bigint): Promise<boolean>;
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
+    getAirdropTimerEnd(): Promise<bigint>;
     getAlerts(): Promise<Array<Alert>>;
     getAllCryptoCurrencies(): Promise<Array<CryptoCurrency>>;
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
@@ -148,6 +149,7 @@ export interface backendInterface {
     getPoll(id: bigint): Promise<PollView | null>;
     getPollsByCode(code: string): Promise<Array<PollView>>;
     getPresaleRemainingTime(): Promise<bigint>;
+    getPresaleTimerEnd(): Promise<bigint>;
     getScheduledTasks(): Promise<Array<ScheduledTask>>;
     getTimerState(timerType: TimerType): Promise<TimerState>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
@@ -158,6 +160,7 @@ export interface backendInterface {
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;
     storeMarketIntelligence(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<MarketIntelligence>;
     submitAirdropForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
     submitPresaleForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;

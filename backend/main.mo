@@ -12,7 +12,9 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -215,8 +217,10 @@ actor {
   var lastPoll : ?Poll = null;
   let maxSubmissions = 5000;
   var marketIntelPassword : Text = "BP2420075112009BP";
-  let presaleEndTime : Int = 1_789_434_800_000_000_000;
-  let airdropEndTime : Int = 2_252_772_800_000_000;
+  // Presale end: March 31, 2027 23:59:59 UTC in nanoseconds
+  var presaleEndTime : Int = 1_806_724_799_000_000_000;
+  // Airdrop end: March 31, 2029 23:59:59 UTC in nanoseconds
+  var airdropEndTime : Int = 1_869_796_799_000_000_000;
   let alertsStore = Map.empty<Principal, [Alert]>();
   let livePriceSnapshots = Map.empty<Nat, LivePriceSnapshot>();
   let aiSentimentsStore = Map.empty<Nat, AISentiment>();
@@ -328,14 +332,26 @@ actor {
     };
   };
 
+  // Public: anyone can query remaining presale time for countdown display
   public query func getPresaleRemainingTime() : async Int {
     let now = Time.now();
     if (presaleEndTime < now) { 0 } else { presaleEndTime - now };
   };
 
+  // Public: anyone can query remaining airdrop time for countdown display
   public query func getAirdropRemainingTime() : async Int {
     let now = Time.now();
     if (airdropEndTime < now) { 0 } else { airdropEndTime - now };
+  };
+
+  // Public: anyone can query the presale end timestamp for countdown display
+  public query func getPresaleTimerEnd() : async Int {
+    presaleEndTime;
+  };
+
+  // Public: anyone can query the airdrop end timestamp for countdown display
+  public query func getAirdropTimerEnd() : async Int {
+    airdropEndTime;
   };
 
   public query ({ caller }) func getTimerState(timerType : TimerType) : async TimerState {
@@ -389,6 +405,34 @@ actor {
     };
     timers.add(key, newState);
     newState;
+  };
+
+  // Admin-only: update timer end times and persist them
+  public shared ({ caller }) func setTimerEnd(timerType : TimerType, endTime : Int) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update timer end times");
+    };
+    switch (timerType) {
+      case (#presale) {
+        presaleEndTime := endTime;
+        // Also update the timers map entry if it exists
+        switch (timers.get("presale")) {
+          case (?state) {
+            timers.add("presale", { state with endTime = endTime; lastUpdate = Int.abs(Time.now()) });
+          };
+          case (null) {};
+        };
+      };
+      case (#airdrop) {
+        airdropEndTime := endTime;
+        switch (timers.get("airdrop")) {
+          case (?state) {
+            timers.add("airdrop", { state with endTime = endTime; lastUpdate = Int.abs(Time.now()) });
+          };
+          case (null) {};
+        };
+      };
+    };
   };
 
   public shared ({ caller }) func submitPresaleForm(name : Text, country : Text, walletAddress : Text, rbsAmount : Float) : async FormSubmission {
@@ -824,5 +868,4 @@ actor {
       transform,
     );
   };
-
 };
