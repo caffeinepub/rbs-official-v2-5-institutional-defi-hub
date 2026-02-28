@@ -1,260 +1,186 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Complete Market Intel, Pre-Sale, Airdrop & All UI-Only Sections",
+  "title": "Rebuild Market Intel — G-Man Intelligence Signal Dashboard",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Implement passcode lock for MarketIntelPage with sessionStorage persistence",
+      "summary": "Remove Advanced Analytics, Live Price, and Crypto News sections from Market Intel page",
       "acceptanceCriteria": [
-        "Entering 'BO2420075112009BP' unlocks the page",
-        "Entering any other string shows an error and keeps the page locked",
-        "Unlock state persists in sessionStorage across soft navigations"
+        "Advanced Analytics, Live Price, and Crypto News sub-sections are not rendered anywhere inside the Market Intel page.",
+        "No console errors related to missing components caused by the removal.",
+        "Other standalone pages that use those components remain unaffected."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Add passcode lock UI with input form and 'Unlock' button before the existing authenticated content. On correct passcode 'BO2420075112009BP', set sessionStorage key 'marketIntelUnlocked' to 'true' and update component state. On incorrect passcode, display clear error message. Check sessionStorage on mount to restore unlocked state. Wrap the passcode form in a styled glass-card with gold borders and center the lock icon, title, and input field."
+          "description": "Remove all references to Advanced Analytics, Live Price, and Crypto News sections including imports, component usage, and any hooks exclusively serving those sections. Keep other page functionality intact including the passcode gate, signal generator placeholder, poll creation, and Market Pulse voting sections."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Display fully functional trading signals dashboard in MarketIntelPage after unlock",
+      "summary": "Preserve passcode gate and ensure access to G-Man Intelligence signal generator, poll creation, and live Market Pulse voting after unlock",
       "acceptanceCriteria": [
-        "Time frame and asset selectors are visible and functional after unlock",
-        "Signal (BUY/SELL/HOLD) updates when asset or timeframe changes",
-        "RSI, MACD, and MA values are displayed",
-        "Data comes from public CoinGecko API with no placeholder values"
+        "Visiting /market-intel without unlocking shows only the passcode entry screen.",
+        "Entering the correct passcode reveals all three sections: signal generator, poll creation, Market Pulse.",
+        "Entering an incorrect passcode shows an error and keeps the gate locked.",
+        "The unlock state persists across re-renders within the same browser session."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useMarketIntelLive.ts",
-          "operation": "modify",
-          "description": "Extend the hook to accept asset (string) and timeframe (string) parameters. Map timeframe to CoinGecko days parameter (1H->1, 4H->2, 1D->7, 1W->30). Support at least BTC, ETH, BNB, SOL, XRP as selectable assets. Return computed RSI, MACD, MA crossover indicators, BUY/SELL/HOLD signal, confidence score, and live price for the selected asset and timeframe."
-        },
-        {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "After the passcode unlock guard, add UI for: (1) a timeframe selector (1H/4H/1D/1W) using tabs or radio buttons, (2) an asset dropdown for BTC/ETH/BNB/SOL/XRP, (3) a large signal card showing BUY/SELL/HOLD with confidence percentage using the extended useMarketIntelLive hook with selected asset and timeframe, (4) a live price ticker card for the selected asset, (5) three indicator cards displaying RSI value, MACD histogram, and MA trend direction. Use the existing glass-card styling with gold accents. Display loading skeletons and error states with retry buttons."
+          "description": "Verify and preserve the existing passcode gate mechanism. Ensure sessionStorage-based unlock state persists across re-renders. After successful unlock, render three main sections: G-Man Intelligence signal generator (to be implemented), poll creation (using existing useCommunityVoting), and Market Pulse voting (using existing backend queries). Use the backend method grantMarketIntelAccess for passcode validation."
         }
       ]
     },
     {
-      "id": "REQ-4",
-      "summary": "Fully implement Pre-Sale tab in AcquisitionPage with countdown timer and WhatsApp redirect",
+      "id": "REQ-3",
+      "summary": "Build G-Man Intelligence signal generator UI flow with market category selection, asset selection, and timeframe selection",
       "acceptanceCriteria": [
-        "Countdown timer ticks in real time while locked",
-        "Form is hidden while timer is running",
-        "Form is revealed when unlocked flag is true",
-        "Submission opens WhatsApp with a pre-filled message containing all form fields",
-        "Partial form data survives page refresh via sessionStorage"
+        "Four market category buttons are displayed (Top 10 Crypto, Top 10 Forex, Gold, Silver).",
+        "Selecting a category reveals the individual assets for that category.",
+        "Seven timeframe buttons (1M, 5M, 15M, 30M, 1H, 4H, 1D) are shown after a category is selected.",
+        "The Generate Signal button is disabled until both an asset and a timeframe are selected.",
+        "Selecting a different category resets the asset and timeframe selections."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "path": "frontend/src/components/SignalGeneratorWizard.tsx",
+          "operation": "create",
+          "description": "Create a multi-step wizard component for G-Man Intelligence signal generation. Step 1: Display four category buttons (Top 10 Crypto, Top 10 Forex, Gold, Silver). On category selection, display the specific assets for that category: Top 10 Crypto: BTC, ETH, BNB, SOL, XRP, ADA, DOGE, AVAX, DOT, LINK; Top 10 Forex: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, EUR/JPY, GBP/JPY; Gold: XAUUSD; Silver: XAGUSD. Step 2: Display seven timeframe buttons (1M, 5M, 15M, 30M, 1H, 4H, 1D). Maintain component state for selectedCategory, selectedAsset, and selectedTimeframe. The Generate Signal button is enabled only when both selectedAsset and selectedTimeframe are set. Changing the category resets selectedAsset and selectedTimeframe. Use a clean card-based layout with gold accent buttons matching the RBS theme."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "In the Pre-Sale tab section: (1) Use useCountdownTimer('presale') to fetch the timer end and display a live countdown in large segmented digit blocks (DD:HH:MM:SS) with gold borders. (2) While countdown is running (unlocked flag false), render a locked state with lock icon, timer prominently centered, and explanatory text 'Pre-Sale opens Q1 2027'. (3) When unlocked flag is true, hide the countdown and reveal the Pre-Sale registration form collecting: full name, email, phone number, wallet address, amount to invest, country. (4) On form submission, use buildWhatsAppMessage from frontend/src/utils/whatsapp.ts to construct a pre-filled message with all field values and openWhatsAppRedirect to open WhatsApp with REDIRECT_CONFIG's number. (5) Persist partial form data in sessionStorage under key 'presaleFormDraft' and restore on mount. Use glass-card styling with gold accents throughout."
+          "description": "Import and render the SignalGeneratorWizard component in the unlocked Market Intel page. Position it as the first major section after the passcode gate. Wire the onGenerateSignal callback to trigger the backend generateSignal call and display the result card."
         }
       ]
     },
     {
       "id": "REQ-5",
-      "summary": "Fully implement Airdrop tab in AcquisitionPage with countdown timer and WhatsApp redirect",
+      "summary": "Display G-Man Intelligence signal output card with signal label, confidence percentage, indicator summary, and trend direction",
       "acceptanceCriteria": [
-        "Countdown timer ticks in real time while locked",
-        "Airdrop form is hidden until timer expires",
-        "Submission redirects to WhatsApp with pre-filled airdrop registration message",
-        "Partial form data survives page refresh via sessionStorage"
+        "After clicking Generate Signal a loading state is shown.",
+        "On success, the signal card renders all six fields: signal label, confidence %, indicator summary, trend direction, asset name, timeframe.",
+        "Strong Buy / Buy are styled in green tones; Sell / Strong Sell in red tones; Neutral in grey/amber.",
+        "A confidence progress bar or percentage badge is clearly visible.",
+        "The card header reads 'G-Man Intelligence'.",
+        "On backend error, a user-friendly error message is displayed instead of a blank card."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "path": "frontend/src/hooks/useGenerateSignal.ts",
+          "operation": "create",
+          "description": "Create a React Query mutation hook that calls the backend generateSignal function with symbol and timeframe parameters. Return SignalResult containing signal (StrongBuy | Buy | Neutral | Sell | StrongSell), confidencePct, indicatorSummary, trendDirection, and calculatedAt timestamp. Handle loading, success, and error states. Use the useActor hook to access the authenticated backend actor."
+        },
+        {
+          "path": "frontend/src/components/SignalOutputCard.tsx",
+          "operation": "create",
+          "description": "Create a signal output card component that displays G-Man Intelligence results. Include the generated image 'frontend/public/assets/generated/gman-intelligence-logo.dim_256x256.png' in the card header with the text 'G-Man Intelligence'. Display the signal label with color coding: StrongBuy/Buy in green (e.g., bg-green-500/10 border-green-500), Sell/StrongSell in red (e.g., bg-red-500/10 border-red-500), Neutral in grey/amber (e.g., bg-amber-500/10 border-amber-500). Show confidence percentage as both a numeric badge and a progress bar. Display indicatorSummary as readable text and trendDirection as a labeled field. Show the asset name and timeframe for reference. Handle loading state with a spinner and error state with a user-friendly message. Use glass-morphism card styling consistent with the RBS dark-gold theme."
+        },
+        {
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "In the Airdrop tab section: (1) Use useCountdownTimer('airdrop') to fetch the timer end and display a live countdown in large segmented digit blocks (DD:HH:MM:SS) with gold borders. (2) While countdown is running (unlocked flag false), render a locked state with lock icon, timer prominently centered, and explanatory text 'Airdrop opens Q1 2029'. (3) When unlocked flag is true, hide the countdown and reveal the Airdrop registration form collecting: full name, email, wallet address, country, referral code (optional). (4) On form submission, use buildWhatsAppMessage and openWhatsAppRedirect from frontend/src/utils/whatsapp.ts with all field values. (5) Persist partial form data in sessionStorage under key 'airdropFormDraft' and restore on mount. Use glass-card styling with gold accents."
+          "description": "Wire SignalOutputCard to display results from the useGenerateSignal mutation. Pass the mutation result to SignalOutputCard after the user clicks Generate Signal in the SignalGeneratorWizard. Position the output card immediately below the wizard. Show loading spinner while mutation is pending, display the signal card on success, and show error message on failure."
         }
       ]
     },
     {
       "id": "REQ-6",
-      "summary": "Complete all empty/placeholder frontend section and page components with full implementations",
+      "summary": "Implement real-time Market Pulse voting with live percentage bars and poll creation access",
       "acceptanceCriteria": [
-        "FormsSection renders presale and airdrop countdown/form panels",
-        "HeroSection renders with RBS logo, tagline, and working CTA buttons",
-        "OracleSection renders live market data from CoinGecko",
-        "WhitepaperSection renders chapter teasers with link to WhitepaperPage",
-        "DeveloperBlogPage and DeveloperToolsPage each render at least 3 content cards"
+        "Three voting buttons (Bullish, Bearish, Neutral) are displayed in the Market Pulse section.",
+        "Clicking a button records the vote via the backend and immediately updates the displayed percentages.",
+        "The tally auto-refreshes every 10 seconds without a full page reload.",
+        "Percentages always sum to 100% and are displayed as progress bars with numeric labels.",
+        "A user who has already voted in the current session sees their selection highlighted but cannot vote again.",
+        "Poll creation UI from the existing CommunityVoting feature is accessible within the unlocked Market Intel page."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/FormsSection.tsx",
-          "operation": "modify",
-          "description": "Implement a section rendering both Pre-Sale and Airdrop panels side-by-side (or stacked on mobile). Each panel includes a countdown timer using useCountdownTimer hook and a brief description. Link each panel to the respective tab on AcquisitionPage. Use glass-card styling with gold borders and the RBS logo asset from frontend/public/assets/generated/rbs-logo-transparent.dim_200x200.png. Apply smoky section transition animation."
+          "path": "frontend/src/hooks/useMarketPulseVoting.ts",
+          "operation": "create",
+          "description": "Create a React Query hook for Market Pulse voting. Implement a query for getMarketPulseTally that auto-refetches every 10 seconds. Implement a mutation for voteMarketPulse that accepts sentiment (Bullish, Bearish, Neutral) and invalidates the tally query on success. Track the user's vote in component state or sessionStorage to prevent duplicate voting in the same session. Use the useActor hook to access the backend actor."
         },
         {
-          "path": "frontend/src/components/HeroSection.tsx",
-          "operation": "modify",
-          "description": "Implement an animated hero section with: (1) RBS logo using frontend/public/assets/generated/rbs-logo-hero-metallic.dim_400x400.png centered at top, (2) a bold tagline 'RBS Institutional Hub - Advanced DeFi Intelligence & Trading Signals', (3) two primary CTA buttons: 'Join Pre-Sale' linking to AcquisitionPage (presale tab) and 'Read Whitepaper' linking to WhitepaperPage. Use gold gradient buttons and apply parallax scrolling effect via useParallax hook. Background should use frontend/public/assets/generated/hero-bg.dim_1920x1080.png."
+          "path": "frontend/src/components/MarketPulseVoting.tsx",
+          "operation": "create",
+          "description": "Create a Market Pulse voting component that displays three voting buttons (Bullish, Bearish, Neutral) and live percentage bars. Use the useMarketPulseVoting hook to fetch the current tally and cast votes. Disable the button the user has already clicked and highlight it to show their selection. Calculate and display percentages from the VoteTally (bullish, bearish, neutral, total) ensuring they sum to 100%. Render progress bars with numeric percentage labels for each sentiment. Use gold accent colors for active selection, green for Bullish, red for Bearish, and grey for Neutral. Auto-refresh the tally every 10 seconds using the query's refetchInterval."
         },
         {
-          "path": "frontend/src/components/OracleSection.tsx",
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Implement a live oracle-style data feed section displaying real-time global crypto market metrics fetched via useRealWorldAnalytics hook: total market cap, BTC dominance, ETH dominance, 24h volume, and active cryptocurrencies count. Render these as animated metric cards in a grid layout with glass-card styling and gold accents. Show loading skeletons and error states with retry button. Apply smoky section transition animation."
-        },
-        {
-          "path": "frontend/src/components/WhitepaperSection.tsx",
-          "operation": "modify",
-          "description": "Implement a whitepaper teaser section with: (1) a section title 'Explore the RBS Whitepaper', (2) a grid of 4-6 chapter highlight cards showing chapter titles (e.g., 'Introduction', 'Tokenomics', 'Technology', 'Governance', 'Roadmap', 'Security') with brief descriptions and chapter icons, (3) a prominent CTA button 'Read Full Whitepaper' linking to WhitepaperPage. Use glass-card styling with gold borders and apply smoky section transition animation."
-        },
-        {
-          "path": "frontend/src/pages/DeveloperBlogPage.tsx",
-          "operation": "modify",
-          "description": "Implement a developer blog page with at least 3 blog post cards. Each card includes: post title (e.g., 'Building on ICP: Best Practices', 'Integrating RBS Oracles', 'Smart Contract Security Guide'), publication date, author, excerpt, and a 'Read More' link. Use glass-card styling with gold borders and apply fade-in animations on scroll. Include a page header with title 'Developer Blog' and subtitle 'Insights & Tutorials for RBS Builders'."
-        },
-        {
-          "path": "frontend/src/pages/DeveloperToolsPage.tsx",
-          "operation": "modify",
-          "description": "Implement a developer tools page with at least 3 tool/resource cards. Each card includes: tool name (e.g., 'RBS SDK', 'API Documentation', 'Smart Contract Templates'), description, key features list, and external link or download button. Use glass-card styling with gold borders and apply fade-in animations on scroll. Include a page header with title 'Developer Tools' and subtitle 'Resources & SDKs for Building on RBS'."
+          "description": "Import and render the MarketPulseVoting component in the unlocked Market Intel page. Position it after the signal output card section. Ensure the existing poll creation UI from useCommunityVoting is also rendered and accessible in the unlocked page. Maintain clear visual separation between Market Pulse voting and poll creation sections."
         }
       ]
     },
     {
       "id": "REQ-7",
-      "summary": "Audit and fix all broken/incomplete functionality across frontend pages",
+      "summary": "Add Contact Information section with WhatsApp Channel, Telegram, Presale WhatsApp, and Contact Email links",
       "acceptanceCriteria": [
-        "useCountdownTimer displays 00:00:00:00 when expired without throwing errors",
-        "Unauthenticated users on LivePricePage see a clear login prompt",
-        "Unauthenticated users on AlertsCenterPage see a clear login prompt",
-        "AdvancedAnalyticsPage shows example symbols and handles empty input gracefully",
-        "AISentimentPage shows skeleton loader and retry button on error",
-        "Community voting join/vote/create flow provides visible feedback on success and failure"
+        "All four contact links are rendered in the Market Intel page after unlock.",
+        "Each link opens in a new browser tab.",
+        "The WhatsApp channel link URL is exactly https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P.",
+        "The Telegram link URL is exactly https://t.me/RBSuperior.",
+        "The Presale & Airdrop WhatsApp link dials +92 329 4238997 via wa.me.",
+        "The email link uses mailto:design.crafters.official@gmail.com."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useCountdownTimer.ts",
-          "operation": "modify",
-          "description": "Fix the hook to handle timer expiration gracefully: when the remaining time reaches zero or becomes negative, return formatted values '00:00:00:00' and set unlocked flag to true instead of throwing errors or returning invalid states. Ensure the timer stops ticking once expired and does not show negative values."
+          "path": "frontend/src/components/ContactInfoSection.tsx",
+          "operation": "create",
+          "description": "Create a Contact Information section component displaying four contact links: WhatsApp Channel (https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P), Telegram (https://t.me/RBSuperior), Presale & Airdrop WhatsApp (+92 329 4238997 via https://wa.me/923294238997), and Contact Email (mailto:design.crafters.official@gmail.com). Render each as a clickable button or link with appropriate icons (use lucide-react icons: MessageCircle for WhatsApp, Send for Telegram, Mail for email). All links must open in a new tab (target='_blank' rel='noopener noreferrer'). Use gold accent styling consistent with the RBS theme and organize links in a responsive grid or column layout."
         },
         {
-          "path": "frontend/src/pages/LivePricePage.tsx",
+          "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Add an authentication guard at the top of the component. If the user is not authenticated (check via useInternetIdentity), render a styled login prompt screen using glass-card with lock icon, title 'Authentication Required', subtitle 'Please log in with Internet Identity to view live prices', and a visible 'Login' button that triggers the login flow. Only render the live price dashboard after authentication."
-        },
-        {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
-          "operation": "modify",
-          "description": "Add an authentication guard at the top of the component. If the user is not authenticated (check via useInternetIdentity), render a styled login prompt screen using glass-card with lock icon, title 'Authentication Required', subtitle 'Please log in with Internet Identity to manage alerts', and a visible 'Login' button that triggers the login flow. Only render the alerts dashboard after authentication."
-        },
-        {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "operation": "modify",
-          "description": "Handle empty search input gracefully: when the search input is empty or whitespace-only, display a placeholder state with example symbol hints (e.g., 'Try searching: BTC, ETH, SOL') and a glass-card showing popular symbols as clickable suggestion chips. Prevent API calls until a valid symbol is entered. Show clear error messages for invalid symbols."
-        },
-        {
-          "path": "frontend/src/pages/AISentimentPage.tsx",
-          "operation": "modify",
-          "description": "Add a proper loading skeleton state while news data is fetching from useCryptoNews hook: display 5-6 animated skeleton cards in the news grid with gold-toned shimmer. On error, show a glass-card with error icon, error message, and a prominent 'Retry' button that refetches data. Ensure the 12-hour cache countdown timer is visible and updates in real-time."
-        },
-        {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the poll join, vote, and create flows provide clear user feedback: (1) On successful poll join, show a success toast message 'Successfully joined poll!'. (2) On successful vote submission, show 'Vote recorded!' toast and refresh poll data. (3) On successful poll creation, show 'Poll created!' toast and navigate to the new poll. (4) On errors (invalid code, already voted, passcode incorrect), show inline error messages or error toasts with specific failure reasons. Use glass-card styling for all feedback elements."
+          "description": "Import and render the ContactInfoSection component at the bottom of the unlocked Market Intel page, after all other sections (signal generator, signal output, Market Pulse voting, poll creation). Ensure it is only visible after the passcode gate is unlocked."
         }
       ]
     },
     {
       "id": "REQ-8",
-      "summary": "Apply consistent gold/dark theme visual design system across all pages",
+      "summary": "Apply professional real-time AI trading dashboard visual theme with dark background, gold accents, and full responsiveness",
       "acceptanceCriteria": [
-        "All pages use glass-card style with gold border accents",
-        "Countdown timers display as large segmented digit blocks",
-        "Locked screens all show a lock icon with consistent title/subtitle layout",
-        "Loading skeletons are gold-toned and animated",
-        "No page uses default unstyled HTML or off-theme colors"
+        "The Market Intel page uses a dark background with gold accent colours.",
+        "All sections are clearly delineated with card containers.",
+        "Numeric signal values and percentages use a monospaced or technical font style.",
+        "The page layout is fully responsive and usable on screens from 375px wide upward.",
+        "No visual overlap, broken layout, or unstyled elements exist on the page."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add utility classes for monospaced or technical typography using existing font families or by importing a monospace font (e.g., 'Roboto Mono', 'JetBrains Mono'). Ensure dark background and gold accent color CSS variables are accessible throughout the app. Do not change existing Tailwind base directives or theme variables; only extend with additional utility classes if needed."
+        },
         {
           "path": "frontend/src/pages/MarketIntelPage.tsx",
           "operation": "modify",
-          "description": "Ensure all cards and containers use the glass-card class with gold border accents from frontend/src/index.css. Countdown timer digits must be displayed as large, bold segmented blocks with gold borders. Locked state screen must show a prominent lock icon (use Lucide Lock icon), title, and subtitle in the established theme. Loading states must use animated gold-toned skeletons. Verify all text uses Inter/Poppins typography scale."
+          "description": "Apply a dark background (e.g., bg-background or bg-gray-950) to the page container. Wrap each major section (passcode gate, signal generator, signal output, Market Pulse, poll creation, contact info) in a glass-morphism card with subtle borders or glows using gold accent colors (e.g., border-[rgb(var(--gold))] shadow-[0_0_20px_rgba(255,215,0,0.15)]). Use a monospaced or technical font class (e.g., font-mono) for all numeric values (confidence percentages, vote percentages, signal confidence). Ensure responsive layout with padding and spacing adjustments for mobile (min-width 375px) and desktop (lg breakpoint). Test for visual overlap and broken layouts at all breakpoints."
         },
         {
-          "path": "frontend/src/pages/AcquisitionPage.tsx",
+          "path": "frontend/src/components/SignalGeneratorWizard.tsx",
           "operation": "modify",
-          "description": "Audit all UI elements: ensure tabs, form inputs, buttons, and countdown timers use glass-card styling with gold accents. Countdown timers must display as large segmented digit blocks with gold borders. Locked state screens for both Pre-Sale and Airdrop tabs must show lock icon, consistent title/subtitle layout. All loading states use gold-toned animated skeletons. Primary buttons use gold gradient."
+          "description": "Apply dark-gold theme styling to category buttons, asset buttons, and timeframe buttons. Use gold accent colors for selected/active states (e.g., bg-[rgb(var(--gold))] text-black) and dark neutral colors for inactive states (e.g., bg-gray-800 text-gray-300). Ensure buttons are touch-friendly on mobile (min-h-12 min-w-20). Use a clean card container with glass-morphism effect and responsive grid or flex layout."
         },
         {
-          "path": "frontend/src/pages/LivePricePage.tsx",
+          "path": "frontend/src/components/SignalOutputCard.tsx",
           "operation": "modify",
-          "description": "Ensure all price cards use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. The authentication prompt screen must use glass-card with lock icon and consistent title/subtitle layout. Verify typography consistency using Inter/Poppins scale."
+          "description": "Apply monospaced or technical font to numeric values (confidence percentage, timestamp). Use dark card background (e.g., bg-gray-900/80) with gold accent borders. Apply color-coded backgrounds and borders for signal labels: green for Buy signals (bg-green-500/10 border-green-500), red for Sell signals (bg-red-500/10 border-red-500), amber/grey for Neutral (bg-amber-500/10 border-amber-500). Ensure responsive layout with proper spacing and text wrapping."
         },
         {
-          "path": "frontend/src/pages/AlertsCenterPage.tsx",
+          "path": "frontend/src/components/MarketPulseVoting.tsx",
           "operation": "modify",
-          "description": "Ensure all alert cards and panels use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. The authentication prompt screen must use glass-card with lock icon and consistent title/subtitle layout. All buttons use gold gradient for primary actions."
+          "description": "Apply dark-gold theme with glass-morphism card styling. Use monospaced font for percentage values. Style voting buttons with color-coded accents: green for Bullish, red for Bearish, grey for Neutral. Highlight the user's selected vote with a gold border or glow. Ensure progress bars are clearly visible with appropriate color fills and responsive widths."
         },
         {
-          "path": "frontend/src/pages/AdvancedAnalyticsPage.tsx",
+          "path": "frontend/src/components/ContactInfoSection.tsx",
           "operation": "modify",
-          "description": "Ensure all metric cards use glass-card styling with gold border accents. Loading skeletons for analytics data must be gold-toned and animated. Placeholder state with symbol hints must use glass-card. Verify all typography uses Inter/Poppins scale."
-        },
-        {
-          "path": "frontend/src/pages/AISentimentPage.tsx",
-          "operation": "modify",
-          "description": "Ensure all news article cards use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated with shimmer effect. Error state card must use glass-card with consistent styling. Countdown timer for cache expiry must be styled with gold accents."
-        },
-        {
-          "path": "frontend/src/pages/CommunityVotingPage.tsx",
-          "operation": "modify",
-          "description": "Ensure all poll cards, voting panels, and form elements use glass-card styling with gold border accents. Loading states must use gold-toned animated skeletons. Success and error feedback toasts/messages must follow the gold/dark theme. All primary buttons use gold gradient."
-        },
-        {
-          "path": "frontend/src/pages/MarketPulsePage.tsx",
-          "operation": "modify",
-          "description": "Ensure all indicator cards and sentiment display use glass-card styling with gold border accents. Loading skeletons must be gold-toned and animated. Verify all typography uses Inter/Poppins scale and that the overall market status indicator is prominent with gold highlights."
-        }
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "summary": "Integrate real public API data for all sections showing placeholder or static data",
-      "acceptanceCriteria": [
-        "InsightsPage shows live global market cap from CoinGecko",
-        "MarketPulsePage shows live BTC RSI and MACD computed from real data",
-        "AISentimentPage shows real news from CryptoPanic with sentiment labels",
-        "All API error states are handled with retry buttons and user-friendly messages"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/InsightsPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the page uses useRealWorldAnalytics hook to fetch live global market data from CoinGecko public /global endpoint. Display metrics: total market cap, BTC dominance, ETH dominance, 24h volume, and active cryptocurrencies count. Remove any hardcoded or placeholder values. Implement error handling with retry button and user-friendly error messages in glass-card style. Show loading skeletons while fetching."
-        },
-        {
-          "path": "frontend/src/pages/MarketPulsePage.tsx",
-          "operation": "modify",
-          "description": "Ensure the page uses useMarketPulse hook to fetch live BTC price history and compute RSI and MACD from real CoinGecko OHLC data. Display computed RSI value, MACD histogram, current BTC price, and 24h change. Remove any hardcoded or placeholder values. Implement error handling with retry button and user-friendly error messages in glass-card style. Show loading skeletons while fetching."
-        },
-        {
-          "path": "frontend/src/pages/AISentimentPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the page uses useCryptoNews hook to fetch real news articles from CryptoPanic public API. Display articles with sentiment labels (positive/negative/neutral) derived from vote counts. Remove any static or placeholder news data. Implement rate limiting error handling with clear error messages and retry button. Show loading skeletons while fetching. Display the 12-hour cache countdown timer."
-        },
-        {
-          "path": "frontend/src/hooks/useRealWorldAnalytics.ts",
-          "operation": "modify",
-          "description": "Verify the hook fetches from CoinGecko public /global endpoint (no authentication required) with proper error handling. Ensure the returned data includes: total_market_cap.usd, market_cap_percentage.btc, market_cap_percentage.eth, total_volume.usd, and active_cryptocurrencies. Handle API rate limiting gracefully with exponential backoff and clear error states."
-        },
-        {
-          "path": "frontend/src/hooks/useMarketPulse.ts",
-          "operation": "modify",
-          "description": "Verify the hook fetches Bitcoin 30-day OHLC data and current price from CoinGecko public API (no authentication required). Ensure RSI and MACD are computed from real price data. Handle API errors and rate limiting gracefully with clear error states and retry capability."
-        },
-        {
-          "path": "frontend/src/hooks/useCryptoNews.ts",
-          "operation": "modify",
-          "description": "Verify the hook fetches from CryptoPanic public API (no authentication required) and derives sentiment from vote counts. Ensure the 12-hour cache mechanism works correctly. Handle API errors and rate limiting gracefully with clear error states and retry capability."
+          "description": "Apply dark card background with gold accent borders. Style contact links as buttons with icons, using gold hover effects. Ensure responsive grid layout that stacks vertically on mobile and displays in a 2x2 or 4-column grid on desktop."
         }
       ]
     }

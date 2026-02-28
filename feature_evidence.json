@@ -1,4 +1,163 @@
 {
   "kind": "feature_evidence_report",
-  "features": []
+  "features": [
+    {
+      "featureId": "feature-remove-the-advanced-analytics-section-live-price-section-and-crypto-news-section-entirely-from-the-market-intel-page-marketintelpage-tsx-delete-or-stub-out-any-sub-components-hooks-or-imports-that-are-exclusively-used-by-those-three-sections-advancedanalyticspage-livepricepage-aisentimentpage-references-inside-market-intel-do-not-break-other-pages-that-may-independently-route-to-those-pages",
+      "featureTitle": "Remove the Advanced Analytics section, Live Price section, and Crypto News section entirely from the Market Intel page (MarketIntelPage.tsx). Delete or stub out any sub-components, hooks, or imports that are exclusively used by those three sections (AdvancedAnalyticsPage, LivePricePage, AISentimentPage references inside Market Intel). Do not break other pages that may independently route to those pages.",
+      "files": [
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-the-market-intel-page-must-be-locked-behind-a-passcode-gate-before-entering-the-user-sees-a-lock-screen-asking-for-a-passcode-the-existing-passcode-mechanism-must-be-preserved-do-not-change-the-passcode-value-on-successful-unlock-stored-in-component-state-sessionstorage-so-it-survives-re-renders-but-not-a-full-new-session-the-user-gains-access-to-a-g-man-intelligence-signal-generator-b-poll-creation-c-live-market-pulse-voting",
+      "featureTitle": "The Market Intel page must be locked behind a passcode gate. Before entering, the user sees a lock screen asking for a passcode. The existing passcode mechanism must be preserved (do not change the passcode value). On successful unlock (stored in component state / sessionStorage so it survives re-renders but not a full new session), the user gains access to: (a) G-Man Intelligence signal generator, (b) Poll creation, (c) Live Market Pulse voting.",
+      "files": [
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-the-g-man-intelligence-signal-generator-ui-flow-inside-the-market-intel-page-step-1-the-user-selects-a-market-category-from-four-options-top-10-crypto-btc-eth-bnb-sol-xrp-ada-doge-avax-dot-link-top-10-forex-eur-usd-gbp-usd-usd-jpy-usd-chf-aud-usd-usd-cad-nzd-usd-eur-gbp-eur-jpy-gbp-jpy-gold-xauusd-silver-xagusd-after-selecting-a-category-show-the-assets-in-that-category-for-the-user-to-pick-one-step-2-the-user-selects-a-timeframe-1m-5m-15m-30m-1h-4h-1d-a-generate-signal-button-becomes-active-only-after-both-a-specific-asset-and-a-timeframe-are-chosen",
+      "featureTitle": "Build the G-Man Intelligence signal generator UI flow inside the Market Intel page. Step 1: The user selects a market category from four options — Top 10 Crypto (BTC, ETH, BNB, SOL, XRP, ADA, DOGE, AVAX, DOT, LINK), Top 10 Forex (EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, EUR/JPY, GBP/JPY), Gold (XAUUSD), Silver (XAGUSD). After selecting a category, show the assets in that category for the user to pick one. Step 2: The user selects a timeframe: 1M, 5M, 15M, 30M, 1H, 4H, 1D. A 'Generate Signal' button becomes active only after both a specific asset and a timeframe are chosen.",
+      "files": [
+        "frontend/src/components/SignalGeneratorWizard.tsx",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-the-g-man-intelligence-signal-output-card-in-the-market-intel-frontend-after-the-user-clicks-generate-signal-and-the-backend-returns-a-result-the-card-must-show-the-signal-label-strong-buy-buy-neutral-sell-strong-sell-with-a-distinct-colour-coding-green-shades-for-buys-red-shades-for-sells-grey-for-neutral-a-confidence-percentage-bar-or-badge-the-indicator-summary-text-and-the-trend-direction-show-a-loading-spinner-while-the-backend-call-is-in-progress-show-an-error-message-if-the-call-fails-brand-the-card-with-the-name-g-man-intelligence-and-a-suitable-icon",
+      "featureTitle": "Display the G-Man Intelligence signal output card in the Market Intel frontend after the user clicks Generate Signal and the backend returns a result. The card must show: the signal label (Strong Buy / Buy / Neutral / Sell / Strong Sell) with a distinct colour coding (green shades for buys, red shades for sells, grey for neutral), a confidence percentage bar or badge, the indicator summary text, and the trend direction. Show a loading spinner while the backend call is in progress. Show an error message if the call fails. Brand the card with the name 'G-Man Intelligence' and a suitable icon.",
+      "files": [
+        "frontend/src/components/SignalOutputCard.tsx",
+        "frontend/src/hooks/useGenerateSignal.ts",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-real-time-market-pulse-inside-the-unlocked-market-intel-page-users-can-cast-one-vote-per-session-for-bullish-bearish-or-neutral-the-backend-must-store-vote-counts-in-stable-state-with-a-votemarketpulse-sentiment-text-async-votetally-function-and-a-getmarketpulsetally-query-async-votetally-query-the-frontend-must-poll-or-refetch-the-tally-every-10-seconds-without-requiring-a-page-refresh-and-display-the-three-options-with-live-percentage-bars-the-existing-poll-creation-feature-usecommunityvoting-must-also-remain-accessible-in-the-unlocked-market-intel-page",
+      "featureTitle": "Implement real-time Market Pulse inside the (unlocked) Market Intel page. Users can cast one vote per session for Bullish, Bearish, or Neutral. The backend must store vote counts in stable state with a `voteMarketPulse(sentiment: Text) : async VoteTally` function and a `getMarketPulseTally : query () : async VoteTally` query. The frontend must poll or refetch the tally every 10 seconds without requiring a page refresh, and display the three options with live percentage bars. The existing poll creation feature (useCommunityVoting) must also remain accessible in the unlocked Market Intel page.",
+      "files": [
+        "frontend/src/components/MarketPulseVoting.tsx",
+        "frontend/src/hooks/useMarketPulseVoting.ts",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-contact-information-section-at-the-bottom-of-the-market-intel-page-visible-after-unlock-displaying-the-following-links-and-details-clearly-whatsapp-channel-https-whatsapp-com-channel-0029vbb6fhv59pwwv9wie93p-rendered-as-a-clickable-button-link-opening-in-a-new-tab-telegram-https-t-me-rbsuperior-rendered-as-a-clickable-button-link-opening-in-a-new-tab-presale-airdrop-whatsapp-92-329-4238997-rendered-as-a-clickable-whatsapp-chat-link-https-wa-me-923294238997-opening-in-a-new-tab-contact-email-design-crafters-official-gmail-com-rendered-as-a-mailto-link",
+      "featureTitle": "Add a Contact Information section at the bottom of the Market Intel page (visible after unlock) displaying the following links and details clearly: WhatsApp Channel: https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P — rendered as a clickable button/link opening in a new tab. Telegram: https://t.me/RBSuperior — rendered as a clickable button/link opening in a new tab. Presale & Airdrop WhatsApp: +92 329 4238997 — rendered as a clickable WhatsApp chat link (https://wa.me/923294238997) opening in a new tab. Contact Email: design.crafters.official@gmail.com — rendered as a mailto link.",
+      "files": [
+        "frontend/src/components/ContactInfoSection.tsx",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-professional-real-time-ai-trading-dashboard-visual-theme-to-the-market-intel-page-use-a-dark-background-with-gold-accent-colours-consistent-with-the-existing-rbs-gold-and-white-design-system-clean-card-layouts-with-subtle-borders-glows-monospaced-or-technical-typography-for-numeric-values-and-clearly-separated-sections-for-passcode-gate-signal-generator-wizard-signal-output-card-market-pulse-voting-poll-creation-and-contact-info-ensure-full-responsiveness-on-mobile-and-desktop",
+      "featureTitle": "Apply a professional real-time AI trading dashboard visual theme to the Market Intel page. Use a dark background with gold accent colours (consistent with the existing RBS gold-and-white design system), clean card layouts with subtle borders/glows, monospaced or technical typography for numeric values, and clearly separated sections for: passcode gate, signal generator wizard, signal output card, Market Pulse voting, poll creation, and contact info. Ensure full responsiveness on mobile and desktop.",
+      "files": [
+        "frontend/src/components/ContactInfoSection.tsx",
+        "frontend/src/components/MarketPulseVoting.tsx",
+        "frontend/src/components/SignalGeneratorWizard.tsx",
+        "frontend/src/components/SignalOutputCard.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "http-outcalls@3.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    }
+  ]
 }

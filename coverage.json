@@ -1,116 +1,120 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T23:52:26.200Z",
+  "generatedAt": "2026-02-28T01:05:06.786Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 9,
-    "implemented": 0,
+    "total": 8,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "In MarketIntelPage.tsx, implement the passcode lock using the exact passcode 'BO2420075112009BP'. On the locked screen, show a styled passcode input form with a visible 'Unlock' button. After the correct passcode is entered, persist the unlocked state in sessionStorage so it survives page reloads within the session. On incorrect passcode, show a clear error message.",
-        "status": "missing",
+        "summary": "Remove the Advanced Analytics section, Live Price section, and Crypto News section entirely from the Market Intel page (MarketIntelPage.tsx). Delete or stub out any sub-components, hooks, or imports that are exclusively used by those three sections (AdvancedAnalyticsPage, LivePricePage, AISentimentPage references inside Market Intel). Do not break other pages that may independently route to those pages.",
+        "status": "implemented",
         "plannedFiles": [
           "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "After unlocking the Market Intel page, display a fully functional trading signals dashboard. Include: (1) a time frame selector (1H, 4H, 1D, 1W), (2) an asset selector for at least BTC, ETH, BNB, SOL, and XRP, (3) live BUY/SELL/HOLD signals with confidence scores computed from RSI, MACD, and MA crossover indicators fetched via the public CoinGecko OHLC API, (4) a live price ticker for the selected asset, and (5) indicator cards showing RSI value, MACD histogram, and trend direction. Use the existing useMarketIntelLive hook as the data source and extend it to support asset and timeframe parameters.",
-        "status": "missing",
+        "summary": "The Market Intel page must be locked behind a passcode gate. Before entering, the user sees a lock screen asking for a passcode. The existing passcode mechanism must be preserved (do not change the passcode value). On successful unlock (stored in component state / sessionStorage so it survives re-renders but not a full new session), the user gains access to: (a) G-Man Intelligence signal generator, (b) Poll creation, (c) Live Market Pulse voting.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useMarketIntelLive.ts",
           "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
       },
       {
         "id": "REQ-3",
-        "summary": "In the backend (main.mo), ensure getPresaleTimerEnd and getAirdropTimerEnd return the correct hardcoded end timestamps: Presale = Q1 2027 (March 31, 2027 23:59:59 UTC in nanoseconds), Airdrop = Q1 2029 (March 31, 2029 23:59:59 UTC in nanoseconds). Also expose a setTimerEnd admin method to allow future changes. Ensure these values survive upgrades.",
+        "summary": "Build the G-Man Intelligence signal generator UI flow inside the Market Intel page. Step 1: The user selects a market category from four options — Top 10 Crypto (BTC, ETH, BNB, SOL, XRP, ADA, DOGE, AVAX, DOT, LINK), Top 10 Forex (EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, EUR/JPY, GBP/JPY), Gold (XAUUSD), Silver (XAGUSD). After selecting a category, show the assets in that category for the user to pick one. Step 2: The user selects a timeframe: 1M, 5M, 15M, 30M, 1H, 4H, 1D. A 'Generate Signal' button becomes active only after both a specific asset and a timeframe are chosen.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/SignalGeneratorWizard.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/SignalGeneratorWizard.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Create a new Motoko backend function `generateSignal(symbol: Text, timeframe: Text) : async SignalResult` where SignalResult contains: signal (variant: StrongBuy | Buy | Neutral | Sell | StrongSell), confidencePct (Nat), indicatorSummary (Text), trendDirection (Text), and calculatedAt (Int timestamp). The function must fetch real OHLCV candle data from a public market data API (use CoinGecko for crypto — /coins/{id}/ohlc endpoint; use a free Forex/metals data source such as frankfurter.app or exchangerate-api for Forex, Gold, Silver). Using the fetched candle data, compute all the following indicators server-side in Motoko: RSI (14-period), MACD (12/26/9 EMA), EMA (20 and 50 period), SMA (20 and 50 period), Bollinger Bands (20-period, 2 std dev), Volume average comparison, ATR (14-period), Trend strength (ADX-style using directional movement), Support & Resistance (recent swing highs/lows), Momentum (rate of change). Apply a weighted scoring system across all indicators to produce the final signal and a confidence percentage (0–100). Store the API key(s) in the backend actor's stable state (accessible only via admin key-setting function, never exposed to the frontend).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-4",
-        "summary": "In AcquisitionPage.tsx, fully implement the Pre-Sale tab: (1) Show a live countdown timer (days/hours/minutes/seconds) using useCountdownTimer fetching from the backend presale timer end; (2) While countdown is running, display a visually complete locked state with the timer prominently centered and explanatory text; (3) When the timer expires (unlocked flag true), reveal the full Pre-Sale registration form collecting: full name, email, phone number, wallet address, amount to invest, country; (4) On form submit, build a pre-filled WhatsApp message with all field values and redirect to WhatsApp using the existing helper in frontend/src/utils/whatsapp.ts using REDIRECT_CONFIG's WhatsApp number. Persist partially filled form data in sessionStorage.",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/pages/AcquisitionPage.tsx"
-        ],
-        "matchedFiles": []
-      },
-      {
         "id": "REQ-5",
-        "summary": "In AcquisitionPage.tsx, fully implement the Airdrop tab: (1) Show a live countdown timer (days/hours/minutes/seconds) using useCountdownTimer fetching from the backend airdrop timer end; (2) While countdown is running, show a visually complete locked state with the timer and explanatory text; (3) When timer expires, reveal the Airdrop registration form collecting: full name, email, wallet address, country, referral code (optional); (4) On form submit, build a pre-filled WhatsApp message and redirect to WhatsApp using REDIRECT_CONFIG. Persist partially filled data in sessionStorage.",
-        "status": "missing",
+        "summary": "Display the G-Man Intelligence signal output card in the Market Intel frontend after the user clicks Generate Signal and the backend returns a result. The card must show: the signal label (Strong Buy / Buy / Neutral / Sell / Strong Sell) with a distinct colour coding (green shades for buys, red shades for sells, grey for neutral), a confidence percentage bar or badge, the indicator summary text, and the trend direction. Show a loading spinner while the backend call is in progress. Show an error message if the call fails. Brand the card with the name 'G-Man Intelligence' and a suitable icon.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/AcquisitionPage.tsx"
+          "frontend/src/hooks/useGenerateSignal.ts",
+          "frontend/src/components/SignalOutputCard.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/hooks/useGenerateSignal.ts",
+          "frontend/src/components/SignalOutputCard.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
       },
       {
         "id": "REQ-6",
-        "summary": "Complete all currently empty or placeholder frontend files with full implementations: FormsSection.tsx (render both Pre-Sale and Airdrop form sections with timers), HeroSection.tsx (animated hero with RBS logo, tagline, CTA buttons to Acquisition and Whitepaper pages), OracleSection.tsx (live oracle-style data feed cards using CoinGecko global market data from useRealWorldAnalytics), WhitepaperSection.tsx (section teaser with chapter highlights and a link to WhitepaperPage). DeveloperBlogPage.tsx and DeveloperToolsPage.tsx should render informational content with at least 3 cards each describing development resources, tools, or blog posts related to RBS/DeFi.",
-        "status": "missing",
+        "summary": "Implement real-time Market Pulse inside the (unlocked) Market Intel page. Users can cast one vote per session for Bullish, Bearish, or Neutral. The backend must store vote counts in stable state with a `voteMarketPulse(sentiment: Text) : async VoteTally` function and a `getMarketPulseTally : query () : async VoteTally` query. The frontend must poll or refetch the tally every 10 seconds without requiring a page refresh, and display the three options with live percentage bars. The existing poll creation feature (useCommunityVoting) must also remain accessible in the unlocked Market Intel page.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/FormsSection.tsx",
-          "frontend/src/components/HeroSection.tsx",
-          "frontend/src/components/OracleSection.tsx",
-          "frontend/src/components/WhitepaperSection.tsx",
-          "frontend/src/pages/DeveloperBlogPage.tsx",
-          "frontend/src/pages/DeveloperToolsPage.tsx"
+          "frontend/src/hooks/useMarketPulseVoting.ts",
+          "frontend/src/components/MarketPulseVoting.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/hooks/useMarketPulseVoting.ts",
+          "frontend/src/components/MarketPulseVoting.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
       },
       {
         "id": "REQ-7",
-        "summary": "Audit and fix all known broken or incomplete functionality across every page: (1) Fix useCountdownTimer so it correctly handles both presale and airdrop timer types and displays 00:00:00:00 when expired rather than erroring; (2) Ensure LivePricePage authentication guard shows a clear, styled login prompt instead of a blank screen when unauthenticated; (3) Ensure AlertsCenterPage shows a styled login prompt when unauthenticated; (4) Ensure AdvancedAnalyticsPage handles empty search gracefully and shows example symbol hints; (5) Ensure AISentimentPage shows a proper loading skeleton and error retry button; (6) Ensure CommunityVotingPage poll join, vote, and create flows work end-to-end with clear user feedback toasts or inline messages.",
-        "status": "missing",
+        "summary": "Add a Contact Information section at the bottom of the Market Intel page (visible after unlock) displaying the following links and details clearly: WhatsApp Channel: https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P — rendered as a clickable button/link opening in a new tab. Telegram: https://t.me/RBSuperior — rendered as a clickable button/link opening in a new tab. Presale & Airdrop WhatsApp: +92 329 4238997 — rendered as a clickable WhatsApp chat link (https://wa.me/923294238997) opening in a new tab. Contact Email: design.crafters.official@gmail.com — rendered as a mailto link.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useCountdownTimer.ts",
-          "frontend/src/pages/LivePricePage.tsx",
-          "frontend/src/pages/AlertsCenterPage.tsx",
-          "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "frontend/src/pages/AISentimentPage.tsx",
-          "frontend/src/pages/CommunityVotingPage.tsx"
+          "frontend/src/components/ContactInfoSection.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/components/ContactInfoSection.tsx",
+          "frontend/src/pages/MarketIntelPage.tsx"
+        ]
       },
       {
         "id": "REQ-8",
-        "summary": "Apply a consistent, complete visual design system across all pages. Enforce the existing gold/dark theme from index.css and tailwind.config.js everywhere: (1) All cards use the glass-card style with gold border accents; (2) All primary buttons use the gold gradient; (3) All countdown timers are displayed in large, bold segmented digit blocks with gold borders; (4) All locked-state screens show a prominent lock icon, title, and subtitle; (5) All loading states use animated gold-toned skeletons; (6) Typography is consistent using the Inter/Poppins scale defined in index.css. Fix any pages or components deviating from this theme.",
-        "status": "missing",
+        "summary": "Apply a professional real-time AI trading dashboard visual theme to the Market Intel page. Use a dark background with gold accent colours (consistent with the existing RBS gold-and-white design system), clean card layouts with subtle borders/glows, monospaced or technical typography for numeric values, and clearly separated sections for: passcode gate, signal generator wizard, signal output card, Market Pulse voting, poll creation, and contact info. Ensure full responsiveness on mobile and desktop.",
+        "status": "implemented",
         "plannedFiles": [
+          "frontend/src/index.css",
           "frontend/src/pages/MarketIntelPage.tsx",
-          "frontend/src/pages/AcquisitionPage.tsx",
-          "frontend/src/pages/LivePricePage.tsx",
-          "frontend/src/pages/AlertsCenterPage.tsx",
-          "frontend/src/pages/AdvancedAnalyticsPage.tsx",
-          "frontend/src/pages/AISentimentPage.tsx",
-          "frontend/src/pages/CommunityVotingPage.tsx",
-          "frontend/src/pages/MarketPulsePage.tsx"
+          "frontend/src/components/SignalGeneratorWizard.tsx",
+          "frontend/src/components/SignalOutputCard.tsx",
+          "frontend/src/components/MarketPulseVoting.tsx",
+          "frontend/src/components/ContactInfoSection.tsx"
         ],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Integrate real public API data for all sections that currently show placeholder or static data: (1) InsightsPage: ensure global market cap, BTC dominance, ETH dominance, 24h volume, and active cryptocurrencies count are fetched live from CoinGecko public API (/global endpoint) via useRealWorldAnalytics; (2) MarketPulsePage: ensure BTC RSI, MACD, price, and 24h change are computed from live CoinGecko OHLC and price data via useMarketPulse; (3) AISentimentPage: ensure news articles are fetched from CryptoPanic public API via useCryptoNews with sentiment derived from vote counts; (4) All public API calls must use the public (no-auth-required) endpoints and handle rate limiting with graceful error states.",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/pages/InsightsPage.tsx",
-          "frontend/src/pages/MarketPulsePage.tsx",
-          "frontend/src/pages/AISentimentPage.tsx",
-          "frontend/src/hooks/useRealWorldAnalytics.ts",
-          "frontend/src/hooks/useMarketPulse.ts",
-          "frontend/src/hooks/useCryptoNews.ts"
-        ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/pages/MarketIntelPage.tsx",
+          "frontend/src/components/SignalGeneratorWizard.tsx",
+          "frontend/src/components/SignalOutputCard.tsx",
+          "frontend/src/components/MarketPulseVoting.tsx",
+          "frontend/src/components/ContactInfoSection.tsx"
+        ]
       }
     ]
   },
@@ -118,14 +122,23 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/gman-intelligence-logo.dim_256x256.png",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
+    "frontend/src/components/ContactInfoSection.tsx",
+    "frontend/src/components/MarketPulseVoting.tsx",
+    "frontend/src/components/PollCreationSection.tsx",
+    "frontend/src/components/SignalGeneratorWizard.tsx",
+    "frontend/src/components/SignalOutputCard.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useGenerateSignal.ts",
+    "frontend/src/hooks/useMarketPulseVoting.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/MarketIntelPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

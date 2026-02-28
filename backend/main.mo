@@ -2,6 +2,7 @@ import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Array "mo:core/Array";
 import Time "mo:core/Time";
+import Float "mo:core/Float";
 import Principal "mo:core/Principal";
 import Int "mo:core/Int";
 import Text "mo:core/Text";
@@ -13,6 +14,7 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
 import Migration "migration";
+import List "mo:core/List";
 
 (with migration = Migration.run)
 actor {
@@ -68,12 +70,17 @@ actor {
     #orderBlocks;
   };
 
-  public type SignalConfidence = {
+  public type Signal = {
     #strongBuy;
     #buy;
     #neutral;
     #sell;
     #strongSell;
+  };
+
+  public type SignalConfidence = {
+    signal : Signal;
+    confidence : Nat;
   };
 
   public type TechnicalIndicator = {
@@ -188,6 +195,36 @@ actor {
     lastRunTimestamp : Int;
   };
 
+  public type CandlestickData = {
+    open : Float;
+    high : Float;
+    low : Float;
+    close : Float;
+    timestamp : Int;
+  };
+
+  public type MarketPulseVote = {
+    #bullish;
+    #bearish;
+    #neutral;
+  };
+
+  public type VoteTally = {
+    bullish : Nat;
+    bearish : Nat;
+    neutral : Nat;
+    total : Nat;
+    lastVoted : ?MarketPulseVote;
+  };
+
+  public type SignalResult = {
+    signal : Signal;
+    confidencePct : Nat;
+    indicatorSummary : Text;
+    trendDirection : Text;
+    calculatedAt : Int;
+  };
+
   let userProfiles = Map.empty<Principal, UserProfile>();
   let submissions = Map.empty<Nat, FormSubmission>();
   let timers = Map.empty<Text, TimerState>();
@@ -209,11 +246,15 @@ actor {
   let contactStore = Map.empty<Nat, Text>();
   let scheduledTasks = Map.empty<Text, ScheduledTask>();
 
+  // Per-principal vote tracking for Market Pulse
+  let voteCounts = Map.empty<Principal, MarketPulseVote>();
+
   var currentId = 0;
   var nextMIId = 1;
   var pollIdCounter = 0;
   var lastEconomyUpdate : Int = 0;
   var lastAlertId = 0;
+  var lastPulseCalculation : ?MarketPulseVote = null;
   var lastPoll : ?Poll = null;
   let maxSubmissions = 5000;
   var marketIntelPassword : Text = "BP2420075112009BP";
@@ -225,6 +266,9 @@ actor {
   let livePriceSnapshots = Map.empty<Nat, LivePriceSnapshot>();
   let aiSentimentsStore = Map.empty<Nat, AISentiment>();
   var initialized = false;
+  var bullishVotes = 0;
+  var bearishVotes = 0;
+  var neutralVotes = 0;
 
   public shared ({ caller }) func initialize() : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
@@ -332,24 +376,20 @@ actor {
     };
   };
 
-  // Public: anyone can query remaining presale time for countdown display
   public query func getPresaleRemainingTime() : async Int {
     let now = Time.now();
     if (presaleEndTime < now) { 0 } else { presaleEndTime - now };
   };
 
-  // Public: anyone can query remaining airdrop time for countdown display
   public query func getAirdropRemainingTime() : async Int {
     let now = Time.now();
     if (airdropEndTime < now) { 0 } else { airdropEndTime - now };
   };
 
-  // Public: anyone can query the presale end timestamp for countdown display
   public query func getPresaleTimerEnd() : async Int {
     presaleEndTime;
   };
 
-  // Public: anyone can query the airdrop end timestamp for countdown display
   public query func getAirdropTimerEnd() : async Int {
     airdropEndTime;
   };
@@ -407,7 +447,6 @@ actor {
     newState;
   };
 
-  // Admin-only: update timer end times and persist them
   public shared ({ caller }) func setTimerEnd(timerType : TimerType, endTime : Int) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can update timer end times");
@@ -415,7 +454,6 @@ actor {
     switch (timerType) {
       case (#presale) {
         presaleEndTime := endTime;
-        // Also update the timers map entry if it exists
         switch (timers.get("presale")) {
           case (?state) {
             timers.add("presale", { state with endTime = endTime; lastUpdate = Int.abs(Time.now()) });
@@ -765,7 +803,6 @@ actor {
     };
   };
 
-  // Toggle trigger for a specific alert by id; only the owning user may do this
   public shared ({ caller }) func toggleAlertTrigger(alertId : Nat) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can toggle alert triggers");
@@ -849,7 +886,6 @@ actor {
     cryptoCurrencies.values().toArray();
   };
 
-  // Admin-only: exposes internal system scheduling information
   public query ({ caller }) func getScheduledTasks() : async [ScheduledTask] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view scheduled tasks");
@@ -861,11 +897,78 @@ actor {
     OutCall.transform(input);
   };
 
+  // Admin-only: making HTTP outcalls consumes cycles and should not be open to all callers
   public shared ({ caller }) func getBTCPriceFromCoingecko() : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can trigger HTTP outcalls");
+    };
     await OutCall.httpGetRequest(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
       [],
       transform,
     );
+  };
+
+  // voteMarketPulse: one vote per authenticated user per session, tracked per-principal.
+  // Any authenticated user (role #user or #admin) may vote; guests may not.
+  public shared ({ caller }) func voteMarketPulse(sentiment : Text) : async VoteTally {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can vote for Market Pulse");
+    };
+
+    let newVote : MarketPulseVote = switch (sentiment) {
+      case ("bullish") { #bullish };
+      case ("bearish") { #bearish };
+      case ("neutral") { #neutral };
+      case (_) { Runtime.trap("Invalid sentiment: must be bullish, bearish, or neutral") };
+    };
+
+    // Check if this caller has already voted and undo their previous vote
+    switch (voteCounts.get(caller)) {
+      case (?previousVote) {
+        if (previousVote == newVote) {
+          Runtime.trap("You have already voted with this sentiment");
+        };
+        // Undo the previous vote
+        switch (previousVote) {
+          case (#bullish) { bullishVotes -= 1 };
+          case (#bearish) { bearishVotes -= 1 };
+          case (#neutral) { neutralVotes -= 1 };
+        };
+      };
+      case (null) {};
+    };
+
+    // Record the new vote for this caller
+    voteCounts.add(caller, newVote);
+
+    // Increment the new vote counter
+    switch (newVote) {
+      case (#bullish) { bullishVotes += 1 };
+      case (#bearish) { bearishVotes += 1 };
+      case (#neutral) { neutralVotes += 1 };
+    };
+
+    let total = bullishVotes + bearishVotes + neutralVotes;
+
+    {
+      bullish = bullishVotes;
+      bearish = bearishVotes;
+      neutral = neutralVotes;
+      total;
+      lastVoted = ?newVote;
+    };
+  };
+
+  // Public query — no auth required, anyone can read the tally
+  public query func getMarketPulseTally() : async VoteTally {
+    let total = bullishVotes + bearishVotes + neutralVotes;
+    {
+      bullish = bullishVotes;
+      bearish = bearishVotes;
+      neutral = neutralVotes;
+      total;
+      lastVoted = null;
+    };
   };
 };

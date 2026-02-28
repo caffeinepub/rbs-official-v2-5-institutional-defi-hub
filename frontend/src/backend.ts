@@ -89,16 +89,6 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface Alert {
-    id: bigint;
-    title: string;
-    read: boolean;
-    triggerEnabled: boolean;
-    message: string;
-    timestamp: bigint;
-    lastChecked: bigint;
-    autoCreated: boolean;
-}
 export interface TimerState {
     endTime: bigint;
     lastUpdate: bigint;
@@ -119,6 +109,13 @@ export interface CryptoCurrency {
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
+export interface VoteTally {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+}
 export interface FormSubmission {
     id: bigint;
     country: string;
@@ -128,6 +125,16 @@ export interface FormSubmission {
     walletAddress: string;
     rbsAmount: number;
     timestamp: bigint;
+}
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    triggerEnabled: boolean;
+    message: string;
+    timestamp: bigint;
+    lastChecked: bigint;
+    autoCreated: boolean;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
@@ -146,6 +153,10 @@ export interface TechnicalIndicator {
     value: number;
     indicatorType: IndicatorType;
     signal: SignalConfidence;
+}
+export interface SignalConfidence {
+    signal: Signal;
+    confidence: bigint;
 }
 export interface PollView {
     id: bigint;
@@ -185,13 +196,13 @@ export interface CreatePollInput {
     isActive: boolean;
     options: Array<string>;
 }
-export interface _CaffeineStorageRefillResult {
-    success?: boolean;
-    topped_up_amount?: bigint;
-}
 export interface UserProfile {
     name: string;
     email?: string;
+}
+export interface _CaffeineStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
 }
 export enum IndicatorType {
     fvg = "fvg",
@@ -202,7 +213,12 @@ export enum IndicatorType {
     bollingerBands = "bollingerBands",
     orderBlocks = "orderBlocks"
 }
-export enum SignalConfidence {
+export enum MarketPulseVote {
+    bullish = "bullish",
+    bearish = "bearish",
+    neutral = "neutral"
+}
+export enum Signal {
     buy = "buy",
     strongBuy = "strongBuy",
     sell = "sell",
@@ -245,6 +261,7 @@ export interface backendInterface {
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
     getLastPoll(): Promise<PollView | null>;
     getMarketIntelligence(id: bigint): Promise<MarketIntelligence | null>;
+    getMarketPulseTally(): Promise<VoteTally>;
     getMySubmissions(): Promise<Array<FormSubmission>>;
     getPoll(id: bigint): Promise<PollView | null>;
     getPollsByCode(code: string): Promise<Array<PollView>>;
@@ -271,8 +288,9 @@ export interface backendInterface {
     updateCryptoCurrency(symbol: string, priceUsd: number, updateIntervalSecs: bigint): Promise<void>;
     updateRecord(recordType: string, id: bigint, content: string): Promise<void>;
     vote(pollId: bigint, option: string): Promise<boolean>;
+    voteMarketPulse(sentiment: string): Promise<VoteTally>;
 }
-import type { Alert as _Alert, CryptoCurrency as _CryptoCurrency, IndicatorType as _IndicatorType, MarketIntelligence as _MarketIntelligence, PollView as _PollView, SignalConfidence as _SignalConfidence, TechnicalIndicator as _TechnicalIndicator, TimerType as _TimerType, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Alert as _Alert, CryptoCurrency as _CryptoCurrency, IndicatorType as _IndicatorType, MarketIntelligence as _MarketIntelligence, MarketPulseVote as _MarketPulseVote, PollView as _PollView, Signal as _Signal, SignalConfidence as _SignalConfidence, TechnicalIndicator as _TechnicalIndicator, TimerType as _TimerType, UserProfile as _UserProfile, UserRole as _UserRole, VoteTally as _VoteTally, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -573,70 +591,84 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n25(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n27(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n25(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n27(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCryptoCurrency(arg0: string): Promise<CryptoCurrency | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCryptoCurrency(arg0);
-                return from_candid_opt_n27(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getCryptoCurrency(arg0);
-            return from_candid_opt_n27(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getLastPoll(): Promise<PollView | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getLastPoll();
-                return from_candid_opt_n28(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getLastPoll();
-            return from_candid_opt_n28(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getMarketIntelligence(arg0: bigint): Promise<MarketIntelligence | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getMarketIntelligence(arg0);
                 return from_candid_opt_n29(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getMarketIntelligence(arg0);
+            const result = await this.actor.getCryptoCurrency(arg0);
             return from_candid_opt_n29(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getLastPoll(): Promise<PollView | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLastPoll();
+                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLastPoll();
+            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMarketIntelligence(arg0: bigint): Promise<MarketIntelligence | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMarketIntelligence(arg0);
+                return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMarketIntelligence(arg0);
+            return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMarketPulseTally(): Promise<VoteTally> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMarketPulseTally();
+                return from_candid_VoteTally_n32(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMarketPulseTally();
+            return from_candid_VoteTally_n32(this._uploadFile, this._downloadFile, result);
         }
     }
     async getMySubmissions(): Promise<Array<FormSubmission>> {
@@ -657,14 +689,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getPoll(arg0);
-                return from_candid_opt_n28(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getPoll(arg0);
-            return from_candid_opt_n28(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
         }
     }
     async getPollsByCode(arg0: string): Promise<Array<PollView>> {
@@ -726,14 +758,14 @@ export class Backend implements backendInterface {
     async getTimerState(arg0: TimerType): Promise<TimerState> {
         if (this.processError) {
             try {
-                const result = await this.actor.getTimerState(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.getTimerState(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getTimerState(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.getTimerState(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -741,14 +773,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
         }
     }
     async grantMarketIntelAccess(arg0: string): Promise<boolean> {
@@ -838,42 +870,42 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n32(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n39(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n32(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n39(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async setTimerEnd(arg0: TimerType, arg1: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setTimerEnd(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0), arg1);
+                const result = await this.actor.setTimerEnd(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0), arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setTimerEnd(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0), arg1);
+            const result = await this.actor.setTimerEnd(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0), arg1);
             return result;
         }
     }
     async storeMarketIntelligence(arg0: string, arg1: string, arg2: Array<TechnicalIndicator>, arg3: SignalConfidence, arg4: number): Promise<MarketIntelligence> {
         if (this.processError) {
             try {
-                const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n34(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n39(this._uploadFile, this._downloadFile, arg3), arg4);
+                const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n41(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n46(this._uploadFile, this._downloadFile, arg3), arg4);
                 return from_candid_MarketIntelligence_n12(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n34(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n39(this._uploadFile, this._downloadFile, arg3), arg4);
+            const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n41(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n46(this._uploadFile, this._downloadFile, arg3), arg4);
             return from_candid_MarketIntelligence_n12(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -936,14 +968,14 @@ export class Backend implements backendInterface {
     async toggleTimer(arg0: TimerType): Promise<TimerState> {
         if (this.processError) {
             try {
-                const result = await this.actor.toggleTimer(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.toggleTimer(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.toggleTimer(to_candid_TimerType_n30(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.toggleTimer(to_candid_TimerType_n37(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1003,24 +1035,47 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async voteMarketPulse(arg0: string): Promise<VoteTally> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.voteMarketPulse(arg0);
+                return from_candid_VoteTally_n32(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.voteMarketPulse(arg0);
+            return from_candid_VoteTally_n32(this._uploadFile, this._downloadFile, result);
+        }
+    }
 }
-function from_candid_IndicatorType_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _IndicatorType): IndicatorType {
-    return from_candid_variant_n20(_uploadFile, _downloadFile, value);
+function from_candid_IndicatorType_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _IndicatorType): IndicatorType {
+    return from_candid_variant_n22(_uploadFile, _downloadFile, value);
 }
 function from_candid_MarketIntelligence_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketIntelligence): MarketIntelligence {
     return from_candid_record_n13(_uploadFile, _downloadFile, value);
 }
+function from_candid_MarketPulseVote_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketPulseVote): MarketPulseVote {
+    return from_candid_variant_n36(_uploadFile, _downloadFile, value);
+}
 function from_candid_SignalConfidence_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SignalConfidence): SignalConfidence {
-    return from_candid_variant_n15(_uploadFile, _downloadFile, value);
+    return from_candid_record_n15(_uploadFile, _downloadFile, value);
 }
-function from_candid_TechnicalIndicator_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TechnicalIndicator): TechnicalIndicator {
-    return from_candid_record_n18(_uploadFile, _downloadFile, value);
+function from_candid_Signal_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Signal): Signal {
+    return from_candid_variant_n17(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserProfile_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
-    return from_candid_record_n23(_uploadFile, _downloadFile, value);
+function from_candid_TechnicalIndicator_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TechnicalIndicator): TechnicalIndicator {
+    return from_candid_record_n20(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n26(_uploadFile, _downloadFile, value);
+function from_candid_UserProfile_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
+    return from_candid_record_n25(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n28(_uploadFile, _downloadFile, value);
+}
+function from_candid_VoteTally_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VoteTally): VoteTally {
+    return from_candid_record_n33(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
@@ -1028,20 +1083,23 @@ function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: Externa
 function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Alert]): Alert | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : from_candid_UserProfile_n22(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : from_candid_UserProfile_n24(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CryptoCurrency]): CryptoCurrency | null {
+function from_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CryptoCurrency]): CryptoCurrency | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
+function from_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketIntelligence]): MarketIntelligence | null {
+function from_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketIntelligence]): MarketIntelligence | null {
     return value.length === 0 ? null : from_candid_MarketIntelligence_n12(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketPulseVote]): MarketPulseVote | null {
+    return value.length === 0 ? null : from_candid_MarketPulseVote_n35(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
@@ -1072,11 +1130,23 @@ function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uin
         asset: value.asset,
         timeframe: value.timeframe,
         overallSignal: from_candid_SignalConfidence_n14(_uploadFile, _downloadFile, value.overallSignal),
-        indicators: from_candid_vec_n16(_uploadFile, _downloadFile, value.indicators),
+        indicators: from_candid_vec_n18(_uploadFile, _downloadFile, value.indicators),
         timestamp: value.timestamp
     };
 }
-function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    signal: _Signal;
+    confidence: bigint;
+}): {
+    signal: Signal;
+    confidence: bigint;
+} {
+    return {
+        signal: from_candid_Signal_n16(_uploadFile, _downloadFile, value.signal),
+        confidence: value.confidence
+    };
+}
+function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     value: number;
     indicatorType: _IndicatorType;
     signal: _SignalConfidence;
@@ -1087,11 +1157,11 @@ function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         value: value.value,
-        indicatorType: from_candid_IndicatorType_n19(_uploadFile, _downloadFile, value.indicatorType),
+        indicatorType: from_candid_IndicatorType_n21(_uploadFile, _downloadFile, value.indicatorType),
         signal: from_candid_SignalConfidence_n14(_uploadFile, _downloadFile, value.signal)
     };
 }
-function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     name: string;
     email: [] | [string];
 }): {
@@ -1100,7 +1170,28 @@ function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         name: value.name,
-        email: record_opt_to_undefined(from_candid_opt_n24(_uploadFile, _downloadFile, value.email))
+        email: record_opt_to_undefined(from_candid_opt_n26(_uploadFile, _downloadFile, value.email))
+    };
+}
+function from_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted: [] | [_MarketPulseVote];
+    neutral: bigint;
+}): {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+} {
+    return {
+        total: value.total,
+        bullish: value.bullish,
+        bearish: value.bearish,
+        lastVoted: record_opt_to_undefined(from_candid_opt_n34(_uploadFile, _downloadFile, value.lastVoted)),
+        neutral: value.neutral
     };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -1115,7 +1206,7 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     buy: null;
 } | {
     strongBuy: null;
@@ -1125,10 +1216,10 @@ function from_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Ui
     neutral: null;
 } | {
     strongSell: null;
-}): SignalConfidence {
-    return "buy" in value ? SignalConfidence.buy : "strongBuy" in value ? SignalConfidence.strongBuy : "sell" in value ? SignalConfidence.sell : "neutral" in value ? SignalConfidence.neutral : "strongSell" in value ? SignalConfidence.strongSell : value;
+}): Signal {
+    return "buy" in value ? Signal.buy : "strongBuy" in value ? Signal.strongBuy : "sell" in value ? Signal.sell : "neutral" in value ? Signal.neutral : "strongSell" in value ? Signal.strongSell : value;
 }
-function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     fvg: null;
 } | {
     rsi: null;
@@ -1145,7 +1236,7 @@ function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): IndicatorType {
     return "fvg" in value ? IndicatorType.fvg : "rsi" in value ? IndicatorType.rsi : "macd" in value ? IndicatorType.macd : "vwap" in value ? IndicatorType.vwap : "movingAverage" in value ? IndicatorType.movingAverage : "bollingerBands" in value ? IndicatorType.bollingerBands : "orderBlocks" in value ? IndicatorType.orderBlocks : value;
 }
-function from_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -1154,26 +1245,38 @@ function from_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
+function from_candid_variant_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    bullish: null;
+} | {
+    bearish: null;
+} | {
+    neutral: null;
+}): MarketPulseVote {
+    return "bullish" in value ? MarketPulseVote.bullish : "bearish" in value ? MarketPulseVote.bearish : "neutral" in value ? MarketPulseVote.neutral : value;
+}
 function from_candid_vec_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_MarketIntelligence>): Array<MarketIntelligence> {
     return value.map((x)=>from_candid_MarketIntelligence_n12(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TechnicalIndicator>): Array<TechnicalIndicator> {
-    return value.map((x)=>from_candid_TechnicalIndicator_n17(_uploadFile, _downloadFile, x));
+function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TechnicalIndicator>): Array<TechnicalIndicator> {
+    return value.map((x)=>from_candid_TechnicalIndicator_n19(_uploadFile, _downloadFile, x));
 }
-function to_candid_IndicatorType_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): _IndicatorType {
+function to_candid_IndicatorType_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): _IndicatorType {
+    return to_candid_variant_n45(_uploadFile, _downloadFile, value);
+}
+function to_candid_SignalConfidence_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): _SignalConfidence {
+    return to_candid_record_n47(_uploadFile, _downloadFile, value);
+}
+function to_candid_Signal_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): _Signal {
+    return to_candid_variant_n49(_uploadFile, _downloadFile, value);
+}
+function to_candid_TechnicalIndicator_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TechnicalIndicator): _TechnicalIndicator {
+    return to_candid_record_n43(_uploadFile, _downloadFile, value);
+}
+function to_candid_TimerType_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
     return to_candid_variant_n38(_uploadFile, _downloadFile, value);
 }
-function to_candid_SignalConfidence_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): _SignalConfidence {
-    return to_candid_variant_n40(_uploadFile, _downloadFile, value);
-}
-function to_candid_TechnicalIndicator_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TechnicalIndicator): _TechnicalIndicator {
-    return to_candid_record_n36(_uploadFile, _downloadFile, value);
-}
-function to_candid_TimerType_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
-    return to_candid_variant_n31(_uploadFile, _downloadFile, value);
-}
-function to_candid_UserProfile_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n33(_uploadFile, _downloadFile, value);
+function to_candid_UserProfile_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
+    return to_candid_record_n40(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -1193,7 +1296,7 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-function to_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     name: string;
     email?: string;
 }): {
@@ -1205,7 +1308,7 @@ function to_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         email: value.email ? candid_some(value.email) : candid_none()
     };
 }
-function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     value: number;
     indicatorType: IndicatorType;
     signal: SignalConfidence;
@@ -1216,11 +1319,23 @@ function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8
 } {
     return {
         value: value.value,
-        indicatorType: to_candid_IndicatorType_n37(_uploadFile, _downloadFile, value.indicatorType),
-        signal: to_candid_SignalConfidence_n39(_uploadFile, _downloadFile, value.signal)
+        indicatorType: to_candid_IndicatorType_n44(_uploadFile, _downloadFile, value.indicatorType),
+        signal: to_candid_SignalConfidence_n46(_uploadFile, _downloadFile, value.signal)
     };
 }
-function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
+function to_candid_record_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    signal: Signal;
+    confidence: bigint;
+}): {
+    signal: _Signal;
+    confidence: bigint;
+} {
+    return {
+        signal: to_candid_Signal_n48(_uploadFile, _downloadFile, value.signal),
+        confidence: value.confidence
+    };
+}
+function to_candid_variant_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
     presale: null;
 } | {
     airdrop: null;
@@ -1231,7 +1346,7 @@ function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint
         airdrop: null
     } : value;
 }
-function to_candid_variant_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): {
+function to_candid_variant_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): {
     fvg: null;
 } | {
     rsi: null;
@@ -1262,7 +1377,7 @@ function to_candid_variant_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint
         orderBlocks: null
     } : value;
 }
-function to_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): {
+function to_candid_variant_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): {
     buy: null;
 } | {
     strongBuy: null;
@@ -1273,15 +1388,15 @@ function to_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint
 } | {
     strongSell: null;
 } {
-    return value == SignalConfidence.buy ? {
+    return value == Signal.buy ? {
         buy: null
-    } : value == SignalConfidence.strongBuy ? {
+    } : value == Signal.strongBuy ? {
         strongBuy: null
-    } : value == SignalConfidence.sell ? {
+    } : value == Signal.sell ? {
         sell: null
-    } : value == SignalConfidence.neutral ? {
+    } : value == Signal.neutral ? {
         neutral: null
-    } : value == SignalConfidence.strongSell ? {
+    } : value == Signal.strongSell ? {
         strongSell: null
     } : value;
 }
@@ -1300,8 +1415,8 @@ function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_vec_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TechnicalIndicator>): Array<_TechnicalIndicator> {
-    return value.map((x)=>to_candid_TechnicalIndicator_n35(_uploadFile, _downloadFile, x));
+function to_candid_vec_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TechnicalIndicator>): Array<_TechnicalIndicator> {
+    return value.map((x)=>to_candid_TechnicalIndicator_n42(_uploadFile, _downloadFile, x));
 }
 export interface CreateActorOptions {
     agent?: Agent;

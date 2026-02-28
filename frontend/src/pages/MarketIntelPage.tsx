@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useHasMarketIntelAccess, useGrantMarketIntelAccess } from '../hooks/useQueries';
-import { useMarketIntelLive } from '../hooks/useMarketIntelLive';
 import { SmokySectionTransition } from '../components/SmokySectionTransition';
 import { PageHead } from '../components/PageHead';
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Lock, Eye, EyeOff, BarChart2, Activity } from 'lucide-react';
+import { Lock, Eye, EyeOff, RefreshCw, Cpu, Shield } from 'lucide-react';
+import SignalGeneratorWizard from '../components/SignalGeneratorWizard';
+import SignalOutputCard from '../components/SignalOutputCard';
+import MarketPulseVoting from '../components/MarketPulseVoting';
+import ContactInfoSection from '../components/ContactInfoSection';
+import PollCreationSection from '../components/PollCreationSection';
+import { useGenerateSignal } from '../hooks/useGenerateSignal';
 
 export default function MarketIntelPage() {
   const { identity } = useInternetIdentity();
@@ -14,7 +19,7 @@ export default function MarketIntelPage() {
 
   const { data: hasAccess, isLoading: accessLoading } = useHasMarketIntelAccess();
   const grantAccess = useGrantMarketIntelAccess();
-  const { data: signals, isLoading: signalsLoading, isRefetching, dataUpdatedAt } = useMarketIntelLive();
+  const signalMutation = useGenerateSignal();
 
   const handleUnlock = async () => {
     setError('');
@@ -25,40 +30,50 @@ export default function MarketIntelPage() {
     }
   };
 
+  const handleGenerateSignal = (asset: string, timeframe: string, category: string) => {
+    signalMutation.mutate({ asset, timeframe, category });
+  };
+
+  // ── Not logged in ──────────────────────────────────────────────────────────
   if (!identity) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <PageHead title="Market Intelligence | RBS" description="Real-time trading signals and market intelligence." />
-        <div className="glass-card p-8 text-center max-w-md">
-          <Lock className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Authentication Required</h2>
-          <p className="text-muted-foreground">Please log in to access Market Intelligence.</p>
+      <div className="min-h-screen market-intel-bg flex items-center justify-center px-4">
+        <PageHead title="Market Intelligence | RBS" description="G-Man Intelligence — Real-time AI trading signals." />
+        <div className="gman-card rounded-2xl p-8 text-center max-w-md w-full">
+          <Lock className="w-12 h-12 text-gold-accent mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gold-accent mb-2">Authentication Required</h2>
+          <p className="text-slate-400 text-sm">Please log in to access Market Intelligence.</p>
         </div>
       </div>
     );
   }
 
+  // ── Loading access check ───────────────────────────────────────────────────
   if (accessLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <PageHead title="Market Intelligence | RBS" description="Real-time trading signals and market intelligence." />
-        <div className="glass-card p-8 text-center">
-          <RefreshCw className="w-8 h-8 text-primary mx-auto mb-4 animate-spin" />
-          <p className="text-muted-foreground">Checking access...</p>
+      <div className="min-h-screen market-intel-bg flex items-center justify-center">
+        <PageHead title="Market Intelligence | RBS" description="G-Man Intelligence — Real-time AI trading signals." />
+        <div className="gman-card rounded-2xl p-8 text-center">
+          <RefreshCw className="w-8 h-8 text-gold-accent mx-auto mb-4 animate-spin" />
+          <p className="text-slate-400">Checking access...</p>
         </div>
       </div>
     );
   }
 
+  // ── Passcode gate ──────────────────────────────────────────────────────────
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <PageHead title="Market Intelligence | RBS" description="Real-time trading signals and market intelligence." />
-        <div className="glass-card p-8 max-w-md w-full">
+      <div className="min-h-screen market-intel-bg flex items-center justify-center px-4">
+        <PageHead title="Market Intelligence | RBS" description="G-Man Intelligence — Real-time AI trading signals." />
+        <div className="gman-card rounded-2xl p-8 max-w-md w-full">
           <div className="text-center mb-6">
-            <Lock className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-foreground mb-2">Market Intelligence</h2>
-            <p className="text-muted-foreground text-sm">Enter your passcode to access live trading signals.</p>
+            <div className="w-16 h-16 rounded-2xl bg-gold-gradient flex items-center justify-center mx-auto mb-4 shadow-gold-md">
+              <Shield className="w-8 h-8 text-black" />
+            </div>
+            <h2 className="text-2xl font-bold text-gold-accent mb-1">Market Intelligence</h2>
+            <p className="text-slate-400 text-sm">Powered by G-Man Intelligence AI</p>
+            <p className="text-slate-500 text-xs mt-2">Enter your passcode to access live trading signals.</p>
           </div>
           <div className="relative mb-4">
             <input
@@ -67,133 +82,90 @@ export default function MarketIntelPage() {
               onChange={(e) => setPasscode(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
               placeholder="Enter passcode"
-              className="w-full bg-background/50 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary pr-12"
+              className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-gold-accent/60 focus:ring-1 focus:ring-gold-accent/30 transition-all pr-12"
             />
             <button
               onClick={() => setShowPasscode(!showPasscode)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-gold-accent transition-colors"
             >
               {showPasscode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          {error && <p className="text-destructive text-sm mb-4">{error}</p>}
+          {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
           <button
             onClick={handleUnlock}
             disabled={grantAccess.isPending || !passcode}
-            className="w-full bg-primary text-primary-foreground rounded-lg py-3 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full bg-gold-gradient text-black rounded-xl py-3 font-bold hover:shadow-gold-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {grantAccess.isPending ? 'Verifying...' : 'Unlock Access'}
+            {grantAccess.isPending ? (
+              <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />Verifying...</>
+            ) : (
+              <><Cpu className="w-4 h-4" />Unlock Access</>
+            )}
           </button>
         </div>
       </div>
     );
   }
 
-  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '—';
-
+  // ── Unlocked Dashboard ─────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background">
-      <PageHead title="Market Intelligence | RBS" description="Real-time trading signals and market intelligence." />
+    <div className="min-h-screen market-intel-bg">
+      <PageHead title="Market Intelligence | RBS" description="G-Man Intelligence — Real-time AI trading signals." />
 
       <SmokySectionTransition>
-        <section className="py-16 px-4 max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Market Intelligence</h1>
-              <p className="text-muted-foreground mt-1">Live signals computed from real CoinGecko OHLCV data</p>
+        <section className="py-12 px-4 max-w-6xl mx-auto">
+          {/* Page Header */}
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <img
+                src="/assets/generated/gman-intelligence-logo.dim_256x256.png"
+                alt="G-Man Intelligence"
+                className="w-12 h-12 rounded-xl object-cover shadow-gold-sm"
+              />
+              <div className="text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-gold-accent">Market Intelligence</h1>
+                <p className="text-slate-400 text-sm">Powered by G-Man Intelligence AI</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              {isRefetching && <RefreshCw className="w-5 h-5 text-primary animate-spin" />}
-              <span className="text-xs text-muted-foreground">Updated: {lastUpdated}</span>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Auto-refresh 30s</span>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className="inline-flex items-center gap-1.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Data
+              </span>
+              <span className="text-xs text-slate-500">RSI · MACD · EMA · SMA · BB · ATR · Volume · Momentum</span>
             </div>
           </div>
 
-          {signalsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="glass-card p-6 animate-pulse">
-                  <div className="h-6 bg-muted rounded mb-4 w-1/3" />
-                  <div className="h-10 bg-muted rounded mb-4" />
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                </div>
-              ))}
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column: Signal Generator + Output */}
+            <div className="space-y-6">
+              <SignalGeneratorWizard
+                onGenerateSignal={handleGenerateSignal}
+                isLoading={signalMutation.isPending}
+              />
+              {(signalMutation.isPending || signalMutation.data || signalMutation.error) && (
+                <SignalOutputCard
+                  result={signalMutation.data ?? null}
+                  isLoading={signalMutation.isPending}
+                  error={signalMutation.error as Error | null}
+                />
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(signals ?? []).map((s) => {
-                const isUp = s.signal === 'BUY';
-                const isDown = s.signal === 'SELL';
-                const SignalIcon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-                const signalColor = isUp ? 'text-green-500' : isDown ? 'text-red-500' : 'text-yellow-500';
-                const signalBg = isUp ? 'bg-green-500/10 border-green-500/30' : isDown ? 'bg-red-500/10 border-red-500/30' : 'bg-yellow-500/10 border-yellow-500/30';
 
-                return (
-                  <div key={s.asset} className="glass-card p-6 hover:scale-[1.02] transition-transform">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <BarChart2 className="w-5 h-5 text-primary" />
-                        <span className="text-lg font-bold text-foreground">{s.asset}</span>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-bold border ${signalBg} ${signalColor}`}>
-                        {s.signal} {s.confidence}%
-                      </span>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <SignalIcon className={`w-6 h-6 ${signalColor}`} />
-                        <span className="text-2xl font-bold text-foreground">
-                          ${s.price > 0 ? s.price.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '—'}
-                        </span>
-                      </div>
-                      <span className={`text-sm font-medium ${s.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {s.change24h >= 0 ? '+' : ''}{s.change24h.toFixed(2)}% (24h)
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 border-t border-border pt-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground flex items-center gap-1"><Activity className="w-3 h-3" /> RSI(14)</span>
-                        <span className={`font-mono font-semibold ${s.rsi > 70 ? 'text-red-500' : s.rsi < 30 ? 'text-green-500' : 'text-foreground'}`}>
-                          {s.rsi.toFixed(1)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">MACD Hist</span>
-                        <span className={`font-mono font-semibold ${s.macdHistogram > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {s.macdHistogram > 0 ? '+' : ''}{s.macdHistogram.toFixed(4)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">MA Crossover</span>
-                        <span className={`font-semibold ${s.maCrossover ? 'text-green-500' : 'text-red-500'}`}>
-                          {s.maCrossover ? 'Bullish ↑' : 'Bearish ↓'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Confidence</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${isUp ? 'bg-green-500' : isDown ? 'bg-red-500' : 'bg-yellow-500'}`}
-                              style={{ width: `${s.confidence}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-foreground">{s.confidence}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Right Column: Market Pulse + Polls + Contact */}
+            <div className="space-y-6">
+              <MarketPulseVoting />
+              <PollCreationSection />
+              <ContactInfoSection />
             </div>
-          )}
+          </div>
 
-          <div className="mt-8 glass-card p-4 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" />
-              Signals are computed client-side from CoinGecko OHLCV data using RSI(14), MACD(12,26,9), and MA(20/50) crossover. Not financial advice.
+          {/* Disclaimer */}
+          <div className="mt-8 p-4 gman-card rounded-xl text-center">
+            <p className="text-xs text-slate-500">
+              G-Man Intelligence uses real-time public market data. All signals are for educational purposes only and do not constitute financial advice. Always do your own research.
             </p>
           </div>
         </section>

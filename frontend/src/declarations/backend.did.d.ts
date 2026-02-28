@@ -59,6 +59,9 @@ export interface MarketIntelligence {
   'indicators' : Array<TechnicalIndicator>,
   'timestamp' : bigint,
 }
+export type MarketPulseVote = { 'bullish' : null } |
+  { 'bearish' : null } |
+  { 'neutral' : null };
 export interface PollView {
   'id' : bigint,
   'creator' : Principal,
@@ -74,11 +77,12 @@ export interface ScheduledTask {
   'lastRunTimestamp' : bigint,
   'intervalSeconds' : bigint,
 }
-export type SignalConfidence = { 'buy' : null } |
+export type Signal = { 'buy' : null } |
   { 'strongBuy' : null } |
   { 'sell' : null } |
   { 'neutral' : null } |
   { 'strongSell' : null };
+export interface SignalConfidence { 'signal' : Signal, 'confidence' : bigint }
 export interface TechnicalIndicator {
   'value' : number,
   'indicatorType' : IndicatorType,
@@ -105,6 +109,13 @@ export interface UserProfile { 'name' : string, 'email' : [] | [string] }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface VoteTally {
+  'total' : bigint,
+  'bullish' : bigint,
+  'bearish' : bigint,
+  'lastVoted' : [] | [MarketPulseVote],
+  'neutral' : bigint,
+}
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -158,6 +169,7 @@ export interface _SERVICE {
   'getCryptoCurrency' : ActorMethod<[string], [] | [CryptoCurrency]>,
   'getLastPoll' : ActorMethod<[], [] | [PollView]>,
   'getMarketIntelligence' : ActorMethod<[bigint], [] | [MarketIntelligence]>,
+  'getMarketPulseTally' : ActorMethod<[], VoteTally>,
   'getMySubmissions' : ActorMethod<[], Array<FormSubmission>>,
   'getPoll' : ActorMethod<[bigint], [] | [PollView]>,
   'getPollsByCode' : ActorMethod<[string], Array<PollView>>,
@@ -193,6 +205,7 @@ export interface _SERVICE {
   'updateCryptoCurrency' : ActorMethod<[string, number, bigint], undefined>,
   'updateRecord' : ActorMethod<[string, bigint, string], undefined>,
   'vote' : ActorMethod<[bigint, string], boolean>,
+  'voteMarketPulse' : ActorMethod<[string], VoteTally>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

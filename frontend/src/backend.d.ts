@@ -7,16 +7,6 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface Alert {
-    id: bigint;
-    title: string;
-    read: boolean;
-    triggerEnabled: boolean;
-    message: string;
-    timestamp: bigint;
-    lastChecked: bigint;
-    autoCreated: boolean;
-}
 export interface TimerState {
     endTime: bigint;
     lastUpdate: bigint;
@@ -34,6 +24,13 @@ export interface CryptoCurrency {
     symbol: string;
     updateIntervalSecs: bigint;
 }
+export interface VoteTally {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+}
 export interface FormSubmission {
     id: bigint;
     country: string;
@@ -43,6 +40,16 @@ export interface FormSubmission {
     walletAddress: string;
     rbsAmount: number;
     timestamp: bigint;
+}
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    triggerEnabled: boolean;
+    message: string;
+    timestamp: bigint;
+    lastChecked: bigint;
+    autoCreated: boolean;
 }
 export interface http_header {
     value: string;
@@ -57,6 +64,10 @@ export interface TechnicalIndicator {
     value: number;
     indicatorType: IndicatorType;
     signal: SignalConfidence;
+}
+export interface SignalConfidence {
+    signal: Signal;
+    confidence: bigint;
 }
 export interface PollView {
     id: bigint;
@@ -109,7 +120,12 @@ export enum IndicatorType {
     bollingerBands = "bollingerBands",
     orderBlocks = "orderBlocks"
 }
-export enum SignalConfidence {
+export enum MarketPulseVote {
+    bullish = "bullish",
+    bearish = "bearish",
+    neutral = "neutral"
+}
+export enum Signal {
     buy = "buy",
     strongBuy = "strongBuy",
     sell = "sell",
@@ -145,6 +161,7 @@ export interface backendInterface {
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
     getLastPoll(): Promise<PollView | null>;
     getMarketIntelligence(id: bigint): Promise<MarketIntelligence | null>;
+    getMarketPulseTally(): Promise<VoteTally>;
     getMySubmissions(): Promise<Array<FormSubmission>>;
     getPoll(id: bigint): Promise<PollView | null>;
     getPollsByCode(code: string): Promise<Array<PollView>>;
@@ -171,4 +188,5 @@ export interface backendInterface {
     updateCryptoCurrency(symbol: string, priceUsd: number, updateIntervalSecs: bigint): Promise<void>;
     updateRecord(recordType: string, id: bigint, content: string): Promise<void>;
     vote(pollId: bigint, option: string): Promise<boolean>;
+    voteMarketPulse(sentiment: string): Promise<VoteTally>;
 }

@@ -1,24 +1,17 @@
 # Specification
 
 ## Summary
-**Goal:** Complete all remaining UI-only sections, implement passcode-locked Market Intel trading signals, lock Pre-Sale and Airdrop forms behind countdown timers with WhatsApp submission, integrate live public API data throughout, and enforce a consistent gold/dark visual design system across the entire RBS Institutional Hub.
+**Goal:** Rebuild the Market Intel page into a professional G-Man Intelligence signal dashboard with passcode protection, real-time AI trading signals, Market Pulse voting, poll creation, and a contact info section — backed by a new Motoko backend that fetches live market data and computes technical indicators server-side.
 
 **Planned changes:**
-- Add passcode lock (`BO2420075112009BP`) to MarketIntelPage with sessionStorage persistence and error feedback on incorrect entry
-- After unlock, display a fully functional trading signals dashboard with asset selector (BTC, ETH, BNB, SOL, XRP), timeframe selector (1H, 4H, 1D, 1W), BUY/SELL/HOLD signals with confidence scores, live price ticker, and RSI/MACD/MA indicator cards sourced from CoinGecko public OHLC API
-- In backend (main.mo), hardcode presale timer end (2027-03-31T23:59:59Z) and airdrop timer end (2029-03-31T23:59:59Z) as stable nanosecond timestamps with an admin `setTimerEnd` method
-- Implement Pre-Sale tab in AcquisitionPage with live countdown timer; reveal full registration form (name, email, phone, wallet, invest amount, country) on expiry; submit via WhatsApp using REDIRECT_CONFIG number; persist partial form in sessionStorage
-- Implement Airdrop tab in AcquisitionPage with live countdown timer; reveal airdrop form (name, email, wallet, country, optional referral) on expiry; submit via WhatsApp; persist partial form in sessionStorage
-- Complete FormsSection.tsx (presale + airdrop countdown/form panels), HeroSection.tsx (animated hero with RBS logo, tagline, CTA buttons), OracleSection.tsx (live CoinGecko global market data cards), and WhitepaperSection.tsx (chapter teasers with link to WhitepaperPage)
-- Implement DeveloperBlogPage.tsx and DeveloperToolsPage.tsx each with at least 3 content cards about RBS/DeFi dev resources
-- Fix useCountdownTimer to show `00:00:00:00` on expiry without errors
-- Add styled login prompts on LivePricePage and AlertsCenterPage for unauthenticated users
-- Fix AdvancedAnalyticsPage empty search handling with example symbol hints
-- Add loading skeleton and error retry button to AISentimentPage
-- Fix CommunityVotingPage join/vote/create flows with visible success/failure feedback toasts
-- Wire InsightsPage to live CoinGecko `/global` endpoint via useRealWorldAnalytics (market cap, BTC dominance, ETH dominance, 24h volume, active coins)
-- Wire MarketPulsePage to live CoinGecko OHLC data for real BTC RSI and MACD via useMarketPulse
-- Wire AISentimentPage to CryptoPanic public API via useCryptoNews with sentiment derived from vote counts
-- Enforce consistent gold/dark theme across all pages: glass-card style with gold borders, gold gradient buttons, large segmented countdown digit blocks, lock icon on locked screens, animated gold-toned skeletons, consistent Inter/Poppins typography
+- Remove the Advanced Analytics, Live Price, and Crypto News sections from MarketIntelPage.tsx (standalone routes for those pages remain untouched)
+- Keep the existing passcode gate on Market Intel; unlock state persists within the browser session
+- Build a G-Man Intelligence signal generator wizard: Step 1 — select market category (Top 10 Crypto, Top 10 Forex, Gold, Silver) then pick a specific asset; Step 2 — select a timeframe (1M, 5M, 15M, 30M, 1H, 4H, 1D); Generate Signal button activates only when both are chosen
+- Add a new Motoko backend function `generateSignal(symbol, timeframe)` that fetches live OHLCV data from CoinGecko (crypto) and a free Forex/metals API (Forex, Gold, Silver), computes RSI, MACD, EMA, SMA, Bollinger Bands, Volume, ATR, Trend Strength, Support & Resistance, and Momentum in Motoko, then returns a weighted signal result (StrongBuy/Buy/Neutral/Sell/StrongSell), confidence %, indicator summary, trend direction, and timestamp; API keys stored in stable backend state only
+- Display the signal output card branded "G-Man Intelligence" with colour-coded signal label, confidence bar, indicator summary, trend direction, loading spinner, and error handling
+- Add Market Pulse voting (Bullish / Bearish / Neutral, one vote per session) backed by `voteMarketPulse` and `getMarketPulseTally` backend functions; frontend polls tally every 10 seconds and shows live percentage bars
+- Keep the existing poll creation UI (useCommunityVoting) accessible within the unlocked Market Intel page
+- Add a Contact Information section (visible after unlock) with links for WhatsApp Channel, Telegram, Presale & Airdrop WhatsApp (wa.me), and Contact Email (mailto)
+- Apply a dark background with gold accent colours, card layouts with subtle borders/glows, monospaced typography for numeric values, and full mobile/desktop responsiveness
 
-**User-visible outcome:** Users can access a passcode-protected trading signals dashboard, view live pre-sale and airdrop countdown timers with WhatsApp-integrated registration forms, and experience a fully consistent gold/dark themed interface with live market data throughout all sections.
+**User-visible outcome:** After unlocking Market Intel with the existing passcode, users can generate AI-powered trading signals for crypto, forex, gold, and silver assets across multiple timeframes, vote on live Market Pulse sentiment, create community polls, and access all RBS contact links — all within a professional dark-gold trading dashboard UI.

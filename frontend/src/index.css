@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -390,6 +390,45 @@
         50% {
             transform: scale(1.02);
         }
+    }
+    
+    /* ── G-Man Intelligence / Market Intel Dark Theme ─────────────────────── */
+    
+    /* Dark background for Market Intel page */
+    .market-intel-bg {
+        background: linear-gradient(135deg, #0a0a0f 0%, #0d0d1a 30%, #0a0f0a 60%, #0d0a0a 100%);
+        background-attachment: fixed;
+    }
+    
+    /* Dark glass card for Market Intel */
+    .gman-card {
+        background: rgba(15, 15, 25, 0.85);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(218, 165, 32, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(218, 165, 32, 0.05);
+    }
+    
+    /* Gold gradient utility */
+    .bg-gold-gradient {
+        background: linear-gradient(135deg, #DAA520 0%, #F9D423 50%, #DAA520 100%);
+    }
+    
+    /* Gold accent text */
+    .text-gold-accent {
+        color: #DAA520;
+    }
+    
+    /* Gold shadow utilities */
+    .shadow-gold-sm {
+        box-shadow: 0 2px 12px rgba(218, 165, 32, 0.25);
+    }
+    
+    .shadow-gold-md {
+        box-shadow: 0 4px 24px rgba(218, 165, 32, 0.3);
+    }
+    
+    .shadow-gold-lg {
+        box-shadow: 0 8px 48px rgba(218, 165, 32, 0.35);
     }
     
     /* Reduced motion overrides */

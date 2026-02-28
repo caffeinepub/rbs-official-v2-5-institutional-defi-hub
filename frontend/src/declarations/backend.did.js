@@ -46,12 +46,16 @@ export const CryptoCurrency = IDL.Record({
   'symbol' : IDL.Text,
   'updateIntervalSecs' : IDL.Nat,
 });
-export const SignalConfidence = IDL.Variant({
+export const Signal = IDL.Variant({
   'buy' : IDL.Null,
   'strongBuy' : IDL.Null,
   'sell' : IDL.Null,
   'neutral' : IDL.Null,
   'strongSell' : IDL.Null,
+});
+export const SignalConfidence = IDL.Record({
+  'signal' : Signal,
+  'confidence' : IDL.Nat,
 });
 export const IndicatorType = IDL.Variant({
   'fvg' : IDL.Null,
@@ -101,6 +105,18 @@ export const FormSubmission = IDL.Record({
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'email' : IDL.Opt(IDL.Text),
+});
+export const MarketPulseVote = IDL.Variant({
+  'bullish' : IDL.Null,
+  'bearish' : IDL.Null,
+  'neutral' : IDL.Null,
+});
+export const VoteTally = IDL.Record({
+  'total' : IDL.Nat,
+  'bullish' : IDL.Nat,
+  'bearish' : IDL.Nat,
+  'lastVoted' : IDL.Opt(MarketPulseVote),
+  'neutral' : IDL.Nat,
 });
 export const ScheduledTask = IDL.Record({
   'name' : IDL.Text,
@@ -194,6 +210,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(MarketIntelligence)],
       ['query'],
     ),
+  'getMarketPulseTally' : IDL.Func([], [VoteTally], ['query']),
   'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
   'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
   'getPollsByCode' : IDL.Func([IDL.Text], [IDL.Vec(PollView)], ['query']),
@@ -246,6 +263,7 @@ export const idlService = IDL.Service({
   'updateCryptoCurrency' : IDL.Func([IDL.Text, IDL.Float64, IDL.Nat], [], []),
   'updateRecord' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [], []),
   'vote' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
+  'voteMarketPulse' : IDL.Func([IDL.Text], [VoteTally], []),
 });
 
 export const idlInitArgs = [];
@@ -289,12 +307,16 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : IDL.Text,
     'updateIntervalSecs' : IDL.Nat,
   });
-  const SignalConfidence = IDL.Variant({
+  const Signal = IDL.Variant({
     'buy' : IDL.Null,
     'strongBuy' : IDL.Null,
     'sell' : IDL.Null,
     'neutral' : IDL.Null,
     'strongSell' : IDL.Null,
+  });
+  const SignalConfidence = IDL.Record({
+    'signal' : Signal,
+    'confidence' : IDL.Nat,
   });
   const IndicatorType = IDL.Variant({
     'fvg' : IDL.Null,
@@ -344,6 +366,18 @@ export const idlFactory = ({ IDL }) => {
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Opt(IDL.Text),
+  });
+  const MarketPulseVote = IDL.Variant({
+    'bullish' : IDL.Null,
+    'bearish' : IDL.Null,
+    'neutral' : IDL.Null,
+  });
+  const VoteTally = IDL.Record({
+    'total' : IDL.Nat,
+    'bullish' : IDL.Nat,
+    'bearish' : IDL.Nat,
+    'lastVoted' : IDL.Opt(MarketPulseVote),
+    'neutral' : IDL.Nat,
   });
   const ScheduledTask = IDL.Record({
     'name' : IDL.Text,
@@ -435,6 +469,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(MarketIntelligence)],
         ['query'],
       ),
+    'getMarketPulseTally' : IDL.Func([], [VoteTally], ['query']),
     'getMySubmissions' : IDL.Func([], [IDL.Vec(FormSubmission)], ['query']),
     'getPoll' : IDL.Func([IDL.Nat], [IDL.Opt(PollView)], ['query']),
     'getPollsByCode' : IDL.Func([IDL.Text], [IDL.Vec(PollView)], ['query']),
@@ -491,6 +526,7 @@ export const idlFactory = ({ IDL }) => {
     'updateCryptoCurrency' : IDL.Func([IDL.Text, IDL.Float64, IDL.Nat], [], []),
     'updateRecord' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [], []),
     'vote' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Bool], []),
+    'voteMarketPulse' : IDL.Func([IDL.Text], [VoteTally], []),
   });
 };
 

@@ -1,79 +1,57 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T23:52:26.197Z",
-  "summary": "The diff contains only 3 file changes: a new backend/migration.mo file, a modified backend/main.mo, and an updated project_state.json. The project_state.json only records intent with all items still 'pending'. The backend files show data structure definitions and map initializations but the diff is truncated and does not show the actual getPresaleTimerEnd, getAirdropTimerEnd, or setTimerEnd implementations. No frontend files are present in the diff at all. The vast majority of requirements (REQ-1 through REQ-9) are frontend-focused and completely unimplemented based on the diff evidence.",
+  "generatedAt": "2026-02-28T01:05:06.780Z",
+  "summary": "The diff implements most of the requested requirements: frontend passcode gate, signal generator wizard, signal output card, market pulse voting, contact info section, poll creation, and visual theme. However, REQ-4 (backend Motoko generateSignal function with server-side indicator calculations) is critically violated — all indicator math is performed client-side in a frontend hook (useGenerateSignal.ts), not in a Motoko backend function. The backend main.mo does not contain a generateSignal function. Additionally, the unlock state uses backend access-grant rather than sessionStorage as specified.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Implement passcode lock in MarketIntelPage.tsx with exact passcode 'BO2420075112009BP', styled unlock form, sessionStorage persistence, and error message on incorrect passcode.",
-      "reason": "No frontend file changes are present in the diff. MarketIntelPage.tsx is not modified or created.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "After unlocking Market Intel page, display trading signals dashboard with timeframe selector, asset selector, live BUY/SELL/HOLD signals from CoinGecko OHLC API, price ticker, and indicator cards.",
-      "reason": "No frontend file changes are present in the diff. Neither MarketIntelPage.tsx nor useMarketIntelLive hook is modified.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Backend getPresaleTimerEnd returns 2027-03-31T23:59:59Z in nanoseconds, getAirdropTimerEnd returns 2029-03-31T23:59:59Z in nanoseconds, setTimerEnd admin method exposed, values survive upgrades.",
-      "reason": "The backend/main.mo diff is truncated and does not show these method implementations. No stable variable declarations or the required query/update methods are visible in the diff content.",
+      "id": "REQ-4",
+      "requirement": "Create a Motoko backend function generateSignal(symbol: Text, timeframe: Text) : async SignalResult that fetches real OHLCV candle data from public APIs and computes all indicators (RSI, MACD, EMA, SMA, Bollinger Bands, ATR, Volume, ADX-style trend strength, Support & Resistance, Momentum) server-side in Motoko, with a weighted scoring system. API keys stored in stable backend state.",
+      "reason": "All indicator calculations are performed client-side in frontend/src/hooks/useGenerateSignal.ts (calcRSI, calcMACD, calcEMA, calcBollingerBands, calcATR, etc.). No generateSignal function is present in backend/main.mo. The hard constraint states all backend indicator calculations must be performed in Motoko, not in the frontend. API key storage and real OHLCV fetching via the backend are also absent.",
       "evidence": [
+        "frontend/src/hooks/useGenerateSignal.ts",
         "backend/main.mo"
       ]
     },
     {
-      "id": "REQ-4",
-      "requirement": "Implement Pre-Sale tab in AcquisitionPage.tsx with live countdown timer, locked state, registration form, WhatsApp redirect, and sessionStorage persistence.",
-      "reason": "No frontend file changes are present in the diff. AcquisitionPage.tsx is not modified.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Implement Airdrop tab in AcquisitionPage.tsx with live countdown timer, locked state, airdrop registration form, WhatsApp redirect, and sessionStorage persistence.",
-      "reason": "No frontend file changes are present in the diff. AcquisitionPage.tsx is not modified.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-6",
-      "requirement": "Complete FormsSection.tsx, HeroSection.tsx, OracleSection.tsx, WhitepaperSection.tsx, DeveloperBlogPage.tsx, and DeveloperToolsPage.tsx with full implementations.",
-      "reason": "No frontend file changes are present in the diff. None of these files are created or modified.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-7",
-      "requirement": "Fix useCountdownTimer, LivePricePage login prompt, AlertsCenterPage login prompt, AdvancedAnalyticsPage empty search handling, AISentimentPage skeleton/retry, and CommunityVotingPage flow.",
-      "reason": "No frontend file changes are present in the diff. None of these hooks or page components are modified.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-8",
-      "requirement": "Apply consistent gold/dark visual design system across all pages with glass-card styles, gold gradient buttons, segmented countdown digit blocks, lock icons, gold-toned skeletons, and consistent typography.",
-      "reason": "No frontend file changes are present in the diff.",
-      "evidence": []
-    },
-    {
-      "id": "REQ-9",
-      "requirement": "Integrate real public CoinGecko and CryptoPanic API data for InsightsPage, MarketPulsePage, and AISentimentPage with error handling and retry buttons.",
-      "reason": "No frontend file changes are present in the diff. None of the relevant hooks or pages are modified.",
-      "evidence": []
+      "id": "REQ-2",
+      "requirement": "Unlock state must be stored in component state / sessionStorage so it survives re-renders but not a full new session.",
+      "reason": "MarketIntelPage.tsx uses useHasMarketIntelAccess and useGrantMarketIntelAccess which persist access to backend stable state across sessions, rather than using sessionStorage for session-scoped unlocking as specified.",
+      "evidence": [
+        "frontend/src/pages/MarketIntelPage.tsx"
+      ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "A backend/migration.mo module was added containing detailed type definitions and an OldActor structure for canister state migration.",
-      "reason": "The build request does not mention a migration module or migration.mo file. The requirement only states that stable variables should be used to survive upgrades, not that a separate migration module should be created.",
+      "description": "Client-side OHLCV fetching and all technical indicator calculations (RSI, MACD, EMA, SMA, Bollinger Bands, ATR, Support & Resistance, Momentum, Trend Strength) implemented entirely in the frontend hook useGenerateSignal.ts, including a weighted scoring system.",
+      "reason": "The build request explicitly states as a hard constraint that all backend indicator calculations must be performed in Motoko, not in the frontend. The diff moves all this logic to the frontend instead of the Motoko backend.",
+      "evidence": [
+        "frontend/src/hooks/useGenerateSignal.ts"
+      ]
+    },
+    {
+      "description": "A backend migration module (migration.mo) defining an OldActor and NewActor schema migration for per-principal vote tracking.",
+      "reason": "No migration module was requested in the build spec. While the Market Pulse feature was requested, a full migration.mo file with OldActor schema definition was not specified.",
       "evidence": [
         "backend/migration.mo"
       ]
     }
   ],
-  "confidence": 0.88,
+  "confidence": 0.82,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/ContactInfoSection.tsx",
+    "frontend/src/components/MarketPulseVoting.tsx",
+    "frontend/src/components/PollCreationSection.tsx",
+    "frontend/src/components/SignalGeneratorWizard.tsx",
+    "frontend/src/components/SignalOutputCard.tsx",
+    "frontend/src/hooks/useGenerateSignal.ts",
+    "frontend/src/hooks/useMarketPulseVoting.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/MarketIntelPage.tsx",
     "project_state.json"
   ]
 }
