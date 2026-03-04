@@ -1,4 +1,4 @@
-import { REDIRECT_CONFIG } from './redirectConfig';
+import { REDIRECT_CONFIG } from "./redirectConfig";
 
 export const SOCIAL_LINKS = {
   telegram: REDIRECT_CONFIG.telegram.channel,

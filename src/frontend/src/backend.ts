@@ -94,33 +94,52 @@ export interface TimerState {
     lastUpdate: bigint;
     isUnlocked: boolean;
 }
+export interface TransformationOutput {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
 export type Time = bigint;
-export interface PollView {
-    id: bigint;
-    creator: Principal;
-    question: string;
-    votes: Array<KeyVal>;
-    code: string;
-    createdAt: Time;
-    isActive: boolean;
-    options: Array<string>;
+export interface CryptoCurrency {
+    lastUpdateTimestamp: bigint;
+    currentPriceUsd: number;
+    symbol: string;
+    updateIntervalSecs: bigint;
 }
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
-export interface KeyVal {
-    key: string;
-    value: bigint;
+export interface VoteTally {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+}
+export interface FormSubmission {
+    id: bigint;
+    country: string;
+    isPresale: boolean;
+    name: string;
+    submittedBy: Principal;
+    walletAddress: string;
+    rbsAmount: number;
+    timestamp: bigint;
+}
+export interface BlogPost {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt?: bigint;
+    category: string;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
-}
-export interface CreatePollInput {
-    question: string;
-    code: string;
-    isActive: boolean;
-    options: Array<string>;
 }
 export interface Alert {
     id: bigint;
@@ -132,6 +151,62 @@ export interface Alert {
     lastChecked: bigint;
     autoCreated: boolean;
 }
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface TechnicalIndicator {
+    value: number;
+    indicatorType: IndicatorType;
+    signal: SignalConfidence;
+}
+export interface SignalConfidence {
+    signal: Signal;
+    confidence: bigint;
+}
+export interface PollView {
+    id: bigint;
+    creator: Principal;
+    question: string;
+    votes: Array<KeyVal>;
+    code: string;
+    createdAt: Time;
+    isActive: boolean;
+    options: Array<string>;
+}
+export interface TransformationInput {
+    context: Uint8Array;
+    response: http_request_result;
+}
+export interface KeyVal {
+    key: string;
+    value: bigint;
+}
+export interface ScheduledTask {
+    name: string;
+    lastRunTimestamp: bigint;
+    intervalSeconds: bigint;
+}
+export interface MarketIntelligence {
+    id: bigint;
+    historicalAccuracy: number;
+    asset: string;
+    timeframe: string;
+    overallSignal: SignalConfidence;
+    indicators: Array<TechnicalIndicator>;
+    timestamp: bigint;
+}
+export interface CreatePollInput {
+    question: string;
+    code: string;
+    isActive: boolean;
+    options: Array<string>;
+}
 export interface UserProfile {
     name: string;
     email?: string;
@@ -139,6 +214,27 @@ export interface UserProfile {
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
+}
+export enum IndicatorType {
+    fvg = "fvg",
+    rsi = "rsi",
+    macd = "macd",
+    vwap = "vwap",
+    movingAverage = "movingAverage",
+    bollingerBands = "bollingerBands",
+    orderBlocks = "orderBlocks"
+}
+export enum MarketPulseVote {
+    bullish = "bullish",
+    bearish = "bearish",
+    neutral = "neutral"
+}
+export enum Signal {
+    buy = "buy",
+    strongBuy = "strongBuy",
+    sell = "sell",
+    neutral = "neutral",
+    strongSell = "strongSell"
 }
 export enum TimerType {
     presale = "presale",
@@ -157,35 +253,91 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    adminGrantMarketIntelAccess(principal: Principal): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     checkAndCreateAutoAlert(): Promise<Alert | null>;
     createAlert(title: string, message: string): Promise<Alert>;
+    createBlogPost(post: BlogPost, passcode: string): Promise<{
+        __kind__: "ok";
+        ok: string;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     createPoll(input: CreatePollInput): Promise<bigint>;
     deleteAlert(alertId: bigint): Promise<boolean>;
+    deleteBlogPost(id: bigint, authorCode: string): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
+    deletePoll(pollId: bigint): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
+    getAirdropTimerEnd(): Promise<bigint>;
     getAlerts(): Promise<Array<Alert>>;
+    getAllBlogPosts(): Promise<Array<BlogPost>>;
+    getAllBlogPostsAdmin(): Promise<Array<BlogPost>>;
+    getAllCryptoCurrencies(): Promise<Array<CryptoCurrency>>;
+    getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllPolls(): Promise<Array<PollView>>;
+    getAllSubmissions(): Promise<Array<FormSubmission>>;
+    getBTCPriceFromCoingecko(): Promise<string>;
+    getBlogPostById(id: bigint): Promise<BlogPost | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getLastPoll(): Promise<PollView | null>;
+    getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
+    getMarketIntelPasscode(): Promise<string>;
+    getMarketIntelligence(id: bigint): Promise<MarketIntelligence | null>;
+    getMarketPulseTally(): Promise<VoteTally>;
+    getMySubmissions(): Promise<Array<FormSubmission>>;
     getPoll(id: bigint): Promise<PollView | null>;
+    getPollsByCode(code: string): Promise<Array<PollView>>;
     getPresaleRemainingTime(): Promise<bigint>;
+    getPresaleTimerEnd(): Promise<bigint>;
+    getPublishedPosts(): Promise<Array<BlogPost>>;
+    getScheduledTasks(): Promise<Array<ScheduledTask>>;
     getTimerState(timerType: TimerType): Promise<TimerState>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     grantMarketIntelAccess(password: string): Promise<boolean>;
     hasMarketIntelAccess(): Promise<boolean>;
+    hasMarketIntelAccessCheck(principal: Principal): Promise<boolean>;
     initialize(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     markAlertAsRead(alertId: bigint): Promise<boolean>;
+    publishBlogPost(post: BlogPost, passcode: string): Promise<{
+        __kind__: "ok";
+        ok: string;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setMarketIntelPasscode(newPasscode: string): Promise<void>;
+    setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;
+    storeMarketIntelligence(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<MarketIntelligence>;
+    submitAirdropForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
+    submitPresaleForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
     submitVote(pollId: bigint, optionIndex: bigint): Promise<boolean>;
+    toggleAlertTrigger(alertId: bigint): Promise<boolean>;
     toggleTimer(timerType: TimerType): Promise<TimerState>;
+    transform(input: TransformationInput): Promise<TransformationOutput>;
+    updateCryptoCurrency(symbol: string, priceUsd: number, updateIntervalSecs: bigint): Promise<void>;
     updateRecord(recordType: string, id: bigint, content: string): Promise<void>;
+    verifyMarketIntelPasscode(passcode: string): Promise<boolean>;
     vote(pollId: bigint, option: string): Promise<boolean>;
+    voteMarketPulse(sentiment: string): Promise<VoteTally>;
 }
-import type { Alert as _Alert, PollView as _PollView, TimerType as _TimerType, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Alert as _Alert, BlogPost as _BlogPost, CryptoCurrency as _CryptoCurrency, IndicatorType as _IndicatorType, MarketIntelligence as _MarketIntelligence, MarketPulseVote as _MarketPulseVote, PollView as _PollView, Signal as _Signal, SignalConfidence as _SignalConfidence, TechnicalIndicator as _TechnicalIndicator, TimerType as _TimerType, UserProfile as _UserProfile, UserRole as _UserRole, VoteTally as _VoteTally, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -286,6 +438,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async adminGrantMarketIntelAccess(arg0: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminGrantMarketIntelAccess(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminGrantMarketIntelAccess(arg0);
+            return result;
+        }
+    }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
         if (this.processError) {
             try {
@@ -328,6 +494,26 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async createBlogPost(arg0: BlogPost, arg1: string): Promise<{
+        __kind__: "ok";
+        ok: string;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createBlogPost(to_candid_BlogPost_n11(this._uploadFile, this._downloadFile, arg0), arg1);
+                return from_candid_variant_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createBlogPost(to_candid_BlogPost_n11(this._uploadFile, this._downloadFile, arg0), arg1);
+            return from_candid_variant_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async createPoll(arg0: CreatePollInput): Promise<bigint> {
         if (this.processError) {
             try {
@@ -354,6 +540,46 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.deleteAlert(arg0);
             return result;
+        }
+    }
+    async deleteBlogPost(arg0: bigint, arg1: string): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteBlogPost(arg0, arg1);
+                return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteBlogPost(arg0, arg1);
+            return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async deletePoll(arg0: bigint): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deletePoll(arg0);
+                return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deletePoll(arg0);
+            return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
         }
     }
     async enableTrigger(arg0: boolean): Promise<void> {
@@ -384,6 +610,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getAirdropTimerEnd(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAirdropTimerEnd();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAirdropTimerEnd();
+            return result;
+        }
+    }
     async getAlerts(): Promise<Array<Alert>> {
         if (this.processError) {
             try {
@@ -396,6 +636,62 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAlerts();
             return result;
+        }
+    }
+    async getAllBlogPosts(): Promise<Array<BlogPost>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllBlogPosts();
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllBlogPosts();
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllBlogPostsAdmin(): Promise<Array<BlogPost>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllBlogPostsAdmin();
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllBlogPostsAdmin();
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllCryptoCurrencies(): Promise<Array<CryptoCurrency>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllCryptoCurrencies();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllCryptoCurrencies();
+            return result;
+        }
+    }
+    async getAllMarketIntelligence(): Promise<Array<MarketIntelligence>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllMarketIntelligence();
+                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllMarketIntelligence();
+            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
         }
     }
     async getAllPolls(): Promise<Array<PollView>> {
@@ -412,60 +708,172 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getAllSubmissions(): Promise<Array<FormSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllSubmissions();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllSubmissions();
+            return result;
+        }
+    }
+    async getBTCPriceFromCoingecko(): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBTCPriceFromCoingecko();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBTCPriceFromCoingecko();
+            return result;
+        }
+    }
+    async getBlogPostById(arg0: bigint): Promise<BlogPost | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBlogPostById(arg0);
+                return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBlogPostById(arg0);
+            return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n15(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n36(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n15(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n36(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getLastPoll(): Promise<PollView | null> {
+    async getCryptoCurrency(arg0: string): Promise<CryptoCurrency | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getLastPoll();
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.getCryptoCurrency(arg0);
+                return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getLastPoll();
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.getCryptoCurrency(arg0);
+            return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMarketIntelPasscode(): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMarketIntelPasscode();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMarketIntelPasscode();
+            return result;
+        }
+    }
+    async getMarketIntelligence(arg0: bigint): Promise<MarketIntelligence | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMarketIntelligence(arg0);
+                return from_candid_opt_n39(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMarketIntelligence(arg0);
+            return from_candid_opt_n39(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMarketPulseTally(): Promise<VoteTally> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMarketPulseTally();
+                return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMarketPulseTally();
+            return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMySubmissions(): Promise<Array<FormSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMySubmissions();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMySubmissions();
+            return result;
         }
     }
     async getPoll(arg0: bigint): Promise<PollView | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getPoll(arg0);
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n45(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getPoll(arg0);
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n45(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getPollsByCode(arg0: string): Promise<Array<PollView>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPollsByCode(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPollsByCode(arg0);
+            return result;
         }
     }
     async getPresaleRemainingTime(): Promise<bigint> {
@@ -482,17 +890,59 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getTimerState(arg0: TimerType): Promise<TimerState> {
+    async getPresaleTimerEnd(): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.getTimerState(to_candid_TimerType_n18(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.getPresaleTimerEnd();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getTimerState(to_candid_TimerType_n18(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.getPresaleTimerEnd();
+            return result;
+        }
+    }
+    async getPublishedPosts(): Promise<Array<BlogPost>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPublishedPosts();
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPublishedPosts();
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getScheduledTasks(): Promise<Array<ScheduledTask>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getScheduledTasks();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getScheduledTasks();
+            return result;
+        }
+    }
+    async getTimerState(arg0: TimerType): Promise<TimerState> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTimerState(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTimerState(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -500,14 +950,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
         }
     }
     async grantMarketIntelAccess(arg0: string): Promise<boolean> {
@@ -535,6 +985,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.hasMarketIntelAccess();
+            return result;
+        }
+    }
+    async hasMarketIntelAccessCheck(arg0: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.hasMarketIntelAccessCheck(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.hasMarketIntelAccessCheck(arg0);
             return result;
         }
     }
@@ -580,6 +1044,26 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async publishBlogPost(arg0: BlogPost, arg1: string): Promise<{
+        __kind__: "ok";
+        ok: string;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.publishBlogPost(to_candid_BlogPost_n11(this._uploadFile, this._downloadFile, arg0), arg1);
+                return from_candid_variant_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.publishBlogPost(to_candid_BlogPost_n11(this._uploadFile, this._downloadFile, arg0), arg1);
+            return from_candid_variant_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async revokeMarketIntelAccessWithPassword(arg0: string): Promise<boolean> {
         if (this.processError) {
             try {
@@ -597,14 +1081,84 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n20(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n48(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n20(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n48(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async setMarketIntelPasscode(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setMarketIntelPasscode(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setMarketIntelPasscode(arg0);
+            return result;
+        }
+    }
+    async setTimerEnd(arg0: TimerType, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setTimerEnd(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0), arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setTimerEnd(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0), arg1);
+            return result;
+        }
+    }
+    async storeMarketIntelligence(arg0: string, arg1: string, arg2: Array<TechnicalIndicator>, arg3: SignalConfidence, arg4: number): Promise<MarketIntelligence> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n50(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n55(this._uploadFile, this._downloadFile, arg3), arg4);
+                return from_candid_MarketIntelligence_n20(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n50(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n55(this._uploadFile, this._downloadFile, arg3), arg4);
+            return from_candid_MarketIntelligence_n20(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async submitAirdropForm(arg0: string, arg1: string, arg2: string, arg3: number): Promise<FormSubmission> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitAirdropForm(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitAirdropForm(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async submitPresaleForm(arg0: string, arg1: string, arg2: string, arg3: number): Promise<FormSubmission> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitPresaleForm(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitPresaleForm(arg0, arg1, arg2, arg3);
             return result;
         }
     }
@@ -622,17 +1176,59 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async toggleTimer(arg0: TimerType): Promise<TimerState> {
+    async toggleAlertTrigger(arg0: bigint): Promise<boolean> {
         if (this.processError) {
             try {
-                const result = await this.actor.toggleTimer(to_candid_TimerType_n18(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.toggleAlertTrigger(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.toggleTimer(to_candid_TimerType_n18(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.toggleAlertTrigger(arg0);
+            return result;
+        }
+    }
+    async toggleTimer(arg0: TimerType): Promise<TimerState> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.toggleTimer(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.toggleTimer(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async transform(arg0: TransformationInput): Promise<TransformationOutput> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.transform(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.transform(arg0);
+            return result;
+        }
+    }
+    async updateCryptoCurrency(arg0: string, arg1: number, arg2: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateCryptoCurrency(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateCryptoCurrency(arg0, arg1, arg2);
             return result;
         }
     }
@@ -650,6 +1246,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async verifyMarketIntelPasscode(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.verifyMarketIntelPasscode(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.verifyMarketIntelPasscode(arg0);
+            return result;
+        }
+    }
     async vote(arg0: bigint, arg1: string): Promise<boolean> {
         if (this.processError) {
             try {
@@ -664,12 +1274,50 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async voteMarketPulse(arg0: string): Promise<VoteTally> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.voteMarketPulse(arg0);
+                return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.voteMarketPulse(arg0);
+            return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+        }
+    }
 }
-function from_candid_UserProfile_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
-    return from_candid_record_n13(_uploadFile, _downloadFile, value);
+function from_candid_BlogPost_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BlogPost): BlogPost {
+    return from_candid_record_n17(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n16(_uploadFile, _downloadFile, value);
+function from_candid_IndicatorType_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _IndicatorType): IndicatorType {
+    return from_candid_variant_n30(_uploadFile, _downloadFile, value);
+}
+function from_candid_MarketIntelligence_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketIntelligence): MarketIntelligence {
+    return from_candid_record_n21(_uploadFile, _downloadFile, value);
+}
+function from_candid_MarketPulseVote_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketPulseVote): MarketPulseVote {
+    return from_candid_variant_n44(_uploadFile, _downloadFile, value);
+}
+function from_candid_SignalConfidence_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SignalConfidence): SignalConfidence {
+    return from_candid_record_n23(_uploadFile, _downloadFile, value);
+}
+function from_candid_Signal_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Signal): Signal {
+    return from_candid_variant_n25(_uploadFile, _downloadFile, value);
+}
+function from_candid_TechnicalIndicator_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TechnicalIndicator): TechnicalIndicator {
+    return from_candid_record_n28(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserProfile_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
+    return from_candid_record_n34(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n37(_uploadFile, _downloadFile, value);
+}
+function from_candid_VoteTally_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VoteTally): VoteTally {
+    return from_candid_record_n41(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
@@ -677,13 +1325,28 @@ function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: Externa
 function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Alert]): Alert | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : from_candid_UserProfile_n12(_uploadFile, _downloadFile, value[0]);
-}
-function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
+function from_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_BlogPost]): BlogPost | null {
+    return value.length === 0 ? null : from_candid_BlogPost_n16(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : from_candid_UserProfile_n33(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CryptoCurrency]): CryptoCurrency | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketIntelligence]): MarketIntelligence | null {
+    return value.length === 0 ? null : from_candid_MarketIntelligence_n20(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketPulseVote]): MarketPulseVote | null {
+    return value.length === 0 ? null : from_candid_MarketPulseVote_n43(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -692,7 +1355,94 @@ function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt: [] | [bigint];
+    category: string;
+}): {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt?: bigint;
+    category: string;
+} {
+    return {
+        id: value.id,
+        title: value.title,
+        isPublished: value.isPublished,
+        body: value.body,
+        createdAt: value.createdAt,
+        tags: value.tags,
+        author: value.author,
+        updatedAt: record_opt_to_undefined(from_candid_opt_n18(_uploadFile, _downloadFile, value.updatedAt)),
+        category: value.category
+    };
+}
+function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    historicalAccuracy: number;
+    asset: string;
+    timeframe: string;
+    overallSignal: _SignalConfidence;
+    indicators: Array<_TechnicalIndicator>;
+    timestamp: bigint;
+}): {
+    id: bigint;
+    historicalAccuracy: number;
+    asset: string;
+    timeframe: string;
+    overallSignal: SignalConfidence;
+    indicators: Array<TechnicalIndicator>;
+    timestamp: bigint;
+} {
+    return {
+        id: value.id,
+        historicalAccuracy: value.historicalAccuracy,
+        asset: value.asset,
+        timeframe: value.timeframe,
+        overallSignal: from_candid_SignalConfidence_n22(_uploadFile, _downloadFile, value.overallSignal),
+        indicators: from_candid_vec_n26(_uploadFile, _downloadFile, value.indicators),
+        timestamp: value.timestamp
+    };
+}
+function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    signal: _Signal;
+    confidence: bigint;
+}): {
+    signal: Signal;
+    confidence: bigint;
+} {
+    return {
+        signal: from_candid_Signal_n24(_uploadFile, _downloadFile, value.signal),
+        confidence: value.confidence
+    };
+}
+function from_candid_record_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    value: number;
+    indicatorType: _IndicatorType;
+    signal: _SignalConfidence;
+}): {
+    value: number;
+    indicatorType: IndicatorType;
+    signal: SignalConfidence;
+} {
+    return {
+        value: value.value,
+        indicatorType: from_candid_IndicatorType_n29(_uploadFile, _downloadFile, value.indicatorType),
+        signal: from_candid_SignalConfidence_n22(_uploadFile, _downloadFile, value.signal)
+    };
+}
+function from_candid_record_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     name: string;
     email: [] | [string];
 }): {
@@ -701,7 +1451,28 @@ function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         name: value.name,
-        email: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.email))
+        email: record_opt_to_undefined(from_candid_opt_n35(_uploadFile, _downloadFile, value.email))
+    };
+}
+function from_candid_record_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted: [] | [_MarketPulseVote];
+    neutral: bigint;
+}): {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+} {
+    return {
+        total: value.total,
+        bullish: value.bullish,
+        bearish: value.bearish,
+        lastVoted: record_opt_to_undefined(from_candid_opt_n42(_uploadFile, _downloadFile, value.lastVoted)),
+        neutral: value.neutral
     };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -716,7 +1487,75 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    ok: string;
+} | {
+    err: string;
+}): {
+    __kind__: "ok";
+    ok: string;
+} | {
+    __kind__: "err";
+    err: string;
+} {
+    return "ok" in value ? {
+        __kind__: "ok",
+        ok: value.ok
+    } : "err" in value ? {
+        __kind__: "err",
+        err: value.err
+    } : value;
+}
+function from_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    ok: null;
+} | {
+    err: string;
+}): {
+    __kind__: "ok";
+    ok: null;
+} | {
+    __kind__: "err";
+    err: string;
+} {
+    return "ok" in value ? {
+        __kind__: "ok",
+        ok: value.ok
+    } : "err" in value ? {
+        __kind__: "err",
+        err: value.err
+    } : value;
+}
+function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    buy: null;
+} | {
+    strongBuy: null;
+} | {
+    sell: null;
+} | {
+    neutral: null;
+} | {
+    strongSell: null;
+}): Signal {
+    return "buy" in value ? Signal.buy : "strongBuy" in value ? Signal.strongBuy : "sell" in value ? Signal.sell : "neutral" in value ? Signal.neutral : "strongSell" in value ? Signal.strongSell : value;
+}
+function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    fvg: null;
+} | {
+    rsi: null;
+} | {
+    macd: null;
+} | {
+    vwap: null;
+} | {
+    movingAverage: null;
+} | {
+    bollingerBands: null;
+} | {
+    orderBlocks: null;
+}): IndicatorType {
+    return "fvg" in value ? IndicatorType.fvg : "rsi" in value ? IndicatorType.rsi : "macd" in value ? IndicatorType.macd : "vwap" in value ? IndicatorType.vwap : "movingAverage" in value ? IndicatorType.movingAverage : "bollingerBands" in value ? IndicatorType.bollingerBands : "orderBlocks" in value ? IndicatorType.orderBlocks : value;
+}
+function from_candid_variant_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -725,11 +1564,44 @@ function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function to_candid_TimerType_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
-    return to_candid_variant_n19(_uploadFile, _downloadFile, value);
+function from_candid_variant_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    bullish: null;
+} | {
+    bearish: null;
+} | {
+    neutral: null;
+}): MarketPulseVote {
+    return "bullish" in value ? MarketPulseVote.bullish : "bearish" in value ? MarketPulseVote.bearish : "neutral" in value ? MarketPulseVote.neutral : value;
 }
-function to_candid_UserProfile_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n21(_uploadFile, _downloadFile, value);
+function from_candid_vec_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_BlogPost>): Array<BlogPost> {
+    return value.map((x)=>from_candid_BlogPost_n16(_uploadFile, _downloadFile, x));
+}
+function from_candid_vec_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_MarketIntelligence>): Array<MarketIntelligence> {
+    return value.map((x)=>from_candid_MarketIntelligence_n20(_uploadFile, _downloadFile, x));
+}
+function from_candid_vec_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TechnicalIndicator>): Array<TechnicalIndicator> {
+    return value.map((x)=>from_candid_TechnicalIndicator_n27(_uploadFile, _downloadFile, x));
+}
+function to_candid_BlogPost_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BlogPost): _BlogPost {
+    return to_candid_record_n12(_uploadFile, _downloadFile, value);
+}
+function to_candid_IndicatorType_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): _IndicatorType {
+    return to_candid_variant_n54(_uploadFile, _downloadFile, value);
+}
+function to_candid_SignalConfidence_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): _SignalConfidence {
+    return to_candid_record_n56(_uploadFile, _downloadFile, value);
+}
+function to_candid_Signal_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): _Signal {
+    return to_candid_variant_n58(_uploadFile, _downloadFile, value);
+}
+function to_candid_TechnicalIndicator_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TechnicalIndicator): _TechnicalIndicator {
+    return to_candid_record_n52(_uploadFile, _downloadFile, value);
+}
+function to_candid_TimerType_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
+    return to_candid_variant_n47(_uploadFile, _downloadFile, value);
+}
+function to_candid_UserProfile_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
+    return to_candid_record_n49(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -740,16 +1612,37 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    name: string;
-    email?: string;
+function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt?: bigint;
+    category: string;
 }): {
-    name: string;
-    email: [] | [string];
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt: [] | [bigint];
+    category: string;
 } {
     return {
-        name: value.name,
-        email: value.email ? candid_some(value.email) : candid_none()
+        id: value.id,
+        title: value.title,
+        isPublished: value.isPublished,
+        body: value.body,
+        createdAt: value.createdAt,
+        tags: value.tags,
+        author: value.author,
+        updatedAt: value.updatedAt ? candid_some(value.updatedAt) : candid_none(),
+        category: value.category
     };
 }
 function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -761,7 +1654,46 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-function to_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
+function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    name: string;
+    email?: string;
+}): {
+    name: string;
+    email: [] | [string];
+} {
+    return {
+        name: value.name,
+        email: value.email ? candid_some(value.email) : candid_none()
+    };
+}
+function to_candid_record_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    value: number;
+    indicatorType: IndicatorType;
+    signal: SignalConfidence;
+}): {
+    value: number;
+    indicatorType: _IndicatorType;
+    signal: _SignalConfidence;
+} {
+    return {
+        value: value.value,
+        indicatorType: to_candid_IndicatorType_n53(_uploadFile, _downloadFile, value.indicatorType),
+        signal: to_candid_SignalConfidence_n55(_uploadFile, _downloadFile, value.signal)
+    };
+}
+function to_candid_record_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    signal: Signal;
+    confidence: bigint;
+}): {
+    signal: _Signal;
+    confidence: bigint;
+} {
+    return {
+        signal: to_candid_Signal_n57(_uploadFile, _downloadFile, value.signal),
+        confidence: value.confidence
+    };
+}
+function to_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
     presale: null;
 } | {
     airdrop: null;
@@ -770,6 +1702,60 @@ function to_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint
         presale: null
     } : value == TimerType.airdrop ? {
         airdrop: null
+    } : value;
+}
+function to_candid_variant_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): {
+    fvg: null;
+} | {
+    rsi: null;
+} | {
+    macd: null;
+} | {
+    vwap: null;
+} | {
+    movingAverage: null;
+} | {
+    bollingerBands: null;
+} | {
+    orderBlocks: null;
+} {
+    return value == IndicatorType.fvg ? {
+        fvg: null
+    } : value == IndicatorType.rsi ? {
+        rsi: null
+    } : value == IndicatorType.macd ? {
+        macd: null
+    } : value == IndicatorType.vwap ? {
+        vwap: null
+    } : value == IndicatorType.movingAverage ? {
+        movingAverage: null
+    } : value == IndicatorType.bollingerBands ? {
+        bollingerBands: null
+    } : value == IndicatorType.orderBlocks ? {
+        orderBlocks: null
+    } : value;
+}
+function to_candid_variant_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): {
+    buy: null;
+} | {
+    strongBuy: null;
+} | {
+    sell: null;
+} | {
+    neutral: null;
+} | {
+    strongSell: null;
+} {
+    return value == Signal.buy ? {
+        buy: null
+    } : value == Signal.strongBuy ? {
+        strongBuy: null
+    } : value == Signal.sell ? {
+        sell: null
+    } : value == Signal.neutral ? {
+        neutral: null
+    } : value == Signal.strongSell ? {
+        strongSell: null
     } : value;
 }
 function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
@@ -786,6 +1772,9 @@ function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     } : value == UserRole.guest ? {
         guest: null
     } : value;
+}
+function to_candid_vec_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TechnicalIndicator>): Array<_TechnicalIndicator> {
+    return value.map((x)=>to_candid_TechnicalIndicator_n51(_uploadFile, _downloadFile, x));
 }
 export interface CreateActorOptions {
     agent?: Agent;

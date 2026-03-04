@@ -1,218 +1,233 @@
-import { Sparkles, Users, Network, Globe, Handshake, Rocket, Target, TrendingUp } from 'lucide-react';
-import { SmokySectionTransition } from '@/components/SmokySectionTransition';
-import { PageHead } from '@/components/PageHead';
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { PageHead } from "@/components/PageHead";
+import {
+  Award,
+  BarChart3,
+  Globe,
+  Rocket,
+  Target,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
+import { motion } from "motion/react";
+
+const growthStrategies = [
+  {
+    icon: Users,
+    title: "Community Expansion",
+    description:
+      "Building a global community through education, engagement, and community rewards.",
+    metrics: [
+      "50K+ Active Members Target",
+      "Global Presence in 30+ Countries",
+      "Ambassador Program Active",
+    ],
+    color: "from-purple-500/20 to-purple-500/5",
+    border: "border-purple-500/30",
+    iconColor: "text-purple-400",
+  },
+  {
+    icon: Rocket,
+    title: "Market Penetration",
+    description:
+      "Strategic partnerships and integrations to expand RBS ecosystem reach globally.",
+    metrics: [
+      "Major Exchange Listings",
+      "DeFi Protocol Integrations",
+      "Enterprise Adoption Drive",
+    ],
+    color: "from-blue-500/20 to-blue-500/5",
+    border: "border-blue-500/30",
+    iconColor: "text-blue-400",
+  },
+  {
+    icon: Target,
+    title: "Product Development",
+    description:
+      "Continuous innovation and feature expansion based on community feedback and research.",
+    metrics: [
+      "Monthly Platform Updates",
+      "New Features Every Quarter",
+      "User-Driven Roadmap",
+    ],
+    color: "from-amber-500/20 to-amber-500/5",
+    border: "border-amber-500/30",
+    iconColor: "text-amber-400",
+  },
+  {
+    icon: TrendingUp,
+    title: "Value Creation",
+    description:
+      "Sustainable growth through deflationary mechanics and utility expansion for holders.",
+    metrics: [
+      "15% Token Burns Allocated",
+      "Staking Rewards (8-20% APY)",
+      "Governance Rights Included",
+    ],
+    color: "from-green-500/20 to-green-500/5",
+    border: "border-green-500/30",
+    iconColor: "text-green-400",
+  },
+];
+
+const milestones = [
+  {
+    icon: Users,
+    value: "50K+",
+    label: "Community Members",
+    color: "text-purple-400",
+  },
+  {
+    icon: Globe,
+    value: "100+",
+    label: "Strategic Partners",
+    color: "text-blue-400",
+  },
+  {
+    icon: BarChart3,
+    value: "$10M+",
+    label: "Ecosystem Value",
+    color: "text-amber-400",
+  },
+  {
+    icon: Award,
+    value: "30+",
+    label: "Countries Reached",
+    color: "text-green-400",
+  },
+  {
+    icon: Zap,
+    value: "99.9%",
+    label: "Platform Uptime",
+    color: "text-cyan-400",
+  },
+  {
+    icon: Rocket,
+    value: "2030",
+    label: "Full Launch Year",
+    color: "text-pink-400",
+  },
+];
 
 export default function EcosystemGrowthPage() {
   return (
     <>
-      <PageHead 
-        title="Ecosystem Growth" 
-        description="Building a thriving community-driven ecosystem with strategic integrations and partnerships"
+      <PageHead
+        title="Ecosystem Growth | RBS"
+        description="RBS ecosystem growth strategies and community expansion"
       />
-      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <SmokySectionTransition>
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-gold/10 border-2 border-gold/30 mb-8">
-                  <Sparkles className="h-10 w-10 text-gold" />
-                </div>
-                <h1 className="text-5xl md:text-7xl font-poppins font-bold mb-6 leading-tight metallic-text-hero">
-                  Ecosystem Growth
-                </h1>
-                <p className="text-xl metallic-text-secondary font-inter max-w-3xl mx-auto leading-relaxed">
-                  Building a thriving community-driven ecosystem with strategic integrations and partnerships.
-                </p>
-              </div>
-            </SmokySectionTransition>
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Hero */}
+          <AnimatedSection direction="up" className="text-center mb-16 pt-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-sm font-medium mb-6">
+              <TrendingUp className="w-4 h-4" /> Ecosystem Growth
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold shimmer-gold mb-6">
+              Growing Together
+            </h1>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              Strategic initiatives driving RBS adoption and community expansion
+              across the globe
+            </p>
+          </AnimatedSection>
 
-            <SmokySectionTransition delay={100}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                <div className="glass-card-gold p-8 glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20">
-                  <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 mb-4">
-                    <Users className="h-6 w-6 text-gold" />
+          {/* Milestones strip */}
+          <AnimatedSection
+            direction="up"
+            delay={100}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-16"
+          >
+            {milestones.map((m, i) => (
+              <motion.div
+                key={m.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="p-4 rounded-xl bg-white/3 border border-white/8 hover:border-amber-500/30 transition-all duration-300 text-center group"
+              >
+                <m.icon
+                  className={`w-6 h-6 mx-auto mb-2 ${m.color} group-hover:scale-110 transition-transform`}
+                />
+                <div className={`text-xl font-bold ${m.color}`}>{m.value}</div>
+                <div className="text-xs text-gray-500 mt-1">{m.label}</div>
+              </motion.div>
+            ))}
+          </AnimatedSection>
+
+          {/* Growth Strategies Grid */}
+          <div className="grid gap-6 md:grid-cols-2 mb-16">
+            {growthStrategies.map((strategy, index) => {
+              const Icon = strategy.icon;
+              return (
+                <motion.div
+                  key={strategy.title}
+                  initial={{
+                    opacity: 0,
+                    x: index % 2 === 0 ? -40 : 40,
+                    filter: "blur(4px)",
+                  }}
+                  whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{
+                    duration: 0.7,
+                    delay: index * 0.1,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className={`p-6 rounded-2xl bg-gradient-to-br ${strategy.color} border ${strategy.border} hover:border-amber-500/40 transition-all duration-300 group`}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`p-3 rounded-xl bg-black/30 ${strategy.iconColor} group-hover:scale-110 transition-transform duration-300`}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">
+                      {strategy.title}
+                    </h3>
                   </div>
-                  <h3 className="text-xl font-poppins font-bold text-gold mb-3">Community Building</h3>
-                  <p className="metallic-text-secondary font-inter leading-relaxed text-sm">
-                    Growing a global community of token holders, developers, and enthusiasts through educational initiatives, AMAs, and engagement programs.
+                  <p className="text-gray-400 leading-relaxed mb-4">
+                    {strategy.description}
                   </p>
-                </div>
-
-                <div className="glass-card-gold p-8 glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20">
-                  <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 mb-4">
-                    <Network className="h-6 w-6 text-gold" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+                      Key Metrics
+                    </p>
+                    <ul className="space-y-2">
+                      {strategy.metrics.map((metric) => (
+                        <li
+                          key={metric}
+                          className="flex items-center gap-2 text-sm text-gray-300"
+                        >
+                          <div className="h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                          {metric}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="text-xl font-poppins font-bold text-gold mb-3">Strategic Partnerships</h3>
-                  <p className="metallic-text-secondary font-inter leading-relaxed text-sm">
-                    Collaborating with leading blockchain projects, DeFi protocols, and institutional partners to expand utility and adoption.
-                  </p>
-                </div>
-
-                <div className="glass-card-gold p-8 glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20">
-                  <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 mb-4">
-                    <Globe className="h-6 w-6 text-gold" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold text-gold mb-3">Platform Integrations</h3>
-                  <p className="metallic-text-secondary font-inter leading-relaxed text-sm">
-                    Integrating RBS across multiple platforms including wallets, exchanges, DeFi protocols, and payment systems for seamless usability.
-                  </p>
-                </div>
-              </div>
-            </SmokySectionTransition>
-
-            <SmokySectionTransition delay={200}>
-              <div className="glass-card p-8 md:p-12 mb-12 glow-border">
-                <h2 className="text-4xl font-poppins font-bold text-gold mb-8 text-center">
-                  Growth Initiatives
-                </h2>
-                <div className="space-y-8">
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-shrink-0">
-                      <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                        <Handshake className="h-8 w-8 text-gold" />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-poppins font-bold text-gold mb-3">Partnership Opportunities</h3>
-                      <p className="metallic-text-secondary font-inter leading-relaxed mb-4">
-                        We actively seek partnerships with projects that align with our vision of building a robust crypto token ecosystem. Our partnership framework focuses on mutual growth, technical integration, and community value creation.
-                      </p>
-                      <ul className="space-y-2 metallic-text-secondary font-inter text-sm">
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Technical integration support and documentation</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Co-marketing initiatives and community engagement</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Shared liquidity pools and cross-chain bridges</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
-
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-shrink-0">
-                      <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                        <Rocket className="h-8 w-8 text-gold" />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-poppins font-bold text-gold mb-3">Community Engagement Programs</h3>
-                      <p className="metallic-text-secondary font-inter leading-relaxed mb-4">
-                        Our community is the heart of RBS. We invest in programs that educate, engage, and empower our token holders to actively participate in the ecosystem's growth and governance.
-                      </p>
-                      <ul className="space-y-2 metallic-text-secondary font-inter text-sm">
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Educational workshops and webinars</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Ambassador and contributor reward programs</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Regular AMAs and community governance sessions</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
-
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-shrink-0">
-                      <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                        <Target className="h-8 w-8 text-gold" />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-poppins font-bold text-gold mb-3">Integration Roadmap</h3>
-                      <p className="metallic-text-secondary font-inter leading-relaxed mb-4">
-                        Our integration roadmap outlines strategic milestones for expanding RBS utility across the blockchain ecosystem. We prioritize integrations that provide immediate value to our community.
-                      </p>
-                      <ul className="space-y-2 metallic-text-secondary font-inter text-sm">
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Major exchange listings and liquidity partnerships</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>DeFi protocol integrations for staking and yield</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gold mt-1">•</span>
-                          <span>Cross-chain bridges and multi-chain deployment</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SmokySectionTransition>
-
-            <SmokySectionTransition delay={300}>
-              <div className="glass-card-gold p-12 mb-12 glow-border">
-                <h2 className="text-4xl font-poppins font-bold text-gold mb-8 text-center">
-                  Growth Metrics
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="text-center">
-                    <TrendingUp className="h-12 w-12 text-gold mx-auto mb-4" />
-                    <p className="text-5xl font-jetbrains font-bold text-gold mb-2">10,000+</p>
-                    <p className="text-sm metallic-text-secondary font-inter">Community Members</p>
-                  </div>
-                  <div className="text-center">
-                    <Network className="h-12 w-12 text-gold mx-auto mb-4" />
-                    <p className="text-5xl font-jetbrains font-bold text-gold mb-2">25+</p>
-                    <p className="text-sm metallic-text-secondary font-inter">Strategic Partners</p>
-                  </div>
-                  <div className="text-center">
-                    <Globe className="h-12 w-12 text-gold mx-auto mb-4" />
-                    <p className="text-5xl font-jetbrains font-bold text-gold mb-2">30+</p>
-                    <p className="text-sm metallic-text-secondary font-inter">Countries Reached</p>
-                  </div>
-                </div>
-              </div>
-            </SmokySectionTransition>
-
-            <SmokySectionTransition delay={400}>
-              <div className="glass-card p-8 text-center glow-border">
-                <Sparkles className="h-12 w-12 text-gold mx-auto mb-4" />
-                <h3 className="text-2xl font-poppins font-bold text-gold mb-4">
-                  Join the Ecosystem
-                </h3>
-                <p className="metallic-text-secondary font-inter leading-relaxed max-w-2xl mx-auto mb-6">
-                  Whether you're a developer, partner, or community member, there's a place for you in the RBS ecosystem.
-                  All opinions about RBS will be taken from the RBS community to ensure it remains fairly community-driven.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a
-                    href="https://t.me/RBSuperior"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 bg-gold hover:bg-gold/90 text-black font-poppins font-bold rounded-lg transition-all duration-300 metallic-button"
-                  >
-                    Join Community
-                  </a>
-                  <a
-                    href="https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 bg-white border-2 border-gold/30 hover:border-gold text-gold font-poppins font-bold rounded-lg transition-all duration-300"
-                  >
-                    Partner With Us
-                  </a>
-                </div>
-              </div>
-            </SmokySectionTransition>
+                </motion.div>
+              );
+            })}
           </div>
+
+          {/* Vision Banner */}
+          <AnimatedSection direction="scale" delay={200}>
+            <div className="p-8 rounded-2xl bg-gradient-to-br from-amber-500/10 to-purple-500/10 border border-amber-500/20 text-center">
+              <Rocket className="w-12 h-12 text-amber-400 mx-auto mb-4 animate-float" />
+              <h2 className="text-2xl font-bold text-white mb-4">
+                The Path to 2030
+              </h2>
+              <p className="text-gray-400 leading-relaxed max-w-2xl mx-auto">
+                From community foundation in 2026 through strategic partnerships
+                in 2028 to full mainnet launch in 2030 — every phase of RBS
+                growth is planned with precision to deliver maximum value to our
+                community members.
+              </p>
+            </div>
+          </AnimatedSection>
         </div>
       </div>
     </>

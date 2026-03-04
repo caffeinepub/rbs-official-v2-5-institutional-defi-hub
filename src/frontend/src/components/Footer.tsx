@@ -1,11 +1,12 @@
-import { Heart } from 'lucide-react';
-import { SiTelegram, SiWhatsapp } from 'react-icons/si';
-import { SOCIAL_LINKS } from '@/constants/socialLinks';
+import { SOCIAL_LINKS } from "@/constants/socialLinks";
+import { Heart } from "lucide-react";
+import { SiTelegram, SiWhatsapp } from "react-icons/si";
 
 export function Footer() {
-  const appIdentifier = typeof window !== 'undefined' 
-    ? encodeURIComponent(window.location.hostname) 
-    : 'rbs-app';
+  const appIdentifier =
+    typeof window !== "undefined"
+      ? encodeURIComponent(window.location.hostname)
+      : "rbs-app";
 
   return (
     <footer className="bg-gradient-to-b from-transparent to-white/50 border-t border-gold-matte/30 py-12">
@@ -15,12 +16,19 @@ export function Footer() {
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="coin-3d" style={{ width: '32px', height: '32px' }}>
+              <div
+                className="coin-3d"
+                style={{ width: "32px", height: "32px" }}
+              >
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-light via-gold-matte to-gold-dark shadow-md" />
               </div>
               <div>
-                <p className="text-sm font-poppins text-dark-matter font-bold">RBS Official</p>
-                <p className="text-xs text-dark-matter opacity-90">Professional Crypto Token</p>
+                <p className="text-sm font-poppins text-dark-matter font-bold">
+                  RBS Official
+                </p>
+                <p className="text-xs text-dark-matter opacity-90">
+                  Professional Crypto Token
+                </p>
               </div>
             </div>
 
@@ -48,7 +56,9 @@ export function Footer() {
 
           <div className="mt-8 pt-6 border-t border-gold-matte/20 text-center">
             <p className="text-sm text-dark-matter opacity-90 font-inter flex items-center justify-center gap-2">
-              © {new Date().getFullYear()}. Built with <Heart className="h-4 w-4 text-gold-matte fill-gold-matte" /> using{' '}
+              © {new Date().getFullYear()}. Built with{" "}
+              <Heart className="h-4 w-4 text-gold-matte fill-gold-matte" />{" "}
+              using{" "}
               <a
                 href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${appIdentifier}`}
                 target="_blank"

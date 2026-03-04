@@ -1,109 +1,126 @@
-import { Users, Award, TrendingUp, Heart, Star, Trophy, Target, Zap } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { SmokySectionTransition } from '@/components/SmokySectionTransition';
-import { PageHead } from '@/components/PageHead';
+import { PageHead } from "@/components/PageHead";
+import { SmokySectionTransition } from "@/components/SmokySectionTransition";
+import { Badge } from "@/components/ui/badge";
+import {
+  Award,
+  Heart,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
 
 export default function CommunityHighlightsPage() {
   const achievements = [
     {
-      title: 'Community Growth Milestone',
-      description: 'Reached 10,000+ active community members across all platforms',
-      date: 'December 2025',
+      title: "Community Growth Milestone",
+      description:
+        "Reached 10,000+ active community members across all platforms",
+      date: "December 2025",
       icon: Users,
-      metric: '10,000+',
-      category: 'Growth',
+      metric: "10,000+",
+      category: "Growth",
     },
     {
-      title: 'Governance Participation Record',
-      description: '85% voter turnout on latest governance proposal - highest in DeFi',
-      date: 'November 2025',
+      title: "Governance Participation Record",
+      description:
+        "85% voter turnout on latest governance proposal - highest in DeFi",
+      date: "November 2025",
       icon: Trophy,
-      metric: '85%',
-      category: 'Governance',
+      metric: "85%",
+      category: "Governance",
     },
     {
-      title: 'Community Contribution Awards',
-      description: 'Recognized 50+ outstanding community contributors with RBS rewards',
-      date: 'October 2025',
+      title: "Community Contribution Awards",
+      description:
+        "Recognized 50+ outstanding community contributors with RBS rewards",
+      date: "October 2025",
       icon: Award,
-      metric: '50+',
-      category: 'Recognition',
+      metric: "50+",
+      category: "Recognition",
     },
     {
-      title: 'Educational Content Milestone',
-      description: 'Published 100+ educational resources created by community members',
-      date: 'September 2025',
+      title: "Educational Content Milestone",
+      description:
+        "Published 100+ educational resources created by community members",
+      date: "September 2025",
       icon: Star,
-      metric: '100+',
-      category: 'Education',
+      metric: "100+",
+      category: "Education",
     },
   ];
 
   const featuredMembers = [
     {
-      name: 'Alex Chen',
-      role: 'Community Moderator',
-      contribution: 'Led 20+ community AMAs and created comprehensive onboarding guides',
-      impact: 'Helped onboard 2,000+ new members',
+      name: "Alex Chen",
+      role: "Community Moderator",
+      contribution:
+        "Led 20+ community AMAs and created comprehensive onboarding guides",
+      impact: "Helped onboard 2,000+ new members",
     },
     {
-      name: 'Sarah Martinez',
-      role: 'Technical Contributor',
-      contribution: 'Developed community tools and analytics dashboards',
-      impact: 'Improved community engagement by 40%',
+      name: "Sarah Martinez",
+      role: "Technical Contributor",
+      contribution: "Developed community tools and analytics dashboards",
+      impact: "Improved community engagement by 40%",
     },
     {
-      name: 'David Kim',
-      role: 'Content Creator',
-      contribution: 'Produced 50+ educational videos and tutorials',
-      impact: 'Reached 100,000+ views across platforms',
+      name: "David Kim",
+      role: "Content Creator",
+      contribution: "Produced 50+ educational videos and tutorials",
+      impact: "Reached 100,000+ views across platforms",
     },
     {
-      name: 'Emma Thompson',
-      role: 'Governance Lead',
-      contribution: 'Facilitated 15+ successful governance proposals',
-      impact: 'Increased voter participation by 60%',
+      name: "Emma Thompson",
+      role: "Governance Lead",
+      contribution: "Facilitated 15+ successful governance proposals",
+      impact: "Increased voter participation by 60%",
     },
   ];
 
   const initiatives = [
     {
-      title: 'Community Ambassador Program',
-      description: 'Global network of ambassadors representing RBS in 30+ countries',
-      participants: '150+',
+      title: "Community Ambassador Program",
+      description:
+        "Global network of ambassadors representing RBS in 30+ countries",
+      participants: "150+",
       icon: Target,
     },
     {
-      title: 'Developer Grants Program',
-      description: 'Funding innovative projects built on RBS ecosystem',
-      participants: '25+',
+      title: "Developer Grants Program",
+      description: "Funding innovative projects built on RBS ecosystem",
+      participants: "25+",
       icon: Zap,
     },
     {
-      title: 'Educational Workshops',
-      description: 'Monthly workshops covering DeFi, governance, and technical topics',
-      participants: '500+',
+      title: "Educational Workshops",
+      description:
+        "Monthly workshops covering DeFi, governance, and technical topics",
+      participants: "500+",
       icon: Star,
     },
     {
-      title: 'Community Rewards Pool',
-      description: 'Distributing rewards to active contributors and participants',
-      participants: '1,000+',
+      title: "Community Rewards Pool",
+      description:
+        "Distributing rewards to active contributors and participants",
+      participants: "1,000+",
       icon: Heart,
     },
   ];
 
   const stats = [
-    { label: 'Total Members', value: '10,000+', icon: Users },
-    { label: 'Active Contributors', value: '1,500+', icon: TrendingUp },
-    { label: 'Governance Proposals', value: '50+', icon: Trophy },
-    { label: 'Community Events', value: '100+', icon: Award },
+    { label: "Total Members", value: "10,000+", icon: Users },
+    { label: "Active Contributors", value: "1,500+", icon: TrendingUp },
+    { label: "Governance Proposals", value: "50+", icon: Trophy },
+    { label: "Community Events", value: "100+", icon: Award },
   ];
 
   return (
     <>
-      <PageHead 
-        title="Community Highlights" 
+      <PageHead
+        title="Community Highlights"
         description="Celebrating the achievements, contributions, and success stories of our vibrant RBS community"
       />
       <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
@@ -118,21 +135,26 @@ export default function CommunityHighlightsPage() {
                   Community Highlights
                 </h1>
                 <p className="text-xl metallic-text-secondary font-inter max-w-3xl mx-auto leading-relaxed">
-                  Celebrating the achievements, contributions, and success stories of our vibrant RBS community
+                  Celebrating the achievements, contributions, and success
+                  stories of our vibrant RBS community
                 </p>
               </div>
             </SmokySectionTransition>
 
             <SmokySectionTransition delay={100}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-                {stats.map((stat, index) => (
+                {stats.map((stat) => (
                   <div
-                    key={index}
+                    key={stat.label}
                     className="glass-card-gold p-6 text-center glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20"
                   >
                     <stat.icon className="h-8 w-8 text-gold mx-auto mb-3" />
-                    <p className="text-3xl font-poppins font-bold text-gold mb-2">{stat.value}</p>
-                    <p className="text-sm metallic-text-secondary font-inter">{stat.label}</p>
+                    <p className="text-3xl font-poppins font-bold text-gold mb-2">
+                      {stat.value}
+                    </p>
+                    <p className="text-sm metallic-text-secondary font-inter">
+                      {stat.label}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -144,9 +166,9 @@ export default function CommunityHighlightsPage() {
                   Major Achievements
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {achievements.map((achievement, index) => (
+                  {achievements.map((achievement) => (
                     <div
-                      key={index}
+                      key={achievement.title}
                       className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-start gap-4 mb-4">
@@ -155,10 +177,15 @@ export default function CommunityHighlightsPage() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline" className="text-gold border-gold/30">
+                            <Badge
+                              variant="outline"
+                              className="text-gold border-gold/30"
+                            >
                               {achievement.category}
                             </Badge>
-                            <span className="text-xs metallic-text-secondary font-inter">{achievement.date}</span>
+                            <span className="text-xs metallic-text-secondary font-inter">
+                              {achievement.date}
+                            </span>
                           </div>
                           <h3 className="text-xl font-poppins font-bold text-gold mb-2">
                             {achievement.title}
@@ -186,9 +213,9 @@ export default function CommunityHighlightsPage() {
                   Featured Community Members
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {featuredMembers.map((member, index) => (
+                  {featuredMembers.map((member) => (
                     <div
-                      key={index}
+                      key={member.name}
                       className="glass-card-gold p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-center gap-4 mb-4">
@@ -198,20 +225,30 @@ export default function CommunityHighlightsPage() {
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-xl font-poppins font-bold text-gold">{member.name}</h3>
-                          <p className="text-sm metallic-text-secondary font-inter">{member.role}</p>
+                          <h3 className="text-xl font-poppins font-bold text-gold">
+                            {member.name}
+                          </h3>
+                          <p className="text-sm metallic-text-secondary font-inter">
+                            {member.role}
+                          </p>
                         </div>
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs metallic-text-secondary font-inter mb-1">Contribution</p>
+                          <p className="text-xs metallic-text-secondary font-inter mb-1">
+                            Contribution
+                          </p>
                           <p className="metallic-text-secondary font-inter leading-relaxed">
                             {member.contribution}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs metallic-text-secondary font-inter mb-1">Impact</p>
-                          <p className="text-gold font-inter font-semibold">{member.impact}</p>
+                          <p className="text-xs metallic-text-secondary font-inter mb-1">
+                            Impact
+                          </p>
+                          <p className="text-gold font-inter font-semibold">
+                            {member.impact}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -226,9 +263,9 @@ export default function CommunityHighlightsPage() {
                   Active Community Initiatives
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {initiatives.map((initiative, index) => (
+                  {initiatives.map((initiative) => (
                     <div
-                      key={index}
+                      key={initiative.title}
                       className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-start gap-4">
@@ -263,9 +300,10 @@ export default function CommunityHighlightsPage() {
                   Join Our Community
                 </h3>
                 <p className="metallic-text-secondary font-inter leading-relaxed max-w-2xl mx-auto mb-6">
-                  Be part of the RBS revolution. Contribute, participate, and help shape the future of
-                  decentralized finance. All opinions about RBS will be taken from the RBS community to
-                  ensure it remains fairly community-driven.
+                  Be part of the RBS revolution. Contribute, participate, and
+                  help shape the future of decentralized finance. All opinions
+                  about RBS will be taken from the RBS community to ensure it
+                  remains fairly community-driven.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <a

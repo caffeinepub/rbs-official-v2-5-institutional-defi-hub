@@ -1,21 +1,10 @@
-import { useCheckMarketIntelAccess } from './useQueries';
+import { useHasMarketIntelAccess } from "./useQueries";
 
 export function useAdvancedAnalytics() {
-  const { data: hasMarketIntelAccess, isLoading: accessLoading } = useCheckMarketIntelAccess();
-
-  const isLoading = accessLoading;
-
-  const dataCoverage = {
-    livePrice: false,
-    aiSentiment: false,
-    marketIntel: !!hasMarketIntelAccess,
-  };
+  const accessQuery = useHasMarketIntelAccess();
 
   return {
-    priceSnapshot: null,
-    sentiment: null,
-    hasMarketIntelAccess,
-    dataCoverage,
-    isLoading,
+    hasAccess: accessQuery.data ?? false,
+    isLoading: accessQuery.isLoading,
   };
 }

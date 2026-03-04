@@ -1,138 +1,176 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { useInternetIdentity } from './useInternetIdentity';
-import type { UserProfile, Alert } from '../backend';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { BlogPost, TimerType } from "../backend";
+import { useActor } from "./useActor";
+
+// ─── User Profile ────────────────────────────────────────────────────────────
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  const query = useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
+  const query = useQuery({
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
-    enabled: !!actor && !!identity && !actorFetching,
+    enabled: !!actor && !actorFetching,
     retry: false,
-    staleTime: 300000,
   });
-
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && !!identity && query.isFetched,
+    isFetched: !!actor && query.isFetched,
   };
 }
 
 export function useSaveCallerUserProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.saveCallerUserProfile(profile);
+    mutationFn: async (profile: { name: string; email?: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
-export function useCheckMarketIntelAccess() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+// ─── Market Intel Access ──────────────────────────────────────────────────────
 
-  return useQuery<boolean>({
-    queryKey: ['marketIntelAccess'],
+export function useHasMarketIntelAccess() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["marketIntelAccess"],
     queryFn: async () => {
       if (!actor) return false;
       return actor.hasMarketIntelAccess();
     },
-    enabled: !!actor && !!identity && !actorFetching,
-    staleTime: 300000,
+    enabled: !!actor && !actorFetching,
     retry: false,
+  });
+}
+
+export function useVerifyMarketIntelPasscode() {
+  const { actor } = useActor();
+  return useMutation({
+    mutationFn: async (passcode: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.verifyMarketIntelPasscode(passcode);
+    },
   });
 }
 
 export function useGrantMarketIntelAccess() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.grantMarketIntelAccess(password);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['marketIntelAccess'] });
+      queryClient.invalidateQueries({ queryKey: ["marketIntelAccess"] });
     },
   });
 }
 
-export function useRevokeMarketIntelAccessWithPassword() {
+// ─── Timer State ──────────────────────────────────────────────────────────────
+
+export function useTimerState(timerType: TimerType) {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["timerState", timerType],
+    queryFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.getTimerState(timerType);
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 60000,
+    retry: false,
+  });
+}
+
+// ─── Polls ────────────────────────────────────────────────────────────────────
+
+export function useGetAllPolls() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["polls"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllPolls();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+}
+
+export function useCreatePoll() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.revokeMarketIntelAccessWithPassword(password);
+    mutationFn: async (input: {
+      question: string;
+      options: string[];
+      isActive: boolean;
+      code: string;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createPoll(input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['marketIntelAccess'] });
-      queryClient.invalidateQueries({ queryKey: ['liveMarketIntel'] });
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
     },
   });
 }
 
-export function useGetPresaleRemainingTime() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<bigint>({
-    queryKey: ['presaleRemainingTime'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getPresaleRemainingTime();
+export function useVoteOnPoll() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      pollId,
+      optionIndex,
+    }: { pollId: bigint; optionIndex: bigint }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.submitVote(pollId, optionIndex);
     },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 1000,
-    retry: 1,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+    },
   });
 }
 
-export function useGetAirdropRemainingTime() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<bigint>({
-    queryKey: ['airdropRemainingTime'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getAirdropRemainingTime();
+export function useDeletePoll() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pollId: bigint) => {
+      if (!actor) throw new Error("Actor not available");
+      const result = await actor.deletePoll(pollId);
+      if (result.__kind__ === "err") {
+        throw new Error(result.err);
+      }
+      return result;
     },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 1000,
-    retry: 1,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+    },
   });
 }
 
-// ============================================
-// ALERTS SYSTEM HOOKS
-// ============================================
+// ─── Alerts ───────────────────────────────────────────────────────────────────
 
 export function useGetAlerts() {
   const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<Alert[]>({
-    queryKey: ['alerts'],
+  return useQuery({
+    queryKey: ["alerts"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return [];
       return actor.getAlerts();
     },
-    enabled: !!actor && !!identity && !actorFetching,
-    staleTime: 30000,
+    enabled: !!actor && !actorFetching,
     retry: false,
   });
 }
@@ -140,14 +178,16 @@ export function useGetAlerts() {
 export function useCreateAlert() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ title, message }: { title: string; message: string }) => {
-      if (!actor) throw new Error('Actor not available');
+    mutationFn: async ({
+      title,
+      message,
+    }: { title: string; message: string }) => {
+      if (!actor) throw new Error("Actor not available");
       return actor.createAlert(title, message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }
@@ -155,14 +195,13 @@ export function useCreateAlert() {
 export function useMarkAlertAsRead() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (alertId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.markAlertAsRead(alertId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }
@@ -170,44 +209,114 @@ export function useMarkAlertAsRead() {
 export function useDeleteAlert() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (alertId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.deleteAlert(alertId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }
 
-export function useEnableTrigger() {
+export function useToggleAlertTrigger() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (enable: boolean) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.enableTrigger(enable);
+    mutationFn: async (alertId: bigint) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.toggleAlertTrigger(alertId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }
 
-export function useCheckAndCreateAutoAlert() {
+// ─── Blog Posts ───────────────────────────────────────────────────────────────
+
+export function usePublishedPosts() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["publishedPosts"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getPublishedPosts();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+}
+
+export function useCreateBlogPost() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.checkAndCreateAutoAlert();
+    mutationFn: async ({
+      post,
+      passcode,
+    }: { post: BlogPost; passcode: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      const result = await actor.createBlogPost(post, passcode);
+      if (result.__kind__ === "err") {
+        throw new Error(result.err);
+      }
+      return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ["publishedPosts"] });
+    },
+  });
+}
+
+export function useDeleteBlogPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      authorCode,
+    }: { id: bigint; authorCode: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      const result = await actor.deleteBlogPost(id, authorCode);
+      if (result.__kind__ === "err") {
+        throw new Error(result.err);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["publishedPosts"] });
+    },
+  });
+}
+
+// ─── Market Pulse Voting ──────────────────────────────────────────────────────
+
+export function useGetMarketPulseTally() {
+  const { actor, isFetching: actorFetching } = useActor();
+  return useQuery({
+    queryKey: ["marketPulseTally"],
+    queryFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.getMarketPulseTally();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 10000,
+    retry: false,
+  });
+}
+
+export function useVoteMarketPulse() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sentiment: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.voteMarketPulse(sentiment);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketPulseTally"] });
     },
   });
 }

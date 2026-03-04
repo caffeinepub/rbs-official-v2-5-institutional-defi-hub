@@ -1,102 +1,44 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-export interface LivePriceAsset {
+export interface LivePriceData {
   symbol: string;
   name: string;
+  id: string;
   price: number;
   change24h: number;
-  timestamp: number;
+  marketCap: number;
+  volume24h: number;
 }
 
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const METALS_API = 'https://api.metals.live/v1/spot';
-const REFETCH_INTERVAL = 7000; // 7 seconds (within 5-10s range)
-
-async function fetchCryptoPrices(): Promise<LivePriceAsset[]> {
-  try {
-    const response = await fetch(
-      `${COINGECKO_API}/simple/price?ids=bitcoin,ethereum,binancecoin&vs_currencies=usd&include_24hr_change=true`
-    );
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch crypto prices');
-    }
-    
-    const data = await response.json();
-    
-    return [
-      {
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        price: data.bitcoin?.usd || 0,
-        change24h: data.bitcoin?.usd_24h_change || 0,
-        timestamp: Date.now(),
-      },
-      {
-        symbol: 'ETH',
-        name: 'Ethereum',
-        price: data.ethereum?.usd || 0,
-        change24h: data.ethereum?.usd_24h_change || 0,
-        timestamp: Date.now(),
-      },
-      {
-        symbol: 'BNB',
-        name: 'Binance Coin',
-        price: data.binancecoin?.usd || 0,
-        change24h: data.binancecoin?.usd_24h_change || 0,
-        timestamp: Date.now(),
-      },
-    ];
-  } catch (error) {
-    console.error('Error fetching crypto prices:', error);
-    throw error;
-  }
-}
-
-async function fetchMetalsPrices(): Promise<LivePriceAsset[]> {
-  try {
-    const response = await fetch(`${METALS_API}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch metals prices');
-    }
-    
-    const data = await response.json();
-    
-    // Calculate 24h change (metals API doesn't provide this, so we'll use 0 for now)
-    return [
-      {
-        symbol: 'XAU',
-        name: 'Gold',
-        price: data.gold || 0,
-        change24h: 0,
-        timestamp: Date.now(),
-      },
-      {
-        symbol: 'XAG',
-        name: 'Silver',
-        price: data.silver || 0,
-        change24h: 0,
-        timestamp: Date.now(),
-      },
-    ];
-  } catch (error) {
-    console.error('Error fetching metals prices:', error);
-    throw error;
-  }
-}
+const COINS = [
+  { id: "bitcoin", symbol: "BTC", name: "Bitcoin" },
+  { id: "ethereum", symbol: "ETH", name: "Ethereum" },
+  { id: "binancecoin", symbol: "BNB", name: "BNB" },
+  { id: "solana", symbol: "SOL", name: "Solana" },
+  { id: "ripple", symbol: "XRP", name: "XRP" },
+];
 
 export function useLivePrice() {
-  return useQuery<LivePriceAsset[]>({
-    queryKey: ['livePrice'],
+  return useQuery<LivePriceData[]>({
+    queryKey: ["livePrices"],
     queryFn: async () => {
-      const [cryptoPrices, metalsPrices] = await Promise.all([
-        fetchCryptoPrices(),
-        fetchMetalsPrices(),
-      ]);
-      return [...cryptoPrices, ...metalsPrices];
+      const ids = COINS.map((c) => c.id).join(",");
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`,
+      );
+      if (!res.ok) throw new Error("Failed to fetch prices");
+      const data = await res.json();
+      return COINS.map((coin) => ({
+        symbol: coin.symbol,
+        name: coin.name,
+        id: coin.id,
+        price: data[coin.id]?.usd ?? 0,
+        change24h: data[coin.id]?.usd_24h_change ?? 0,
+        marketCap: data[coin.id]?.usd_market_cap ?? 0,
+        volume24h: data[coin.id]?.usd_24h_vol ?? 0,
+      }));
     },
-    refetchInterval: REFETCH_INTERVAL,
+    refetchInterval: 7000,
     staleTime: 5000,
     retry: 2,
   });

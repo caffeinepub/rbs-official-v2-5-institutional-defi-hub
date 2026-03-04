@@ -1,165 +1,210 @@
-import { useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, DollarSign, Coins, RefreshCw } from 'lucide-react';
-import { PageHead } from '@/components/PageHead';
-import { useLivePrice } from '@/hooks/useLivePrice';
-import { useInternetIdentity } from '@/hooks/useInternetIdentity';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Lock, RefreshCw, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import React from "react";
+import { PageHead } from "../components/PageHead";
+import { SmokySectionTransition } from "../components/SmokySectionTransition";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useLivePrice } from "../hooks/useLivePrice";
+
+function formatPrice(price: number): string {
+  if (price >= 1000)
+    return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (price >= 1)
+    return price.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  return price.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+function formatMarketCap(value: number): string {
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  return `$${value.toFixed(2)}`;
+}
+
+const COIN_ICONS: Record<string, string> = {
+  BTC: "₿",
+  ETH: "Ξ",
+  BNB: "B",
+  SOL: "◎",
+  XRP: "X",
+};
 
 export default function LivePricePage() {
   const { identity } = useInternetIdentity();
-  const { data: prices, isLoading, error, refetch } = useLivePrice();
-
-  useEffect(() => {
-    document.body.style.setProperty('--animate-duration', '0.6s');
-    return () => {
-      document.body.style.removeProperty('--animate-duration');
-    };
-  }, []);
-
-  const getAssetType = (symbol: string): 'crypto' | 'metal' => {
-    return ['BTC', 'ETH', 'BNB'].includes(symbol) ? 'crypto' : 'metal';
-  };
+  const {
+    data: prices,
+    isLoading,
+    isRefetching,
+    error,
+    dataUpdatedAt,
+  } = useLivePrice();
 
   if (!identity) {
     return (
-      <>
-        <PageHead title="Live Price" description="Real-time cryptocurrency and precious metals prices" />
-        <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <Alert className="animate-fade-in">
-                <AlertDescription>
-                  Please log in to view live price data.
-                </AlertDescription>
-              </Alert>
-            </div>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <PageHead
+          title="Live Prices | RBS"
+          description="Real-time cryptocurrency prices for top 5 coins."
+        />
+        <div className="glass-card p-8 text-center max-w-md">
+          <Lock className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Authentication Required
+          </h2>
+          <p className="text-muted-foreground">
+            Please log in to view live cryptocurrency prices.
+          </p>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <PageHead title="Live Price" description="Real-time cryptocurrency and precious metals prices" />
-      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-poppins font-bold metallic-text-hero mb-4">
-                Live Price Dashboard
+    <div className="min-h-screen bg-background">
+      <PageHead
+        title="Live Prices | RBS"
+        description="Real-time cryptocurrency prices for top 5 coins."
+      />
+
+      <SmokySectionTransition>
+        <section className="py-16 px-4 max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                Live Prices
               </h1>
-              <p className="text-lg metallic-text-secondary mb-6">
-                Real-time market data for cryptocurrencies and precious metals
+              <p className="text-muted-foreground mt-1">
+                Top 5 cryptocurrencies — refreshes every 7 seconds
               </p>
-              <Button
-                onClick={() => refetch()}
-                variant="outline"
-                className="mex-hover-lift transition-all duration-300"
-                disabled={isLoading}
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh Prices
-              </Button>
             </div>
-
-            {error && (
-              <Alert variant="destructive" className="mb-6 animate-fade-in">
-                <AlertDescription>
-                  Failed to load price data. Please try again later.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isLoading && !prices && (
-              <div className="text-center py-12 animate-pulse">
-                <p className="text-muted-foreground">Loading live prices...</p>
-              </div>
-            )}
-
-            {prices && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {prices.map((asset, index) => {
-                  const assetType = getAssetType(asset.symbol);
-                  return (
-                    <Card
-                      key={asset.symbol}
-                      className="glass-card mex-hover-lift transition-all duration-300 animate-fade-in"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span className="flex items-center gap-2">
-                            {assetType === 'crypto' ? (
-                              <Coins className="h-5 w-5 text-gold" />
-                            ) : (
-                              <DollarSign className="h-5 w-5 text-gold" />
-                            )}
-                            {asset.name}
-                          </span>
-                          <span className="text-sm font-normal text-muted-foreground">
-                            {asset.symbol}
-                          </span>
-                        </CardTitle>
-                        <CardDescription>
-                          {assetType === 'crypto' ? 'Cryptocurrency' : 'Precious Metal'}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-3xl font-bold text-gold transition-all duration-300">
-                              ${asset.price.toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">Current Price</p>
-                          </div>
-                          <div
-                            className={`flex items-center gap-2 transition-all duration-300 ${
-                              asset.change24h >= 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }`}
-                          >
-                            {asset.change24h >= 0 ? (
-                              <TrendingUp className="h-4 w-4 animate-pulse" />
-                            ) : (
-                              <TrendingDown className="h-4 w-4 animate-pulse" />
-                            )}
-                            <span className="font-semibold">
-                              {asset.change24h >= 0 ? '+' : ''}
-                              {asset.change24h.toFixed(2)}%
-                            </span>
-                            <span className="text-sm text-muted-foreground">24h</span>
-                          </div>
-                          {asset.timestamp && (
-                            <p className="text-xs text-muted-foreground">
-                              Updated: {new Date(asset.timestamp).toLocaleTimeString()}
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="mt-12 text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
-              <p className="text-sm text-muted-foreground">
-                Prices update automatically every 7 seconds
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Data sourced from backend price engine
-              </p>
+            <div className="flex items-center gap-3">
+              {isRefetching && (
+                <div className="flex items-center gap-2 text-primary">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span className="text-xs">Updating...</span>
+                </div>
+              )}
+              {!isRefetching && (
+                <div className="flex items-center gap-2 text-green-500">
+                  <Zap className="w-4 h-4" />
+                  <span className="text-xs">Live</span>
+                </div>
+              )}
+              {dataUpdatedAt > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {new Date(dataUpdatedAt).toLocaleTimeString()}
+                </span>
+              )}
             </div>
           </div>
-        </div>
-      </div>
-    </>
+
+          {error && (
+            <div className="glass-card p-4 mb-6 border border-destructive/30">
+              <p className="text-destructive text-sm">
+                Failed to fetch prices. Retrying automatically...
+              </p>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {(["s1", "s2", "s3", "s4", "s5"] as const).map((sk) => (
+                <div key={sk} className="glass-card p-6 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-muted rounded-full" />
+                      <div>
+                        <div className="h-5 bg-muted rounded w-16 mb-2" />
+                        <div className="h-4 bg-muted rounded w-24" />
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="h-6 bg-muted rounded w-28 mb-2" />
+                      <div className="h-4 bg-muted rounded w-16" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {(prices ?? []).map((coin, index) => {
+                const isPositive = coin.change24h >= 0;
+                return (
+                  <div
+                    key={coin.symbol}
+                    className="glass-card p-5 hover:scale-[1.01] transition-transform"
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xl font-bold text-primary">
+                          {COIN_ICONS[coin.symbol] ?? coin.symbol[0]}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-foreground">
+                              {coin.symbol}
+                            </span>
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              #{index + 1}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {coin.name}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-8 flex-wrap">
+                        <div className="text-right">
+                          <p className="text-2xl font-bold font-mono text-foreground">
+                            ${formatPrice(coin.price)}
+                          </p>
+                          <div
+                            className={`flex items-center gap-1 justify-end ${isPositive ? "text-green-500" : "text-red-500"}`}
+                          >
+                            {isPositive ? (
+                              <TrendingUp className="w-4 h-4" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4" />
+                            )}
+                            <span className="text-sm font-semibold">
+                              {isPositive ? "+" : ""}
+                              {coin.change24h.toFixed(2)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right hidden md:block">
+                          <p className="text-sm font-medium text-foreground">
+                            {formatMarketCap(coin.marketCap)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Market Cap
+                          </p>
+                        </div>
+
+                        <div className="text-right hidden lg:block">
+                          <p className="text-sm font-medium text-foreground">
+                            {formatMarketCap(coin.volume24h)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            24h Volume
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            Data sourced from CoinGecko API. Prices update every 7 seconds. Not
+            financial advice.
+          </p>
+        </section>
+      </SmokySectionTransition>
+    </div>
   );
 }

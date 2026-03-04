@@ -1,112 +1,74 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { formatCountdown, nanosToSeconds, type CountdownTime } from '@/utils/timers';
+import { useEffect, useRef, useState } from "react";
 
-const RESYNC_INTERVAL = 60000; // Resync with backend every minute
-
-export function usePresaleCountdown() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [localCountdown, setLocalCountdown] = useState<CountdownTime>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    isUnlocked: false,
-  });
-
-  // Fetch remaining time from backend
-  const { data: backendRemaining } = useQuery({
-    queryKey: ['presaleTimer'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getPresaleRemainingTime();
-    },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: RESYNC_INTERVAL,
-    staleTime: 30000,
-  });
-
-  useEffect(() => {
-    if (backendRemaining === undefined) return;
-
-    // Convert backend time immediately and set state
-    let remainingSeconds = nanosToSeconds(backendRemaining);
-    const initialCountdown = formatCountdown(remainingSeconds);
-    setLocalCountdown(initialCountdown);
-
-    // Don't start interval if already at 0
-    if (remainingSeconds <= 0) {
-      return;
-    }
-
-    // Start local countdown interval
-    const interval = setInterval(() => {
-      remainingSeconds = Math.max(0, remainingSeconds - 1);
-      const newCountdown = formatCountdown(remainingSeconds);
-      setLocalCountdown(newCountdown);
-
-      // Clear interval when we hit 0
-      if (remainingSeconds === 0) {
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [backendRemaining]);
-
-  return localCountdown;
+export interface CountdownDisplay {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  displayTime: string;
+  isUnlocked: boolean;
+  totalSecondsLeft: number;
 }
 
-export function useAirdropCountdown() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const [localCountdown, setLocalCountdown] = useState<CountdownTime>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    isUnlocked: false,
+// Roadmap dates (nanoseconds as bigint)
+const PRESALE_END_NS = BigInt("1806724799000000000"); // March 31, 2027
+const AIRDROP_END_NS = BigInt("1869796799000000000"); // March 31, 2029
+
+function nsToMs(ns: bigint): number {
+  return Number(ns / BigInt(1_000_000));
+}
+
+function formatCountdown(msLeft: number): CountdownDisplay {
+  const totalSeconds = Math.max(0, Math.floor(msLeft / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const isUnlocked = totalSeconds <= 0;
+  const displayTime = isUnlocked
+    ? "UNLOCKED"
+    : `${String(days).padStart(2, "0")}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+  return {
+    days,
+    hours,
+    minutes,
+    seconds,
+    displayTime,
+    isUnlocked,
+    totalSecondsLeft: totalSeconds,
+  };
+}
+
+export function useCountdownTimer(
+  timerType: "presale" | "airdrop",
+  onUnlock?: () => void,
+): CountdownDisplay {
+  const endNs = timerType === "presale" ? PRESALE_END_NS : AIRDROP_END_NS;
+  const endMs = nsToMs(endNs);
+
+  const [countdown, setCountdown] = useState<CountdownDisplay>(() => {
+    const msLeft = endMs - Date.now();
+    return formatCountdown(msLeft);
   });
 
-  // Fetch remaining time from backend
-  const { data: backendRemaining } = useQuery({
-    queryKey: ['airdropTimer'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getAirdropRemainingTime();
-    },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: RESYNC_INTERVAL,
-    staleTime: 30000,
-  });
+  const onUnlockRef = useRef(onUnlock);
+  onUnlockRef.current = onUnlock;
+  const hasUnlockedRef = useRef(false);
 
   useEffect(() => {
-    if (backendRemaining === undefined) return;
-
-    // Convert backend time immediately and set state
-    let remainingSeconds = nanosToSeconds(backendRemaining);
-    const initialCountdown = formatCountdown(remainingSeconds);
-    setLocalCountdown(initialCountdown);
-
-    // Don't start interval if already at 0
-    if (remainingSeconds <= 0) {
-      return;
-    }
-
-    // Start local countdown interval
-    const interval = setInterval(() => {
-      remainingSeconds = Math.max(0, remainingSeconds - 1);
-      const newCountdown = formatCountdown(remainingSeconds);
-      setLocalCountdown(newCountdown);
-
-      // Clear interval when we hit 0
-      if (remainingSeconds === 0) {
-        clearInterval(interval);
+    const tick = () => {
+      const msLeft = endMs - Date.now();
+      const cd = formatCountdown(msLeft);
+      setCountdown(cd);
+      if (cd.isUnlocked && !hasUnlockedRef.current) {
+        hasUnlockedRef.current = true;
+        onUnlockRef.current?.();
       }
-    }, 1000);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [endMs]);
 
-    return () => clearInterval(interval);
-  }, [backendRemaining]);
-
-  return localCountdown;
+  return countdown;
 }

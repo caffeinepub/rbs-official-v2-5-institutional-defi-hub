@@ -1,4 +1,4 @@
-import { REDIRECT_CONFIG } from '@/constants/redirectConfig';
+import { REDIRECT_CONFIG } from "@/constants/redirectConfig";
 
 /**
  * Builds a WhatsApp URL with pre-filled message using the configured direct number.
@@ -6,11 +6,24 @@ import { REDIRECT_CONFIG } from '@/constants/redirectConfig';
  */
 export function buildWhatsAppURL(
   subject: string,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): string {
   const message = formatWhatsAppMessage(subject, data);
   const encodedMessage = encodeURIComponent(message);
   return `${REDIRECT_CONFIG.whatsapp.directUrl}?text=${encodedMessage}`;
+}
+
+/**
+ * Redirects to WhatsApp with pre-filled message using window.location.assign
+ * for better mobile compatibility.
+ */
+export function redirectToWhatsApp(
+  subject: string,
+  data: Record<string, string>,
+): void {
+  const url = buildWhatsAppURL(subject, data);
+  // Use window.location.assign for better mobile compatibility
+  window.location.assign(url);
 }
 
 /**
@@ -19,10 +32,10 @@ export function buildWhatsAppURL(
  */
 export function openWhatsApp(
   subject: string,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): void {
   const url = buildWhatsAppURL(subject, data);
-  window.open(url, '_blank', 'noopener,noreferrer');
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 /**
@@ -30,16 +43,15 @@ export function openWhatsApp(
  */
 function formatWhatsAppMessage(
   subject: string,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): string {
   let message = `*${subject}*\n\n`;
-  
+
   for (const [key, value] of Object.entries(data)) {
-    const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-    message += `*${formattedKey}:* ${value}\n`;
+    message += `*${key}:* ${value}\n`;
   }
-  
-  message += `\n_Sent via RBS Acquisition Portal_`;
-  
+
+  message += "\n_Sent via RBS Acquisition Portal_";
+
   return message;
 }

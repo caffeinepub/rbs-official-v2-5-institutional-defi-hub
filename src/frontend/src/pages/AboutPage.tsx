@@ -1,334 +1,242 @@
-import { SmokySectionTransition } from '@/components/SmokySectionTransition';
-import { PageHead } from '@/components/PageHead';
-import { Shield, Zap, Users, TrendingUp, Target, Award, CheckCircle, Rocket } from 'lucide-react';
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { PageHead } from "@/components/PageHead";
+import {
+  Award,
+  Code,
+  Globe,
+  Lock,
+  Shield,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
+import { motion } from "motion/react";
+
+const features = [
+  {
+    icon: Shield,
+    title: "Enterprise Security",
+    description:
+      "Bank-grade security protocols protecting your assets and transactions 24/7 on the Internet Computer.",
+    color: "from-blue-500/20 to-blue-500/5",
+    border: "border-blue-500/30",
+    iconColor: "text-blue-400",
+  },
+  {
+    icon: Zap,
+    title: "Lightning Fast",
+    description:
+      "Sub-second transaction finality on the Internet Computer Protocol with virtually zero fees.",
+    color: "from-yellow-500/20 to-yellow-500/5",
+    border: "border-yellow-500/30",
+    iconColor: "text-yellow-400",
+  },
+  {
+    icon: Users,
+    title: "Community Driven",
+    description:
+      "Governed by token holders through transparent voting — every voice matters in the RBS ecosystem.",
+    color: "from-purple-500/20 to-purple-500/5",
+    border: "border-purple-500/30",
+    iconColor: "text-purple-400",
+  },
+  {
+    icon: TrendingUp,
+    title: "Deflationary Model",
+    description:
+      "Built-in scarcity mechanisms with 15% burn allocation increase long-term token value.",
+    color: "from-green-500/20 to-green-500/5",
+    border: "border-green-500/30",
+    iconColor: "text-green-400",
+  },
+  {
+    icon: Code,
+    title: "Developer Friendly",
+    description:
+      "Comprehensive APIs and tools for seamless ecosystem integration and expansion.",
+    color: "from-cyan-500/20 to-cyan-500/5",
+    border: "border-cyan-500/30",
+    iconColor: "text-cyan-400",
+  },
+  {
+    icon: Lock,
+    title: "Audited Contracts",
+    description:
+      "Independently verified and continuously monitored smart contracts for maximum trust.",
+    color: "from-amber-500/20 to-amber-500/5",
+    border: "border-amber-500/30",
+    iconColor: "text-amber-400",
+  },
+];
+
+const techPillars = [
+  {
+    icon: Globe,
+    title: "ICP Architecture",
+    desc: "Built on the Internet Computer Protocol — the world's first blockchain that runs at web speed with near-zero cost transactions.",
+  },
+  {
+    icon: Award,
+    title: "Token Economics",
+    desc: "A carefully designed deflationary model with burn mechanisms, staking rewards, and governance rights that align community incentives.",
+  },
+  {
+    icon: Users,
+    title: "Governance Model",
+    desc: "Democratic decision-making through token-weighted voting, ensuring the community shapes the future direction of the protocol.",
+  },
+];
 
 export default function AboutPage() {
   return (
     <>
-      <PageHead 
-        title="About RBS" 
-        description="Learn about the Resonance Blockchain System, our mission, values, and vision for the future of decentralized finance."
+      <PageHead
+        title="About RBS | Return Be Superior"
+        description="Learn about RBS's mission, technology, and vision for the future of decentralized blockchain solutions"
       />
-      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <SmokySectionTransition>
-            <div className="text-center mb-16 mex-fade-up">
-              <h1 className="text-4xl md:text-6xl font-poppins font-bold metallic-text-hero mb-6">
-                About <span className="text-gold">RBS Protocol</span>
-              </h1>
-              <p className="text-xl metallic-text-secondary max-w-3xl mx-auto">
-                Building the future of decentralized finance through innovation, transparency, and community empowerment
-              </p>
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Hero */}
+          <AnimatedSection direction="up" className="text-center mb-20 pt-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-sm font-medium mb-6">
+              <Award className="w-4 h-4" /> About RBS
             </div>
-          </SmokySectionTransition>
+            <h1 className="text-4xl md:text-6xl font-bold shimmer-gold mb-6">
+              Return Be Superior
+            </h1>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+              Return Be Superior is pioneering the next generation of blockchain
+              solutions on the Internet Computer Protocol. We're building a
+              transparent, secure, and scalable ecosystem for the decentralized
+              future.
+            </p>
+          </AnimatedSection>
 
-          <SmokySectionTransition delay={100}>
-            <section className="mb-16">
-              <div className="glass-card-gold p-8 md:p-12 mex-hover-lift">
-                <h2 className="text-3xl font-poppins font-bold metallic-text mb-6">Our Mission</h2>
-                <p className="text-lg metallic-text-secondary leading-relaxed">
-                  RBS Protocol is revolutionizing blockchain technology by combining cutting-edge mesh architecture with 
-                  deflationary tokenomics and community-driven governance. We're building a sustainable, scalable, and 
-                  secure ecosystem that empowers users worldwide to participate in the decentralized economy.
+          {/* Mission Card */}
+          <AnimatedSection direction="left" delay={100} className="mb-16">
+            <div className="p-8 rounded-2xl bg-amber-500/5 border border-amber-500/20 backdrop-blur-sm">
+              <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                <Shield className="w-8 h-8 text-amber-400" />
+                Our Mission
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <p className="text-gray-400 leading-relaxed text-lg">
+                  We're building a transparent, secure, and scalable blockchain
+                  ecosystem that empowers individuals and organizations to
+                  participate in the decentralized economy on their own terms.
+                </p>
+                <p className="text-gray-400 leading-relaxed text-lg">
+                  Through innovative technology and community-driven governance,
+                  RBS is creating the infrastructure for the future of finance —
+                  accessible, fair, and built to last.
                 </p>
               </div>
-            </section>
-          </SmokySectionTransition>
+            </div>
+          </AnimatedSection>
 
-          <SmokySectionTransition delay={200}>
-            <section className="mb-16">
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-8 text-center">
-                Core <span className="text-gold">Values</span>
+          {/* Features */}
+          <AnimatedSection
+            direction="up"
+            delay={150}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl font-bold text-white mb-2">
+              What We Deliver
+            </h2>
+            <p className="text-gray-400">Core pillars of the RBS ecosystem</p>
+          </AnimatedSection>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-16">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30, filter: "blur(4px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{
+                    duration: 0.6,
+                    delay: index * 0.1,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className={`p-6 rounded-2xl bg-gradient-to-br ${feature.color} border ${feature.border} hover:border-amber-500/40 transition-all duration-300 group`}
+                >
+                  <div
+                    className={`p-3 rounded-xl bg-black/30 w-fit mb-4 ${feature.iconColor} group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* How It Works */}
+          <AnimatedSection direction="up" delay={200} className="mb-16">
+            <h2 className="text-3xl font-bold text-white mb-10 text-center">
+              How It Works
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {techPillars.map((pillar, i) => (
+                <motion.div
+                  key={pillar.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.15 }}
+                  className="p-6 rounded-2xl bg-white/3 border border-white/8 hover:border-amber-500/30 transition-all duration-300"
+                >
+                  <pillar.icon className="w-8 h-8 text-amber-400 mb-4" />
+                  <h3 className="text-lg font-bold text-amber-400 mb-3">
+                    {pillar.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    {pillar.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </AnimatedSection>
+
+          {/* CTA */}
+          <AnimatedSection direction="scale" delay={300}>
+            <div className="p-8 rounded-2xl bg-gradient-to-br from-amber-500/10 to-blue-500/10 border border-amber-500/20 text-center">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Join the RBS Journey
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="glass-card p-6 text-center mex-hover-lift mex-hover-glow mex-scale-in">
-                  <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4 border-2 border-gold/30">
-                    <Shield className="h-8 w-8 text-gold" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold metallic-text mb-3">Security First</h3>
-                  <p className="metallic-text-secondary">
-                    Military-grade encryption and multi-layer security protocols protect your assets
-                  </p>
-                </div>
-
-                <div className="glass-card p-6 text-center mex-hover-lift mex-hover-glow mex-scale-in animation-delay-200">
-                  <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4 border-2 border-gold/30">
-                    <Zap className="h-8 w-8 text-gold" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold metallic-text mb-3">Innovation</h3>
-                  <p className="metallic-text-secondary">
-                    Pioneering mesh technology and advanced consensus mechanisms
-                  </p>
-                </div>
-
-                <div className="glass-card p-6 text-center mex-hover-lift mex-hover-glow mex-scale-in animation-delay-400">
-                  <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4 border-2 border-gold/30">
-                    <Users className="h-8 w-8 text-gold" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold metallic-text mb-3">Community</h3>
-                  <p className="metallic-text-secondary">
-                    Democratic governance where every voice matters in protocol decisions
-                  </p>
-                </div>
-
-                <div className="glass-card p-6 text-center mex-hover-lift mex-hover-glow mex-scale-in animation-delay-600">
-                  <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4 border-2 border-gold/30">
-                    <TrendingUp className="h-8 w-8 text-gold" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold metallic-text mb-3">Sustainability</h3>
-                  <p className="metallic-text-secondary">
-                    Deflationary model ensures long-term value and ecosystem health
-                  </p>
-                </div>
+              <p className="text-gray-400 max-w-2xl mx-auto mb-6 leading-relaxed">
+                Be part of a movement that's redefining blockchain
+                accessibility. With 100,000 RBS fixed supply and a
+                community-first approach, RBS is built for long-term success.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="https://t.me/RBSuperior"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-blue-600/20 border border-blue-500/40 text-blue-400 rounded-xl font-bold hover:bg-blue-600/30 transition-all duration-300"
+                >
+                  Join Telegram
+                </a>
+                <a
+                  href="https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-green-600/20 border border-green-500/40 text-green-400 rounded-xl font-bold hover:bg-green-600/30 transition-all duration-300"
+                >
+                  WhatsApp Channel
+                </a>
               </div>
-            </section>
-          </SmokySectionTransition>
-
-          <SmokySectionTransition delay={300}>
-            <section className="mb-16">
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-8 text-center">
-                What We <span className="text-gold">Deliver</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="glass-card-gold p-8 mex-hover-lift">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40">
-                      <Target className="h-6 w-6 text-gold" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-poppins font-bold metallic-text mb-2">Enterprise Solutions</h3>
-                      <p className="metallic-text-secondary">
-                        Scalable blockchain infrastructure for businesses of all sizes
-                      </p>
-                    </div>
-                  </div>
-                  <ul className="space-y-3 metallic-text-secondary">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Custom smart contract development and deployment</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Integration support with existing systems</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>24/7 technical support and monitoring</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Compliance and regulatory guidance</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="glass-card-gold p-8 mex-hover-lift">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40">
-                      <Award className="h-6 w-6 text-gold" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-poppins font-bold metallic-text mb-2">Developer Tools</h3>
-                      <p className="metallic-text-secondary">
-                        Comprehensive toolkit for building on RBS Protocol
-                      </p>
-                    </div>
-                  </div>
-                  <ul className="space-y-3 metallic-text-secondary">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Full SDK with multiple language support</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Extensive API documentation and examples</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Testing frameworks and debugging tools</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                      <span>Active developer community and forums</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </SmokySectionTransition>
-
-          <SmokySectionTransition delay={400}>
-            <section className="mb-16">
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-8 text-center">
-                How It <span className="text-gold">Works</span>
-              </h2>
-              <div className="glass-card p-8 md:p-12">
-                <div className="space-y-8">
-                  <div className="flex items-start gap-6 mex-fade-up">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40 text-gold font-bold text-xl">
-                      1
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-poppins font-bold metallic-text mb-2">Mesh Network Architecture</h3>
-                      <p className="metallic-text-secondary">
-                        Our revolutionary mesh topology creates a self-healing, highly resilient network where every node 
-                        contributes to overall system stability and performance. Unlike traditional blockchain architectures, 
-                        our mesh design eliminates single points of failure and enables true decentralization.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-6 mex-fade-up animation-delay-200">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40 text-gold font-bold text-xl">
-                      2
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-poppins font-bold metallic-text mb-2">Consensus & Validation</h3>
-                      <p className="metallic-text-secondary">
-                        Advanced consensus mechanism combines the best of Proof of Stake with innovative mesh validation. 
-                        Transactions are verified across multiple pathways simultaneously, ensuring speed without compromising 
-                        security. Our system achieves finality in seconds while maintaining Byzantine fault tolerance.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-6 mex-fade-up animation-delay-400">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40 text-gold font-bold text-xl">
-                      3
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-poppins font-bold metallic-text mb-2">Token Economics</h3>
-                      <p className="metallic-text-secondary">
-                        RBS implements a carefully designed deflationary model where 15% of the total supply is permanently 
-                        burned, creating natural scarcity. Every transaction includes a small burn mechanism, continuously 
-                        reducing circulating supply. This economic model rewards long-term holders and ensures sustainable growth.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-6 mex-fade-up animation-delay-600">
-                    <div className="h-12 w-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0 border-2 border-gold/40 text-gold font-bold text-xl">
-                      4
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-poppins font-bold metallic-text mb-2">Community Governance</h3>
-                      <p className="metallic-text-secondary">
-                        Token holders participate directly in protocol governance through our democratic voting system. 
-                        Propose changes, vote on upgrades, and shape the future of RBS. Voting power is proportional to 
-                        stake, ensuring those most invested in the ecosystem have the strongest voice.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </SmokySectionTransition>
-
-          <SmokySectionTransition delay={200}>
-            <section className="mb-16">
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-8 text-center">
-                Deflationary <span className="text-gold">Model</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-card-gold p-6 text-center mex-hover-lift mex-scale-in">
-                  <div className="text-4xl font-bold text-gold mb-2">15%</div>
-                  <div className="text-sm metallic-text-secondary mb-4">Initial Burn</div>
-                  <p className="metallic-text-secondary text-sm">
-                    Permanently removed from circulation at launch
-                  </p>
-                </div>
-
-                <div className="glass-card-gold p-6 text-center mex-hover-lift mex-scale-in animation-delay-200">
-                  <div className="text-4xl font-bold text-gold mb-2">0.1%</div>
-                  <div className="text-sm metallic-text-secondary mb-4">Transaction Burn</div>
-                  <p className="metallic-text-secondary text-sm">
-                    Automatic burn on every transaction
-                  </p>
-                </div>
-
-                <div className="glass-card-gold p-6 text-center mex-hover-lift mex-scale-in animation-delay-400">
-                  <div className="text-4xl font-bold text-gold mb-2">100K</div>
-                  <div className="text-sm metallic-text-secondary mb-4">Total Supply</div>
-                  <p className="metallic-text-secondary text-sm">
-                    Fixed maximum supply, decreasing over time
-                  </p>
-                </div>
-              </div>
-            </section>
-          </SmokySectionTransition>
-
-          <SmokySectionTransition delay={300}>
-            <section className="mb-16">
-              <h2 className="text-3xl font-poppins font-bold metallic-text mb-8 text-center">
-                Governance <span className="text-gold">Model</span>
-              </h2>
-              <div className="glass-card p-8 md:p-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="mex-fade-up">
-                    <h3 className="text-xl font-poppins font-bold metallic-text mb-4">Proposal System</h3>
-                    <p className="metallic-text-secondary mb-4">
-                      Any token holder can submit proposals for protocol improvements, new features, or parameter changes. 
-                      Proposals require a minimum stake threshold to prevent spam and ensure serious consideration.
-                    </p>
-                    <ul className="space-y-2 metallic-text-secondary">
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        Minimum 100 RBS to submit proposals
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        7-day discussion period
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        Community feedback and refinement
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="mex-fade-up animation-delay-200">
-                    <h3 className="text-xl font-poppins font-bold metallic-text mb-4">Voting Power</h3>
-                    <p className="metallic-text-secondary mb-4">
-                      Voting power is determined by your RBS stake. The longer you hold, the more weight your vote carries. 
-                      This system rewards committed community members and ensures long-term thinking.
-                    </p>
-                    <ul className="space-y-2 metallic-text-secondary">
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        1 RBS = 1 vote (base power)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        Bonus multiplier for long-term holders
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gold"></span>
-                        Transparent on-chain voting records
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </SmokySectionTransition>
-
-          <SmokySectionTransition delay={400}>
-            <section>
-              <div className="glass-card-gold p-8 md:p-12 text-center mex-hover-lift">
-                <div className="h-16 w-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-6 border-2 border-gold/40">
-                  <Rocket className="h-8 w-8 text-gold" />
-                </div>
-                <h2 className="text-3xl font-poppins font-bold metallic-text mb-4">
-                  Vision <span className="text-gold">2031</span>
-                </h2>
-                <p className="text-lg metallic-text-secondary max-w-3xl mx-auto">
-                  By 2031, RBS Protocol will be the leading blockchain infrastructure powering millions of transactions 
-                  daily across global enterprises, DeFi platforms, and decentralized applications. Our mesh technology 
-                  will set the standard for scalability, security, and sustainability in the blockchain industry.
-                </p>
-              </div>
-            </section>
-          </SmokySectionTransition>
+            </div>
+          </AnimatedSection>
         </div>
       </div>
     </>

@@ -1,77 +1,52 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
+import { useQuery } from "@tanstack/react-query";
 
-// Temporary local types until backend is updated
-interface GlobalCryptoMetrics {
+export interface GlobalMarketData {
   totalMarketCap: number;
-  total24hVolume: number;
   btcDominance: number;
-  activeCryptocurrencies: bigint;
-  timestamp: bigint;
+  ethDominance: number;
+  totalVolume24h: number;
+  marketCapChange24h: number;
+  activeCryptocurrencies: number;
+  lastUpdated: Date;
+  trendUp: boolean;
 }
 
-interface SentimentSnapshot {
-  fearGreedIndex: number;
-  sentimentLabel: string;
-  timestamp: bigint;
+export function formatLargeNumber(value: number): string {
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  return `$${value.toFixed(2)}`;
 }
 
-interface AnalyticsSnapshot {
-  cryptoMetrics: GlobalCryptoMetrics | null;
-  sentiment: SentimentSnapshot | null;
-  lastUpdated: bigint;
-  isStale: boolean;
-}
-
-const POLLING_INTERVAL = 120000; // 2 minutes
-
-export function useGetAnalyticsSnapshot(enabled: boolean = true) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<AnalyticsSnapshot>({
-    queryKey: ['analyticsSnapshot'],
+export function useRealWorldAnalytics() {
+  return useQuery<GlobalMarketData>({
+    queryKey: ["realWorldAnalytics"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      // Temporary mock data until backend implements getAnalyticsSnapshot
+      const res = await fetch("https://api.coingecko.com/api/v3/global");
+      if (!res.ok) throw new Error("Failed to fetch global market data");
+      const data = await res.json();
+      const d = data.data ?? {};
+
+      const totalMarketCap = d.total_market_cap?.usd ?? 0;
+      const btcDominance = d.market_cap_percentage?.btc ?? 0;
+      const ethDominance = d.market_cap_percentage?.eth ?? 0;
+      const totalVolume24h = d.total_volume?.usd ?? 0;
+      const marketCapChange24h = d.market_cap_change_percentage_24h_usd ?? 0;
+      const activeCryptocurrencies = d.active_cryptocurrencies ?? 0;
+
       return {
-        cryptoMetrics: null,
-        sentiment: null,
-        lastUpdated: BigInt(Date.now() * 1_000_000),
-        isStale: false,
+        totalMarketCap,
+        btcDominance,
+        ethDominance,
+        totalVolume24h,
+        marketCapChange24h,
+        activeCryptocurrencies,
+        lastUpdated: new Date(),
+        trendUp: marketCapChange24h >= 0,
       };
     },
-    enabled: !!actor && !actorFetching && enabled,
-    refetchInterval: enabled ? POLLING_INTERVAL : false,
-    staleTime: 60000,
-    retry: 1,
+    refetchInterval: 60000,
+    staleTime: 55000,
+    retry: 2,
   });
-}
-
-export function useRefreshAnalytics() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      // Temporary no-op until backend implements refreshAnalytics
-      console.log('Refresh analytics');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['analyticsSnapshot'] });
-    },
-  });
-}
-
-export function formatMarketCap(value: number): string {
-  if (value >= 1_000_000_000_000) {
-    return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
-  }
-  if (value >= 1_000_000_000) {
-    return `$${(value / 1_000_000_000).toFixed(2)}B`;
-  }
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`;
-  }
-  return `$${value.toFixed(2)}`;
 }

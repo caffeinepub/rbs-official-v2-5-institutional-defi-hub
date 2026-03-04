@@ -1,58 +1,26 @@
-/**
- * Timer utility functions for countdown display
- * Converts backend remaining time (bigint nanoseconds) to stable UI-friendly format
- */
+export function formatTimerDisplay(nanoseconds: bigint): {
+  days: string;
+  hours: string;
+  minutes: string;
+  seconds: string;
+} {
+  // Convert nanoseconds to milliseconds
+  const totalMs = Number(nanoseconds / BigInt(1_000_000));
 
-export interface CountdownTime {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  isUnlocked: boolean;
-}
+  // Ensure non-negative
+  const ms = Math.max(0, totalMs);
 
-/**
- * Convert bigint nanoseconds to seconds, clamped at 0
- */
-export function nanosToSeconds(nanos: bigint): number {
-  const seconds = Number(nanos / BigInt(1_000_000_000));
-  return Math.max(0, seconds);
-}
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
-/**
- * Format remaining seconds into countdown parts
- * Returns stable time parts for UI rendering with fixed-width support
- */
-export function formatCountdown(remainingSeconds: number): CountdownTime {
-  const safeSeconds = Math.max(0, Math.floor(remainingSeconds));
-  
-  if (safeSeconds === 0) {
-    return {
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      isUnlocked: true,
-    };
-  }
-
-  const days = Math.floor(safeSeconds / 86400);
-  const hours = Math.floor((safeSeconds % 86400) / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-
+  // Use tabular-nums for consistent width
   return {
-    days,
-    hours,
-    minutes,
-    seconds,
-    isUnlocked: false,
+    days: String(days).padStart(2, "0"),
+    hours: String(hours).padStart(2, "0"),
+    minutes: String(minutes).padStart(2, "0"),
+    seconds: String(seconds).padStart(2, "0"),
   };
-}
-
-/**
- * Format time part with leading zero for stable display
- */
-export function padTime(value: number): string {
-  return value.toString().padStart(2, '0');
 }

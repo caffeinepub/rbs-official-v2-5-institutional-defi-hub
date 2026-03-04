@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-export function useParallax(intensity: number = 0.5) {
+export function useParallax(intensity = 0.5) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   useEffect(() => {
@@ -27,27 +27,27 @@ export function useParallax(intensity: number = 0.5) {
       });
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [intensity, prefersReducedMotion]);
 
   return { offset, prefersReducedMotion };
 }
 
-export function usePointerParallax(intensity: number = 0.02) {
+export function usePointerParallax(intensity = 0.02) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   useEffect(() => {
@@ -59,8 +59,10 @@ export function usePointerParallax(intensity: number = 0.02) {
       setOffset({ x, y });
     };
 
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
-    return () => window.removeEventListener('pointermove', handlePointerMove);
+    window.addEventListener("pointermove", handlePointerMove, {
+      passive: true,
+    });
+    return () => window.removeEventListener("pointermove", handlePointerMove);
   }, [intensity, prefersReducedMotion]);
 
   return { offset, prefersReducedMotion };

@@ -1,41 +1,49 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Key, CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
-import { useGetApiKeyStatuses, useSetApiKey } from '@/hooks/useAdminConfig';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useGetApiKeyStatuses, useSetApiKey } from "@/hooks/useAdminConfig";
+import { AlertCircle, CheckCircle, Key, Loader2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const PROVIDER_LABELS: Record<string, string> = {
-  coingecko: 'CoinGecko API',
-  cryptocompare: 'CryptoCompare API',
-  alternative: 'Alternative.me API',
-  binance: 'Binance API',
+  coingecko: "CoinGecko API",
+  cryptocompare: "CryptoCompare API",
+  alternative: "Alternative.me API",
+  binance: "Binance API",
 };
 
 export function AdminApiKeysPanel() {
   const { data: statuses, isLoading } = useGetApiKeyStatuses();
   const setApiKeyMutation = useSetApiKey();
   const [editingProvider, setEditingProvider] = useState<string | null>(null);
-  const [keyValue, setKeyValue] = useState('');
+  const [keyValue, setKeyValue] = useState("");
 
   const handleSave = async (provider: string) => {
     if (!keyValue.trim()) {
-      toast.error('Please enter an API key');
+      toast.error("Please enter an API key");
       return;
     }
 
     try {
       await setApiKeyMutation.mutateAsync({ provider, key: keyValue });
-      toast.success(`${PROVIDER_LABELS[provider] || provider} key updated successfully`);
+      toast.success(
+        `${PROVIDER_LABELS[provider] || provider} key updated successfully`,
+      );
       setEditingProvider(null);
-      setKeyValue('');
+      setKeyValue("");
     } catch (error) {
-      console.error('Failed to set API key:', error);
-      toast.error('Failed to update API key');
+      console.error("Failed to set API key:", error);
+      toast.error("Failed to update API key");
     }
   };
 
@@ -58,27 +66,39 @@ export function AdminApiKeysPanel() {
           API Key Configuration
         </CardTitle>
         <CardDescription>
-          Manage external API keys for real-time data providers. Keys are stored securely and never exposed.
+          Manage external API keys for real-time data providers. Keys are stored
+          securely and never exposed.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Some features work with public endpoints. API keys improve rate limits and data quality.
+            Some features work with public endpoints. API keys improve rate
+            limits and data quality.
           </AlertDescription>
         </Alert>
 
         {statuses && statuses.length > 0 ? (
           <div className="space-y-4">
             {statuses.map((status) => (
-              <div key={status.provider} className="border border-border/50 rounded-lg p-4 space-y-3">
+              <div
+                key={status.provider}
+                className="border border-border/50 rounded-lg p-4 space-y-3"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-gold">
                       {PROVIDER_LABELS[status.provider] || status.provider}
                     </span>
-                    <Badge variant={status.configured ? 'default' : 'outline'} className={status.configured ? 'bg-green-500/10 text-green-600 border-green-500/30' : ''}>
+                    <Badge
+                      variant={status.configured ? "default" : "outline"}
+                      className={
+                        status.configured
+                          ? "bg-green-500/10 text-green-600 border-green-500/30"
+                          : ""
+                      }
+                    >
                       {status.configured ? (
                         <>
                           <CheckCircle className="h-3 w-3 mr-1" />
@@ -98,11 +118,11 @@ export function AdminApiKeysPanel() {
                       variant="outline"
                       onClick={() => {
                         setEditingProvider(status.provider);
-                        setKeyValue('');
+                        setKeyValue("");
                       }}
                       className="mex-hover-lift"
                     >
-                      {status.configured ? 'Update' : 'Add'} Key
+                      {status.configured ? "Update" : "Add"} Key
                     </Button>
                   )}
                 </div>
@@ -133,7 +153,7 @@ export function AdminApiKeysPanel() {
                             Saving...
                           </>
                         ) : (
-                          'Save Key'
+                          "Save Key"
                         )}
                       </Button>
                       <Button
@@ -141,7 +161,7 @@ export function AdminApiKeysPanel() {
                         variant="outline"
                         onClick={() => {
                           setEditingProvider(null);
-                          setKeyValue('');
+                          setKeyValue("");
                         }}
                         disabled={setApiKeyMutation.isPending}
                       >
@@ -154,7 +174,9 @@ export function AdminApiKeysPanel() {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-4">No API providers configured</p>
+          <p className="text-center text-muted-foreground py-4">
+            No API providers configured
+          </p>
         )}
       </CardContent>
     </Card>

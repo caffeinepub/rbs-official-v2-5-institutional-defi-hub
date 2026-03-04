@@ -1,487 +1,458 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Send, Lock, ExternalLink, Sparkles } from 'lucide-react';
-import { PageHead } from '@/components/PageHead';
-import { usePresaleCountdown, useAirdropCountdown } from '@/hooks/useCountdownTimer';
-import { padTime } from '@/utils/timers';
-import { buildWhatsAppURL } from '@/utils/whatsapp';
-import { REDIRECT_CONFIG, getBinanceSquareLink } from '@/constants/redirectConfig';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, CheckCircle, Clock, Loader2, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { PageHead } from "../components/PageHead";
+import { SmokySectionTransition } from "../components/SmokySectionTransition";
 
-interface PendingSubmission {
-  type: 'presale' | 'airdrop';
-  payload: Record<string, string>;
-  timestamp: number;
+// Roadmap dates: Presale unlocks March 31, 2027 | Airdrop unlocks March 31, 2029
+const PRESALE_UNLOCK_DATE = new Date("2027-03-31T23:59:59Z");
+const AIRDROP_UNLOCK_DATE = new Date("2029-03-31T23:59:59Z");
+
+const WHATSAPP_NUMBER = "923294238997";
+
+function useCountdown(targetDate: Date) {
+  const [timeLeft, setTimeLeft] = useState(() =>
+    Math.max(0, targetDate.getTime() - Date.now()),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(Math.max(0, targetDate.getTime() - Date.now()));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  const isUnlocked = timeLeft === 0;
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(
+    (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  );
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+  return { isUnlocked, days, hours, minutes, seconds };
 }
 
-const PENDING_KEY = 'rbs_pending_submission';
+function CountdownDisplay({
+  days,
+  hours,
+  minutes,
+  seconds,
+  label,
+}: {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  label: string;
+}) {
+  return (
+    <div className="text-center py-8">
+      <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
+        <Lock className="h-4 w-4 text-amber-400" />
+        <span className="text-amber-400 text-sm font-medium">
+          {label} — Locked
+        </span>
+      </div>
+      <p className="text-muted-foreground text-sm mb-6">
+        This form will unlock when the roadmap milestone is reached
+      </p>
+      <div className="flex items-center justify-center gap-3">
+        {[
+          { value: days, label: "Days" },
+          { value: hours, label: "Hours" },
+          { value: minutes, label: "Min" },
+          { value: seconds, label: "Sec" },
+        ].map(({ value, label: unitLabel }) => (
+          <div key={unitLabel} className="flex flex-col items-center">
+            <div className="w-16 h-16 bg-card border border-border rounded-xl flex items-center justify-center">
+              <span className="text-2xl font-bold text-foreground tabular-nums">
+                {String(value).padStart(2, "0")}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground mt-1">
+              {unitLabel}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PresaleForm() {
+  const { isUnlocked, days, hours, minutes, seconds } =
+    useCountdown(PRESALE_UNLOCK_DATE);
+  const [form, setForm] = useState({
+    name: "",
+    country: "",
+    wallet: "",
+    amount: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.country.trim()) e.country = "Country is required";
+    if (!form.wallet.trim()) e.wallet = "Wallet address is required";
+    if (
+      !form.amount ||
+      Number.isNaN(Number(form.amount)) ||
+      Number(form.amount) <= 0
+    )
+      e.amount = "Valid RBS amount required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setSubmitting(true);
+    const text = encodeURIComponent(
+      `*RBS Presale Registration*\n\nName: ${form.name}\nCountry: ${form.country}\nWallet: ${form.wallet}\nRBS Amount: ${form.amount}\n\n_Sent via RBS Acquisition Portal_`,
+    );
+    window.location.assign(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`);
+    toast.success("Redirecting to WhatsApp...");
+    setSubmitting(false);
+  };
+
+  if (!isUnlocked) {
+    return (
+      <CountdownDisplay
+        days={days}
+        hours={hours}
+        minutes={minutes}
+        seconds={seconds}
+        label="Presale Registration"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 w-fit">
+        <CheckCircle className="h-4 w-4 text-green-400" />
+        <span className="text-green-400 text-sm font-medium">
+          Presale Registration Open!
+        </span>
+      </div>
+
+      <div>
+        <label
+          htmlFor="presale-name"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Full Name *
+        </label>
+        <Input
+          id="presale-name"
+          value={form.name}
+          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          placeholder="Your full name"
+          disabled={submitting}
+        />
+        {errors.name && (
+          <p className="text-xs text-destructive mt-1">{errors.name}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="presale-country"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Country *
+        </label>
+        <Input
+          id="presale-country"
+          value={form.country}
+          onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+          placeholder="Your country"
+          disabled={submitting}
+        />
+        {errors.country && (
+          <p className="text-xs text-destructive mt-1">{errors.country}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="presale-wallet"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Wallet Address *
+        </label>
+        <Input
+          id="presale-wallet"
+          value={form.wallet}
+          onChange={(e) => setForm((p) => ({ ...p, wallet: e.target.value }))}
+          placeholder="Your wallet address"
+          disabled={submitting}
+        />
+        {errors.wallet && (
+          <p className="text-xs text-destructive mt-1">{errors.wallet}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="presale-amount"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          RBS Amount *
+        </label>
+        <Input
+          id="presale-amount"
+          type="number"
+          value={form.amount}
+          onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+          placeholder="Amount of RBS tokens"
+          disabled={submitting}
+        />
+        {errors.amount && (
+          <p className="text-xs text-destructive mt-1">{errors.amount}</p>
+        )}
+      </div>
+
+      <Button onClick={handleSubmit} disabled={submitting} className="w-full">
+        {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        {submitting ? "Processing..." : "Register for Presale via WhatsApp"}
+      </Button>
+    </div>
+  );
+}
+
+function AirdropForm() {
+  const { isUnlocked, days, hours, minutes, seconds } =
+    useCountdown(AIRDROP_UNLOCK_DATE);
+  const [form, setForm] = useState({
+    name: "",
+    country: "",
+    wallet: "",
+    amount: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.country.trim()) e.country = "Country is required";
+    if (!form.wallet.trim()) e.wallet = "Wallet address is required";
+    if (
+      !form.amount ||
+      Number.isNaN(Number(form.amount)) ||
+      Number(form.amount) <= 0
+    )
+      e.amount = "Valid RBS amount required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setSubmitting(true);
+    const text = encodeURIComponent(
+      `*RBS Airdrop Registration*\n\nName: ${form.name}\nCountry: ${form.country}\nWallet: ${form.wallet}\nRBS Amount: ${form.amount}\n\n_Sent via RBS Acquisition Portal_`,
+    );
+    window.location.assign(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`);
+    toast.success("Redirecting to WhatsApp...");
+    setSubmitting(false);
+  };
+
+  if (!isUnlocked) {
+    return (
+      <CountdownDisplay
+        days={days}
+        hours={hours}
+        minutes={minutes}
+        seconds={seconds}
+        label="Airdrop Registration"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 w-fit">
+        <CheckCircle className="h-4 w-4 text-green-400" />
+        <span className="text-green-400 text-sm font-medium">
+          Airdrop Registration Open!
+        </span>
+      </div>
+
+      <div>
+        <label
+          htmlFor="airdrop-name"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Full Name *
+        </label>
+        <Input
+          id="airdrop-name"
+          value={form.name}
+          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          placeholder="Your full name"
+          disabled={submitting}
+        />
+        {errors.name && (
+          <p className="text-xs text-destructive mt-1">{errors.name}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="airdrop-country"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Country *
+        </label>
+        <Input
+          id="airdrop-country"
+          value={form.country}
+          onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}
+          placeholder="Your country"
+          disabled={submitting}
+        />
+        {errors.country && (
+          <p className="text-xs text-destructive mt-1">{errors.country}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="airdrop-wallet"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Wallet Address *
+        </label>
+        <Input
+          id="airdrop-wallet"
+          value={form.wallet}
+          onChange={(e) => setForm((p) => ({ ...p, wallet: e.target.value }))}
+          placeholder="Your wallet address"
+          disabled={submitting}
+        />
+        {errors.wallet && (
+          <p className="text-xs text-destructive mt-1">{errors.wallet}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="airdrop-amount"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          RBS Amount *
+        </label>
+        <Input
+          id="airdrop-amount"
+          type="number"
+          value={form.amount}
+          onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
+          placeholder="Amount of RBS tokens"
+          disabled={submitting}
+        />
+        {errors.amount && (
+          <p className="text-xs text-destructive mt-1">{errors.amount}</p>
+        )}
+      </div>
+
+      <Button onClick={handleSubmit} disabled={submitting} className="w-full">
+        {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        {submitting ? "Processing..." : "Register for Airdrop via WhatsApp"}
+      </Button>
+    </div>
+  );
+}
 
 export default function AcquisitionPage() {
-  const presaleCountdown = usePresaleCountdown();
-  const airdropCountdown = useAirdropCountdown();
-
-  const [presaleForm, setPresaleForm] = useState({
-    name: '',
-    country: '',
-    walletAddress: '',
-    rbsAmount: '',
-  });
-
-  const [airdropForm, setAirdropForm] = useState({
-    name: '',
-    country: '',
-    walletAddress: '',
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Check for pending submissions when countdown unlocks
-  useEffect(() => {
-    const pendingStr = sessionStorage.getItem(PENDING_KEY);
-    if (!pendingStr) return;
-
-    try {
-      const pending: PendingSubmission = JSON.parse(pendingStr);
-      
-      // Check if the relevant countdown is now unlocked
-      if (pending.type === 'presale' && presaleCountdown.isUnlocked) {
-        const url = buildWhatsAppURL('Presale Registration', pending.payload);
-        sessionStorage.removeItem(PENDING_KEY);
-        toast.success('Presale unlocked! Redirecting to WhatsApp...');
-        setTimeout(() => {
-          window.location.assign(url);
-        }, 1000);
-      } else if (pending.type === 'airdrop' && airdropCountdown.isUnlocked) {
-        const url = buildWhatsAppURL('Airdrop Registration', pending.payload);
-        sessionStorage.removeItem(PENDING_KEY);
-        toast.success('Airdrop unlocked! Redirecting to WhatsApp...');
-        setTimeout(() => {
-          window.location.assign(url);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error processing pending submission:', error);
-      sessionStorage.removeItem(PENDING_KEY);
-    }
-  }, [presaleCountdown.isUnlocked, airdropCountdown.isUnlocked]);
-
-  const handlePresaleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!presaleForm.name || !presaleForm.country || !presaleForm.walletAddress || !presaleForm.rbsAmount) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        Name: presaleForm.name,
-        Country: presaleForm.country,
-        'Wallet Address': presaleForm.walletAddress,
-        'RBS Amount': presaleForm.rbsAmount,
-      };
-
-      if (presaleCountdown.isUnlocked) {
-        // Presale is unlocked, redirect immediately
-        const url = buildWhatsAppURL('Presale Registration', payload);
-        toast.success('Redirecting to WhatsApp...');
-        setTimeout(() => {
-          window.location.assign(url);
-        }, 500);
-      } else {
-        // Save pending submission
-        const pending: PendingSubmission = {
-          type: 'presale',
-          payload,
-          timestamp: Date.now(),
-        };
-        sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-        toast.success('Registration saved! You will be redirected when presale unlocks.');
-        
-        // Clear form
-        setPresaleForm({
-          name: '',
-          country: '',
-          walletAddress: '',
-          rbsAmount: '',
-        });
-      }
-    } catch (error) {
-      console.error('Presale submission error:', error);
-      toast.error('Failed to process registration');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAirdropSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!airdropForm.name || !airdropForm.country || !airdropForm.walletAddress) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        Name: airdropForm.name,
-        Country: airdropForm.country,
-        'Wallet Address': airdropForm.walletAddress,
-      };
-
-      if (airdropCountdown.isUnlocked) {
-        // Airdrop is unlocked, redirect immediately
-        const url = buildWhatsAppURL('Airdrop Registration', payload);
-        toast.success('Redirecting to WhatsApp...');
-        setTimeout(() => {
-          window.location.assign(url);
-        }, 500);
-      } else {
-        // Save pending submission
-        const pending: PendingSubmission = {
-          type: 'airdrop',
-          payload,
-          timestamp: Date.now(),
-        };
-        sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-        toast.success('Registration saved! You will be redirected when airdrop unlocks.');
-        
-        // Clear form
-        setAirdropForm({
-          name: '',
-          country: '',
-          walletAddress: '',
-        });
-      }
-    } catch (error) {
-      console.error('Airdrop submission error:', error);
-      toast.error('Failed to process registration');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <>
       <PageHead
-        title="Acquisition Portal - RBS"
-        description="Register for RBS presale and airdrop opportunities. Secure your position in the future of blockchain technology."
+        title="Acquisition | RBS Superior"
+        description="Register for the RBS Superior presale and airdrop programs."
       />
-      <div className="min-h-screen bg-gradient-to-b from-white via-gold/5 to-white py-12 px-4">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12 animate-fade-in">
-            <h1 className="text-5xl font-bold mb-4 metallic-text-hero mex-glow-text">
-              Acquisition Portal
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Secure your position in the RBS ecosystem. Register for presale or airdrop opportunities.
-            </p>
-          </div>
+      <div className="min-h-screen bg-background pt-20 pb-24">
+        <SmokySectionTransition>
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 text-sm text-primary font-medium mb-4">
+                <Clock className="h-4 w-4" />
+                Token Acquisition
+              </div>
+              <h1 className="text-4xl font-bold text-foreground mb-3">
+                Acquire RBS Tokens
+              </h1>
+              <p className="text-muted-foreground max-w-lg mx-auto">
+                Register for the presale or airdrop program. Forms unlock
+                according to the project roadmap timeline.
+              </p>
+            </div>
 
-          <Tabs defaultValue="presale" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 mex-hover-lift">
-              <TabsTrigger value="presale" className="text-lg transition-all duration-300">
-                <Sparkles className="mr-2 h-5 w-5" />
-                Presale Q1 2027
-              </TabsTrigger>
-              <TabsTrigger value="airdrop" className="text-lg transition-all duration-300">
-                <Sparkles className="mr-2 h-5 w-5" />
-                Airdrop Q1 2029
-              </TabsTrigger>
-            </TabsList>
+            {/* Roadmap Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-foreground text-sm">
+                    Presale Phase
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Unlocks: March 31, 2027
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Phase 2 of the RBS roadmap
+                </p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-foreground text-sm">
+                    Airdrop Phase
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Unlocks: March 31, 2029
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Phase 4 of the RBS roadmap
+                </p>
+              </div>
+            </div>
 
-            <TabsContent value="presale" className="animate-fade-in">
-              <Card className="glass-card border-gold/30 shadow-xl mex-hover-lift">
-                <CardHeader className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-3xl font-bold text-gold">Presale Registration</CardTitle>
-                    {presaleCountdown.isUnlocked ? (
-                      <div className="flex items-center gap-2 text-green-600 font-semibold animate-pulse">
-                        <Clock className="h-5 w-5" />
-                        <span>UNLOCKED</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Lock className="h-5 w-5" />
-                        <span>Locked</span>
-                      </div>
-                    )}
-                  </div>
-                  <CardDescription className="text-base">
-                    {presaleCountdown.isUnlocked
-                      ? 'Presale is now open! Complete the form to register via WhatsApp.'
-                      : 'Register now and be automatically redirected when presale unlocks.'}
-                  </CardDescription>
-                  
-                  {!presaleCountdown.isUnlocked && (
-                    <div className="bg-gold/10 rounded-lg p-6 border border-gold/30">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-3 font-medium">Time Until Unlock</p>
-                        <div className="flex justify-center gap-4 text-center">
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(presaleCountdown.days)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">DAYS</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(presaleCountdown.hours)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">HOURS</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(presaleCountdown.minutes)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">MINUTES</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(presaleCountdown.seconds)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">SECONDS</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handlePresaleSubmit} className="space-y-6">
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="presale-name">Full Name *</Label>
-                      <Input
-                        id="presale-name"
-                        value={presaleForm.name}
-                        onChange={(e) => setPresaleForm({ ...presaleForm, name: e.target.value })}
-                        placeholder="Enter your full name"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="presale-country">Country *</Label>
-                      <Input
-                        id="presale-country"
-                        value={presaleForm.country}
-                        onChange={(e) => setPresaleForm({ ...presaleForm, country: e.target.value })}
-                        placeholder="Enter your country"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="presale-wallet">Wallet Address *</Label>
-                      <Input
-                        id="presale-wallet"
-                        value={presaleForm.walletAddress}
-                        onChange={(e) => setPresaleForm({ ...presaleForm, walletAddress: e.target.value })}
-                        placeholder="Enter your wallet address"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="presale-amount">RBS Amount *</Label>
-                      <Input
-                        id="presale-amount"
-                        type="number"
-                        step="0.01"
-                        value={presaleForm.rbsAmount}
-                        onChange={(e) => setPresaleForm({ ...presaleForm, rbsAmount: e.target.value })}
-                        placeholder="Enter desired RBS amount"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-gold hover:bg-gold/90 text-black font-semibold py-6 text-lg mex-hover-lift transition-all duration-300"
-                    >
-                      {isSubmitting ? (
-                        'Processing...'
-                      ) : presaleCountdown.isUnlocked ? (
-                        <>
-                          <Send className="mr-2 h-5 w-5" />
-                          Submit & Open WhatsApp
-                        </>
-                      ) : (
-                        <>
-                          <Clock className="mr-2 h-5 w-5" />
-                          Register for Presale
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {/* Forms */}
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
+              <Tabs defaultValue="presale">
+                <TabsList className="w-full mb-6">
+                  <TabsTrigger value="presale" className="flex-1">
+                    Presale Registration
+                  </TabsTrigger>
+                  <TabsTrigger value="airdrop" className="flex-1">
+                    Airdrop Registration
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="presale">
+                  <PresaleForm />
+                </TabsContent>
+                <TabsContent value="airdrop">
+                  <AirdropForm />
+                </TabsContent>
+              </Tabs>
+            </div>
 
-            <TabsContent value="airdrop" className="animate-fade-in">
-              <Card className="glass-card border-gold/30 shadow-xl mex-hover-lift">
-                <CardHeader className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-3xl font-bold text-gold">Airdrop Registration</CardTitle>
-                    {airdropCountdown.isUnlocked ? (
-                      <div className="flex items-center gap-2 text-green-600 font-semibold animate-pulse">
-                        <Clock className="h-5 w-5" />
-                        <span>UNLOCKED</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Lock className="h-5 w-5" />
-                        <span>Locked</span>
-                      </div>
-                    )}
-                  </div>
-                  <CardDescription className="text-base">
-                    {airdropCountdown.isUnlocked
-                      ? 'Airdrop is now open! Complete the form to register via WhatsApp.'
-                      : 'Register now and be automatically redirected when airdrop unlocks.'}
-                  </CardDescription>
-                  
-                  {!airdropCountdown.isUnlocked && (
-                    <div className="bg-gold/10 rounded-lg p-6 border border-gold/30">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-3 font-medium">Time Until Unlock</p>
-                        <div className="flex justify-center gap-4 text-center">
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(airdropCountdown.days)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">DAYS</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(airdropCountdown.hours)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">HOURS</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(airdropCountdown.minutes)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">MINUTES</div>
-                          </div>
-                          <div className="text-4xl font-bold text-gold">:</div>
-                          <div className="mex-hover-lift">
-                            <div className="text-4xl font-bold text-gold tabular-nums">
-                              {padTime(airdropCountdown.seconds)}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">SECONDS</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAirdropSubmit} className="space-y-6">
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="airdrop-name">Full Name *</Label>
-                      <Input
-                        id="airdrop-name"
-                        value={airdropForm.name}
-                        onChange={(e) => setAirdropForm({ ...airdropForm, name: e.target.value })}
-                        placeholder="Enter your full name"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="airdrop-country">Country *</Label>
-                      <Input
-                        id="airdrop-country"
-                        value={airdropForm.country}
-                        onChange={(e) => setAirdropForm({ ...airdropForm, country: e.target.value })}
-                        placeholder="Enter your country"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <div className="space-y-2 mex-hover-lift">
-                      <Label htmlFor="airdrop-wallet">Wallet Address *</Label>
-                      <Input
-                        id="airdrop-wallet"
-                        value={airdropForm.walletAddress}
-                        onChange={(e) => setAirdropForm({ ...airdropForm, walletAddress: e.target.value })}
-                        placeholder="Enter your wallet address"
-                        required
-                        className="transition-all duration-300 focus:ring-2 focus:ring-gold"
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-gold hover:bg-gold/90 text-black font-semibold py-6 text-lg mex-hover-lift transition-all duration-300"
-                    >
-                      {isSubmitting ? (
-                        'Processing...'
-                      ) : airdropCountdown.isUnlocked ? (
-                        <>
-                          <Send className="mr-2 h-5 w-5" />
-                          Submit & Open WhatsApp
-                        </>
-                      ) : (
-                        <>
-                          <Clock className="mr-2 h-5 w-5" />
-                          Register for Airdrop
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          <div className="mt-12 text-center space-y-4 animate-fade-in">
-            <p className="text-gray-600">
-              Need help? Contact us on WhatsApp or join our community.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button
-                variant="outline"
-                className="mex-hover-lift transition-all duration-300"
-                onClick={() => window.open(REDIRECT_CONFIG.whatsapp.directUrl, '_blank')}
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                WhatsApp Support
-              </Button>
-              <Button
-                variant="outline"
-                className="mex-hover-lift transition-all duration-300"
-                onClick={() => window.open(REDIRECT_CONFIG.telegram.channel, '_blank')}
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Telegram Channel
-              </Button>
-              <Button
-                variant="outline"
-                className="mex-hover-lift transition-all duration-300"
-                onClick={() => window.open(getBinanceSquareLink(), '_blank')}
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Binance Square
-              </Button>
+            {/* Note */}
+            <div className="mt-6 flex items-start gap-3 bg-muted/50 border border-border rounded-xl p-4">
+              <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                Registration forms are locked until the corresponding roadmap
+                milestone is reached. This ensures fair and transparent token
+                distribution aligned with project development.
+              </p>
             </div>
           </div>
-        </div>
+        </SmokySectionTransition>
       </div>
     </>
   );

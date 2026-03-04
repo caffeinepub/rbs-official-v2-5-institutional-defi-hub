@@ -1,16 +1,17 @@
-import { useEffect } from 'react';
-import { useRouterState } from '@tanstack/react-router';
-import { ArrowUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { useRouterState } from "@tanstack/react-router";
+import { ArrowUp } from "lucide-react";
+import { useEffect } from "react";
+import { useState } from "react";
 
 export function ScrollToTop() {
-  const routerState = useRouterState();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isVisible, setIsVisible] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname triggers scroll-to-top on route change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [routerState.location.pathname]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [pathname]);
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -21,14 +22,14 @@ export function ScrollToTop() {
       }
     };
 
-    window.addEventListener('scroll', toggleVisibility);
-    return () => window.removeEventListener('scroll', toggleVisibility);
+    window.addEventListener("scroll", toggleVisibility);
+    return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
   };
 

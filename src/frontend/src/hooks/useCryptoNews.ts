@@ -1,66 +1,123 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-export interface NewsItem {
+export interface CryptoNewsItem {
+  id: number;
   title: string;
-  source: string;
   url: string;
-  timestamp: number;
+  source: string;
   publishedAt: string;
+  sentiment: "positive" | "negative" | "neutral";
+  currencies: string[];
 }
 
-const CRYPTOPANIC_API = 'https://cryptopanic.com/api/v1/posts/';
-const REFETCH_INTERVAL = 180000; // 3 minutes
-
-async function fetchCryptoNews(): Promise<NewsItem[]> {
-  try {
-    // Using CryptoPanic free tier (no auth required for public feed)
-    const response = await fetch(
-      `${CRYPTOPANIC_API}?auth_token=free&public=true&kind=news`
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch crypto news');
-    }
-
-    const data = await response.json();
-
-    return data.results.slice(0, 20).map((item: any) => ({
-      title: item.title,
-      source: item.source?.title || 'Unknown',
-      url: item.url,
-      timestamp: new Date(item.published_at).getTime(),
-      publishedAt: item.published_at,
-    }));
-  } catch (error) {
-    console.error('Error fetching crypto news:', error);
-    throw error;
-  }
+function deriveSentiment(
+  votes: {
+    positive?: number;
+    negative?: number;
+    important?: number;
+    liked?: number;
+    disliked?: number;
+    lol?: number;
+    toxic?: number;
+    saved?: number;
+    comments?: number;
+  } | null,
+): "positive" | "negative" | "neutral" {
+  if (!votes) return "neutral";
+  const pos =
+    (votes.positive ?? 0) + (votes.liked ?? 0) + (votes.important ?? 0);
+  const neg =
+    (votes.negative ?? 0) + (votes.disliked ?? 0) + (votes.toxic ?? 0);
+  if (pos > neg && pos > 0) return "positive";
+  if (neg > pos && neg > 0) return "negative";
+  return "neutral";
 }
 
 export function useCryptoNews() {
-  return useQuery<NewsItem[]>({
-    queryKey: ['cryptoNews'],
-    queryFn: fetchCryptoNews,
-    refetchInterval: REFETCH_INTERVAL,
-    staleTime: 120000,
+  return useQuery<CryptoNewsItem[]>({
+    queryKey: ["cryptoNews"],
+    queryFn: async () => {
+      try {
+        const res = await fetch(
+          "https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true&kind=news",
+        );
+        if (!res.ok) throw new Error("CryptoPanic fetch failed");
+        const data = await res.json();
+        const results = data.results ?? [];
+        return results.slice(0, 20).map(
+          (item: {
+            id: number;
+            title: string;
+            url: string;
+            source?: { title?: string };
+            published_at: string;
+            votes?: {
+              positive?: number;
+              negative?: number;
+              important?: number;
+              liked?: number;
+              disliked?: number;
+              lol?: number;
+              toxic?: number;
+              saved?: number;
+              comments?: number;
+            } | null;
+            currencies?: Array<{ code: string }>;
+          }) => ({
+            id: item.id,
+            title: item.title,
+            url: item.url,
+            source: item.source?.title ?? "Unknown",
+            publishedAt: item.published_at,
+            sentiment: deriveSentiment(item.votes ?? null),
+            currencies: (item.currencies ?? []).map(
+              (c: { code: string }) => c.code,
+            ),
+          }),
+        );
+      } catch {
+        // Fallback: try alternative public endpoint
+        const res2 = await fetch(
+          "https://cryptopanic.com/api/v1/posts/?auth_token=public&public=true",
+        );
+        if (!res2.ok) throw new Error("All CryptoPanic endpoints failed");
+        const data2 = await res2.json();
+        const results2 = data2.results ?? [];
+        return results2.slice(0, 20).map(
+          (item: {
+            id: number;
+            title: string;
+            url: string;
+            source?: { title?: string };
+            published_at: string;
+            votes?: {
+              positive?: number;
+              negative?: number;
+              important?: number;
+              liked?: number;
+              disliked?: number;
+              lol?: number;
+              toxic?: number;
+              saved?: number;
+              comments?: number;
+            } | null;
+            currencies?: Array<{ code: string }>;
+          }) => ({
+            id: item.id,
+            title: item.title,
+            url: item.url,
+            source: item.source?.title ?? "Unknown",
+            publishedAt: item.published_at,
+            sentiment: deriveSentiment(item.votes ?? null),
+            currencies: (item.currencies ?? []).map(
+              (c: { code: string }) => c.code,
+            ),
+          }),
+        );
+      }
+    },
+    staleTime: 12 * 60 * 60 * 1000,
+    refetchInterval: 12 * 60 * 60 * 1000,
     retry: 2,
   });
-}
-
-export function formatNewsTime(timestamp: number): string {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffMinutes = Math.floor(diffMs / 60000);
-
-  if (diffMinutes < 1) return 'Just now';
-  if (diffMinutes === 1) return '1 minute ago';
-  if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours === 1) return '1 hour ago';
-  if (diffHours < 24) return `${diffHours} hours ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return '1 day ago';
-  return `${diffDays} days ago`;
 }

@@ -1,222 +1,394 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Activity, BarChart3, Brain, Search, AlertCircle, Shield } from 'lucide-react';
-import { useInternetIdentity } from '@/hooks/useInternetIdentity';
-import { PageHead } from '@/components/PageHead';
-import { useTokenAdvancedAnalytics } from '@/hooks/useTokenAdvancedAnalytics';
-import { toast } from 'sonner';
+import {
+  Activity,
+  AlertTriangle,
+  BarChart2,
+  Minus,
+  RefreshCw,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import React, { useState } from "react";
+import { PageHead } from "../components/PageHead";
+import { SmokySectionTransition } from "../components/SmokySectionTransition";
+import { useTokenAdvancedAnalytics } from "../hooks/useTokenAdvancedAnalytics";
+
+function formatNumber(n: number, decimals = 2): string {
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(decimals)}T`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(decimals)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(decimals)}M`;
+  if (n >= 1000)
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  return `$${n.toFixed(decimals)}`;
+}
 
 export default function AdvancedAnalyticsPage() {
-  const { identity } = useInternetIdentity();
-  const [tokenSymbol, setTokenSymbol] = useState('');
-  const [searchSymbol, setSearchSymbol] = useState('');
-  
-  const { data: analytics, isLoading, error } = useTokenAdvancedAnalytics(
-    searchSymbol,
-    !!searchSymbol
-  );
+  const [inputSymbol, setInputSymbol] = useState("");
+  const [searchSymbol, setSearchSymbol] = useState("");
+
+  const { data, isLoading, error } = useTokenAdvancedAnalytics(searchSymbol);
 
   const handleSearch = () => {
-    if (!tokenSymbol.trim()) {
-      toast.error('Please enter a token symbol');
-      return;
-    }
-    setSearchSymbol(tokenSymbol.trim().toUpperCase());
+    if (inputSymbol.trim()) setSearchSymbol(inputSymbol.trim().toUpperCase());
   };
 
-  if (!identity) {
-    return (
-      <>
-        <PageHead title="Advanced Analytics" description="AI-powered cryptocurrency analytics" />
-        <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white flex items-center justify-center">
-          <Card className="max-w-md w-full mx-4 mex-scale-in">
-            <CardHeader>
-              <CardTitle className="text-gold">Authentication Required</CardTitle>
-              <CardDescription>Please log in to access Advanced Analytics</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </>
-    );
-  }
+  const trendColor =
+    data?.trendSignal === "Bullish"
+      ? "text-green-500"
+      : data?.trendSignal === "Bearish"
+        ? "text-red-500"
+        : "text-yellow-500";
+  const TrendIcon =
+    data?.trendSignal === "Bullish"
+      ? TrendingUp
+      : data?.trendSignal === "Bearish"
+        ? TrendingDown
+        : Minus;
+  const riskColor =
+    data?.riskLevel === "Low"
+      ? "text-green-500"
+      : data?.riskLevel === "High"
+        ? "text-red-500"
+        : "text-yellow-500";
+  const volTrendColor =
+    data?.volumeTrend === "Rising"
+      ? "text-green-500"
+      : data?.volumeTrend === "Falling"
+        ? "text-red-500"
+        : "text-yellow-500";
 
   return (
-    <>
-      <PageHead title="Advanced Analytics" description="AI-powered cryptocurrency analytics" />
-      <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12 mex-fade-in">
-              <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-gold/10 border-2 border-gold/30 mb-8">
-                <Brain className="h-10 w-10 text-gold" />
-              </div>
-              <h1 className="text-5xl md:text-7xl font-poppins font-bold text-gold mb-6 tracking-tight leading-tight">
-                Advanced Analytics
-              </h1>
-              <p className="text-xl metallic-text-secondary font-inter max-w-2xl mx-auto leading-relaxed">
-                Deep dive into cryptocurrency market analysis with AI-powered insights
+    <div className="min-h-screen bg-background">
+      <PageHead
+        title="Advanced Analytics | RBS"
+        description="Deep token analytics with Bollinger Bands, RSI, MACD, and market strength."
+      />
+
+      <SmokySectionTransition>
+        <section className="py-16 px-4 max-w-5xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+              Advanced Analytics
+            </h1>
+            <p className="text-muted-foreground">
+              Deep token analysis with Bollinger Bands, RSI, MACD, volume
+              trends, and market strength
+            </p>
+          </div>
+
+          {/* Search */}
+          <div className="glass-card p-6 mb-8">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={inputSymbol}
+                onChange={(e) => setInputSymbol(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Enter token symbol (e.g. BTC, ETH, SOL)"
+                className="flex-1 bg-background/50 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                type="button"
+                onClick={handleSearch}
+                disabled={isLoading || !inputSymbol.trim()}
+                className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+                Analyze
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="glass-card p-6 mb-6 border border-destructive/30 text-center">
+              <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-2" />
+              <p className="text-destructive">
+                Token not found or API error. Try a different symbol.
               </p>
             </div>
+          )}
 
-            <Card className="glass-card-gold glow-border mb-8 mex-fade-up">
-              <CardHeader>
-                <CardTitle className="text-gold">Token Analysis</CardTitle>
-                <CardDescription>Enter a token symbol to analyze</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Label htmlFor="token-symbol" className="sr-only">Token Symbol</Label>
-                    <Input
-                      id="token-symbol"
-                      value={tokenSymbol}
-                      onChange={(e) => setTokenSymbol(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="Enter token symbol (e.g., BTC, ETH, BNB)"
-                      className="mex-focus-ring"
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(
+                ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"] as const
+              ).map((sk) => (
+                <div key={sk} className="glass-card p-5 animate-pulse">
+                  <div className="h-4 bg-muted rounded mb-3 w-1/2" />
+                  <div className="h-8 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {data && !isLoading && (
+            <>
+              {/* Header */}
+              <div className="glass-card p-6 mb-6">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">
+                      {data.name} ({data.symbol})
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Rank #{data.marketCapRank}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold font-mono text-foreground">
+                      {formatNumber(data.price)}
+                    </p>
+                    <div
+                      className={`flex items-center gap-1 justify-end ${trendColor}`}
+                    >
+                      <TrendIcon className="w-4 h-4" />
+                      <span className="font-semibold">{data.trendSignal}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Market Strength */}
+              <div className="glass-card p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold text-foreground">
+                    Market Strength Score
+                  </h3>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        data.marketStrength >= 70
+                          ? "bg-green-500"
+                          : data.marketStrength >= 40
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{ width: `${data.marketStrength}%` }}
                     />
                   </div>
-                  <Button
-                    onClick={handleSearch}
-                    disabled={!tokenSymbol.trim() || isLoading}
-                    className="bg-gold hover:bg-gold/90 text-black mex-hover-lift"
+                  <span
+                    className={`text-3xl font-bold font-mono ${
+                      data.marketStrength >= 70
+                        ? "text-green-500"
+                        : data.marketStrength >= 40
+                          ? "text-yellow-500"
+                          : "text-red-500"
+                    }`}
                   >
-                    <Search className="h-4 w-4 mr-2" />
-                    Analyze
-                  </Button>
+                    {data.marketStrength}/100
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-
-            {error && (
-              <Alert variant="destructive" className="mb-8 mex-fade-up">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Failed to fetch analytics for {searchSymbol}. Please check the symbol and try again.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isLoading && (
-              <div className="space-y-6">
-                <Card className="glass-card">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-32 mb-2" />
-                    <Skeleton className="h-4 w-48" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-24 w-full" />
-                  </CardContent>
-                </Card>
               </div>
-            )}
 
-            {analytics && !isLoading && (
-              <div className="space-y-6 mex-fade-up">
-                <Card className="glass-card-gold glow-border">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-2xl text-gold">{analytics.symbol} Analysis</CardTitle>
-                      <Badge variant="outline" className="text-gold border-gold/30">
-                        Live Data
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      Updated: {new Date(analytics.timestamp).toLocaleString()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white/40 rounded-lg p-6 border border-gold/20">
-                        <div className="flex items-center gap-2 mb-3">
-                          <TrendingUp className="h-5 w-5 text-gold" />
-                          <span className="font-inter metallic-text font-semibold">Trend Overview</span>
-                        </div>
-                        <p className="text-2xl font-poppins font-bold text-gold mb-2">
-                          {analytics.trendOverview}
-                        </p>
-                      </div>
+              {/* Main Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* RSI */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      RSI (14)
+                    </span>
+                  </div>
+                  <p
+                    className={`text-3xl font-bold font-mono ${data.rsi > 70 ? "text-red-500" : data.rsi < 30 ? "text-green-500" : "text-foreground"}`}
+                  >
+                    {data.rsi.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {data.rsi > 70
+                      ? "Overbought"
+                      : data.rsi < 30
+                        ? "Oversold"
+                        : "Neutral"}
+                  </p>
+                  <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${data.rsi > 70 ? "bg-red-500" : data.rsi < 30 ? "bg-green-500" : "bg-primary"}`}
+                      style={{ width: `${data.rsi}%` }}
+                    />
+                  </div>
+                </div>
 
-                      <div className="bg-white/40 rounded-lg p-6 border border-gold/20">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Shield className="h-5 w-5 text-gold" />
-                          <span className="font-inter metallic-text font-semibold">Risk Level</span>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={`text-lg px-4 py-2 ${
-                            analytics.riskLevel === 'Low'
-                              ? 'text-green-600 border-green-600/30 bg-green-50'
-                              : analytics.riskLevel === 'High'
-                              ? 'text-red-600 border-red-600/30 bg-red-50'
-                              : 'text-yellow-600 border-yellow-600/30 bg-yellow-50'
-                          }`}
-                        >
-                          {analytics.riskLevel}
-                        </Badge>
-                      </div>
+                {/* Volume Trend */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      Volume Trend
+                    </span>
+                  </div>
+                  <p className={`text-3xl font-bold ${volTrendColor}`}>
+                    {data.volumeTrend}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    24h Vol: {formatNumber(data.volume24h)}
+                  </p>
+                </div>
 
-                      <div className="bg-white/40 rounded-lg p-6 border border-gold/20">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Activity className="h-5 w-5 text-gold" />
-                          <span className="font-inter metallic-text font-semibold">Volatility Score</span>
-                        </div>
-                        <p className="text-2xl font-poppins font-bold text-gold">
-                          {analytics.volatilityScore}%
-                        </p>
-                      </div>
+                {/* Risk Level */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      Risk Level
+                    </span>
+                  </div>
+                  <p className={`text-3xl font-bold ${riskColor}`}>
+                    {data.riskLevel}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Volatility: {data.volatilityScore.toFixed(1)}%
+                  </p>
+                </div>
 
-                      <div className="bg-white/40 rounded-lg p-6 border border-gold/20">
-                        <div className="flex items-center gap-2 mb-3">
-                          <BarChart3 className="h-5 w-5 text-gold" />
-                          <span className="font-inter metallic-text font-semibold">Market Strength</span>
-                        </div>
-                        <p className="text-2xl font-poppins font-bold text-gold">
-                          {analytics.marketStrength}/100
-                        </p>
-                      </div>
-                    </div>
+                {/* 7d Change */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      7-Day Change
+                    </span>
+                  </div>
+                  <p
+                    className={`text-3xl font-bold font-mono ${data.change7d >= 0 ? "text-green-500" : "text-red-500"}`}
+                  >
+                    {data.change7d >= 0 ? "+" : ""}
+                    {data.change7d.toFixed(2)}%
+                  </p>
+                </div>
 
-                    <div className="bg-white/40 rounded-lg p-6 border border-gold/20">
-                      <div className="flex items-center gap-2 mb-3">
-                        <BarChart3 className="h-5 w-5 text-gold" />
-                        <span className="font-inter metallic-text font-semibold">Volume Analysis</span>
-                      </div>
-                      <p className="metallic-text-secondary">{analytics.volumeAnalysis}</p>
-                    </div>
+                {/* 30d Change */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      30-Day Change
+                    </span>
+                  </div>
+                  <p
+                    className={`text-3xl font-bold font-mono ${data.change30d >= 0 ? "text-green-500" : "text-red-500"}`}
+                  >
+                    {data.change30d >= 0 ? "+" : ""}
+                    {data.change30d.toFixed(2)}%
+                  </p>
+                </div>
 
-                    <div className="pt-4 border-t border-gold/20">
-                      <p className="text-sm text-muted-foreground mb-2">Data Sources:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {analytics.sources.map((source, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {source}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* ATH */}
+                <div className="glass-card p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      All-Time High
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold font-mono text-foreground">
+                    {formatNumber(data.ath)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {data.price < data.ath
+                      ? `${(((data.ath - data.price) / data.ath) * 100).toFixed(1)}% below ATH`
+                      : "At ATH"}
+                  </p>
+                </div>
               </div>
-            )}
 
-            {!searchSymbol && !isLoading && (
-              <Card className="glass-card">
-                <CardContent className="py-12 text-center">
-                  <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg metallic-text">Enter a token symbol to begin analysis</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+              {/* Bollinger Bands */}
+              <div className="glass-card p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold text-foreground">
+                    Bollinger Bands (20-period)
+                  </h3>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Upper Band
+                    </p>
+                    <p className="text-lg font-bold font-mono text-red-400">
+                      {formatNumber(data.bollingerUpper)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Middle (SMA20)
+                    </p>
+                    <p className="text-lg font-bold font-mono text-primary">
+                      {formatNumber(data.bollingerMiddle)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Lower Band
+                    </p>
+                    <p className="text-lg font-bold font-mono text-green-400">
+                      {formatNumber(data.bollingerLower)}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 relative h-3 bg-muted rounded-full overflow-hidden">
+                  {data.bollingerUpper > data.bollingerLower && (
+                    <div
+                      className="absolute top-0 h-full w-2 bg-primary rounded-full"
+                      style={{
+                        left: `${Math.max(0, Math.min(100, ((data.price - data.bollingerLower) / (data.bollingerUpper - data.bollingerLower)) * 100))}%`,
+                        transform: "translateX(-50%)",
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Lower</span>
+                  <span>Price Position</span>
+                  <span>Upper</span>
+                </div>
+              </div>
+
+              {/* Supply Info */}
+              <div className="glass-card p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Activity className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Supply Ratio (Circulating / Total)
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${data.supplyRatio}%` }}
+                    />
+                  </div>
+                  <span className="text-lg font-bold font-mono text-foreground">
+                    {data.supplyRatio.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {!searchSymbol && !isLoading && (
+            <div className="glass-card p-12 text-center">
+              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Enter a token symbol above to see advanced analytics
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Try: BTC, ETH, SOL, BNB, ADA, DOT, AVAX
+              </p>
+            </div>
+          )}
+        </section>
+      </SmokySectionTransition>
+    </div>
   );
 }

@@ -1,68 +1,55 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { motion, useInView } from "motion/react";
+import { type ReactNode, useRef } from "react";
 
 interface SmokySectionTransitionProps {
   children: ReactNode;
   delay?: number;
   className?: string;
+  direction?: "up" | "left" | "right" | "fade";
 }
 
-export function SmokySectionTransition({ children, delay = 0, className = '' }: SmokySectionTransitionProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasBeenVisible, setHasBeenVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+export function SmokySectionTransition({
+  children,
+  delay = 0,
+  className = "",
+  direction = "up",
+}: SmokySectionTransitionProps) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
 
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion) {
-      setIsVisible(true);
-      setHasBeenVisible(true);
-      return;
-    }
-
-    if (!('IntersectionObserver' in window)) {
-      setIsVisible(true);
-      setHasBeenVisible(true);
-      return;
-    }
-
-    observerRef.current = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasBeenVisible) {
-          timeoutRef.current = setTimeout(() => {
-            setIsVisible(true);
-            setHasBeenVisible(true);
-            if (observerRef.current && sectionRef.current) {
-              observerRef.current.unobserve(sectionRef.current);
-            }
-          }, delay);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (sectionRef.current) {
-      observerRef.current.observe(sectionRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [delay, hasBeenVisible]);
+  const variants = {
+    up: {
+      hidden: { opacity: 0, y: 32 },
+      visible: { opacity: 1, y: 0 },
+    },
+    left: {
+      hidden: { opacity: 0, x: -40 },
+      visible: { opacity: 1, x: 0 },
+    },
+    right: {
+      hidden: { opacity: 0, x: 40 },
+      visible: { opacity: 1, x: 0 },
+    },
+    fade: {
+      hidden: { opacity: 0 },
+      visible: { opacity: 1 },
+    },
+  };
 
   return (
-    <div
-      ref={sectionRef}
-      className={`smoky-section-wrapper ${isVisible ? 'smoky-section-visible' : 'smoky-section-hidden'} ${className}`}
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={variants[direction]}
+      transition={{
+        duration: 0.7,
+        ease: [0.4, 0, 0.2, 1],
+        delay: delay / 1000,
+      }}
+      className={className}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

@@ -1,22 +1,22 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { UserCheck, Loader2, Send } from 'lucide-react';
-import { toast } from 'sonner';
-import { openWhatsApp } from '@/utils/whatsapp';
-import { PageHead } from '@/components/PageHead';
+import { PageHead } from "@/components/PageHead";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { openWhatsApp } from "@/utils/whatsapp";
+import { Loader2, Send, UserCheck } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function AdultFormPage() {
   const [formData, setFormData] = useState({
-    fullName: '',
-    dateOfBirth: '',
-    country: '',
-    email: '',
-    phone: '',
-    idNumber: '',
-    purpose: '',
+    fullName: "",
+    dateOfBirth: "",
+    country: "",
+    email: "",
+    phone: "",
+    idNumber: "",
+    purpose: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,31 +26,31 @@ export default function AdultFormPage() {
 
     // Client-side validation
     if (!formData.fullName.trim()) {
-      toast.error('Please enter your full name');
+      toast.error("Please enter your full name");
       return;
     }
     if (!formData.dateOfBirth) {
-      toast.error('Please enter your date of birth');
+      toast.error("Please enter your date of birth");
       return;
     }
     if (!formData.country.trim()) {
-      toast.error('Please enter your country');
+      toast.error("Please enter your country");
       return;
     }
-    if (!formData.email.trim() || !formData.email.includes('@')) {
-      toast.error('Please enter a valid email address');
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
     if (!formData.phone.trim()) {
-      toast.error('Please enter your phone number');
+      toast.error("Please enter your phone number");
       return;
     }
     if (!formData.idNumber.trim()) {
-      toast.error('Please enter your ID number');
+      toast.error("Please enter your ID number");
       return;
     }
     if (!formData.purpose.trim()) {
-      toast.error('Please describe your purpose');
+      toast.error("Please describe your purpose");
       return;
     }
 
@@ -62,7 +62,7 @@ export default function AdultFormPage() {
     const isAdult = age > 18 || (age === 18 && monthDiff >= 0);
 
     if (!isAdult) {
-      toast.error('You must be 18 years or older to submit this form');
+      toast.error("You must be 18 years or older to submit this form");
       return;
     }
 
@@ -70,33 +70,33 @@ export default function AdultFormPage() {
 
     try {
       // Open WhatsApp with prefilled message
-      openWhatsApp('RBS Adult Verification Form', {
-        'Full Name': formData.fullName,
-        'Date of Birth': formData.dateOfBirth,
-        'Country': formData.country,
-        'Email': formData.email,
-        'Phone': formData.phone,
-        'ID Number': formData.idNumber,
-        'Purpose': formData.purpose,
+      openWhatsApp("RBS Adult Verification Form", {
+        "Full Name": formData.fullName,
+        "Date of Birth": formData.dateOfBirth,
+        Country: formData.country,
+        Email: formData.email,
+        Phone: formData.phone,
+        "ID Number": formData.idNumber,
+        Purpose: formData.purpose,
       });
 
-      toast.success('Form submitted successfully!', {
-        description: 'WhatsApp opened with your information.',
+      toast.success("Form submitted successfully!", {
+        description: "WhatsApp opened with your information.",
       });
 
       // Reset form
       setFormData({
-        fullName: '',
-        dateOfBirth: '',
-        country: '',
-        email: '',
-        phone: '',
-        idNumber: '',
-        purpose: '',
+        fullName: "",
+        dateOfBirth: "",
+        country: "",
+        email: "",
+        phone: "",
+        idNumber: "",
+        purpose: "",
       });
     } catch (error) {
-      console.error('Form submission error:', error);
-      toast.error('Failed to open WhatsApp. Please try again.');
+      console.error("Form submission error:", error);
+      toast.error("Failed to open WhatsApp. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +104,10 @@ export default function AdultFormPage() {
 
   return (
     <>
-      <PageHead title="Adult Verification Form" description="Submit your adult verification information for RBS services" />
+      <PageHead
+        title="Adult Verification Form"
+        description="Submit your adult verification information for RBS services"
+      />
       <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
@@ -116,21 +119,27 @@ export default function AdultFormPage() {
                 Adult Verification Form
               </h1>
               <p className="text-xl metallic-text-secondary font-inter max-w-2xl mx-auto leading-relaxed">
-                Please provide your information for age verification and identity confirmation
+                Please provide your information for age verification and
+                identity confirmation
               </p>
             </div>
 
             <div className="glass-card-gold p-10 md:p-12 glow-border mex-fade-up">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="fullName" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="fullName"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Full Name *
                   </Label>
                   <Input
                     id="fullName"
                     type="text"
                     value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fullName: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     placeholder="Enter your full legal name"
@@ -139,30 +148,42 @@ export default function AdultFormPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="dateOfBirth" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="dateOfBirth"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Date of Birth *
                   </Label>
                   <Input
                     id="dateOfBirth"
                     type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dateOfBirth: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     required
                   />
-                  <p className="text-sm metallic-text-secondary mt-2">You must be 18 years or older</p>
+                  <p className="text-sm metallic-text-secondary mt-2">
+                    You must be 18 years or older
+                  </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="country" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="country"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Country *
                   </Label>
                   <Input
                     id="country"
                     type="text"
                     value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     placeholder="Enter your country of residence"
@@ -171,14 +192,19 @@ export default function AdultFormPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="email"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Email Address *
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     placeholder="your.email@example.com"
@@ -187,14 +213,19 @@ export default function AdultFormPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="phone"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Phone Number *
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     placeholder="+1 234 567 8900"
@@ -203,14 +234,19 @@ export default function AdultFormPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="idNumber" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="idNumber"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     ID Number *
                   </Label>
                   <Input
                     id="idNumber"
                     type="text"
                     value={formData.idNumber}
-                    onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, idNumber: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold h-14 text-lg"
                     placeholder="Government-issued ID number"
@@ -222,13 +258,18 @@ export default function AdultFormPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="purpose" className="metallic-text font-inter text-lg mb-2 block">
+                  <Label
+                    htmlFor="purpose"
+                    className="metallic-text font-inter text-lg mb-2 block"
+                  >
                     Purpose of Verification *
                   </Label>
                   <Textarea
                     id="purpose"
                     value={formData.purpose}
-                    onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, purpose: e.target.value })
+                    }
                     disabled={isSubmitting}
                     className="bg-white/40 border-2 border-gold/30 metallic-text focus:border-gold min-h-[120px] text-lg"
                     placeholder="Please describe why you need adult verification..."
@@ -257,7 +298,8 @@ export default function AdultFormPage() {
                 </div>
 
                 <p className="text-sm metallic-text-secondary text-center mt-6">
-                  Your information will be sent via WhatsApp for secure verification. All data is handled confidentially.
+                  Your information will be sent via WhatsApp for secure
+                  verification. All data is handled confidentially.
                 </p>
               </form>
             </div>

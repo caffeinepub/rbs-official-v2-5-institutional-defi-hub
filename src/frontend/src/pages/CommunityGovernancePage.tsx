@@ -1,4 +1,11 @@
-import { Vote, Users, FileText, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  FileText,
+  TrendingUp,
+  Users,
+  Vote,
+} from "lucide-react";
 
 export default function CommunityGovernancePage() {
   return (
@@ -16,7 +23,8 @@ export default function CommunityGovernancePage() {
               All opinions about RBS are community-driven
             </p>
             <p className="text-xl metallic-text-secondary font-inter max-w-3xl mx-auto leading-relaxed">
-              True decentralized governance where every token holder has a voice in shaping the future of RBS.
+              True decentralized governance where every token holder has a voice
+              in shaping the future of RBS.
             </p>
           </div>
 
@@ -26,10 +34,15 @@ export default function CommunityGovernancePage() {
                 <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <FileText className="h-7 w-7 text-gold" />
                 </div>
-                <h3 className="text-3xl font-poppins font-bold text-gold tracking-tight">Proposal System</h3>
+                <h3 className="text-3xl font-poppins font-bold text-gold tracking-tight">
+                  Proposal System
+                </h3>
               </div>
               <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
-                Token holders can submit proposals for protocol changes, treasury allocations, partnership decisions, and strategic initiatives. Each proposal undergoes community review before voting.
+                Token holders can submit proposals for protocol changes,
+                treasury allocations, partnership decisions, and strategic
+                initiatives. Each proposal undergoes community review before
+                voting.
               </p>
               <ul className="space-y-3 metallic-text-secondary font-inter">
                 <li className="flex items-start gap-3">
@@ -56,10 +69,14 @@ export default function CommunityGovernancePage() {
                 <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <CheckCircle className="h-7 w-7 text-gold" />
                 </div>
-                <h3 className="text-3xl font-poppins font-bold text-gold tracking-tight">Voting Power</h3>
+                <h3 className="text-3xl font-poppins font-bold text-gold tracking-tight">
+                  Voting Power
+                </h3>
               </div>
               <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
-                Voting power is proportional to token holdings, ensuring fair representation. All votes are recorded on-chain for complete transparency and accountability.
+                Voting power is proportional to token holdings, ensuring fair
+                representation. All votes are recorded on-chain for complete
+                transparency and accountability.
               </p>
               <ul className="space-y-3 metallic-text-secondary font-inter">
                 <li className="flex items-start gap-3">
@@ -90,12 +107,19 @@ export default function CommunityGovernancePage() {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                    <span className="text-gold font-poppins font-bold text-xl">1</span>
+                    <span className="text-gold font-poppins font-bold text-xl">
+                      1
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">Proposal Submission</h3>
+                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">
+                    Proposal Submission
+                  </h3>
                 </div>
                 <p className="metallic-text-secondary font-inter leading-relaxed ml-16 text-lg">
-                  Token holders meeting the minimum threshold submit detailed proposals through the governance portal. Proposals must include clear objectives, implementation plans, and expected outcomes.
+                  Token holders meeting the minimum threshold submit detailed
+                  proposals through the governance portal. Proposals must
+                  include clear objectives, implementation plans, and expected
+                  outcomes.
                 </p>
               </div>
 
@@ -104,12 +128,18 @@ export default function CommunityGovernancePage() {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                    <span className="text-gold font-poppins font-bold text-xl">2</span>
+                    <span className="text-gold font-poppins font-bold text-xl">
+                      2
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">Community Discussion</h3>
+                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">
+                    Community Discussion
+                  </h3>
                 </div>
                 <p className="metallic-text-secondary font-inter leading-relaxed ml-16 text-lg">
-                  A 7-day discussion period allows community members to review, ask questions, and provide feedback. Proposal creators can refine their submissions based on community input.
+                  A 7-day discussion period allows community members to review,
+                  ask questions, and provide feedback. Proposal creators can
+                  refine their submissions based on community input.
                 </p>
               </div>
 
@@ -118,12 +148,19 @@ export default function CommunityGovernancePage() {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                    <span className="text-gold font-poppins font-bold text-xl">3</span>
+                    <span className="text-gold font-poppins font-bold text-xl">
+                      3
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">Voting Period</h3>
+                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">
+                    Voting Period
+                  </h3>
                 </div>
                 <p className="metallic-text-secondary font-inter leading-relaxed ml-16 text-lg">
-                  After the discussion period, voting opens for 5 days. Token holders cast their votes on-chain, with results visible in real-time. Quorum requirements must be met for proposals to pass.
+                  After the discussion period, voting opens for 5 days. Token
+                  holders cast their votes on-chain, with results visible in
+                  real-time. Quorum requirements must be met for proposals to
+                  pass.
                 </p>
               </div>
 
@@ -132,12 +169,19 @@ export default function CommunityGovernancePage() {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                    <span className="text-gold font-poppins font-bold text-xl">4</span>
+                    <span className="text-gold font-poppins font-bold text-xl">
+                      4
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">Implementation</h3>
+                  <h3 className="text-2xl font-poppins font-bold text-gold tracking-tight">
+                    Implementation
+                  </h3>
                 </div>
                 <p className="metallic-text-secondary font-inter leading-relaxed ml-16 text-lg">
-                  Approved proposals are implemented by the development team with full transparency. Progress updates are shared with the community, and implementation timelines are clearly communicated.
+                  Approved proposals are implemented by the development team
+                  with full transparency. Progress updates are shared with the
+                  community, and implementation timelines are clearly
+                  communicated.
                 </p>
               </div>
             </div>
@@ -154,7 +198,8 @@ export default function CommunityGovernancePage() {
                 Community First
               </h3>
               <p className="metallic-text-secondary font-inter text-center leading-relaxed text-lg">
-                Every decision prioritizes community interests and long-term ecosystem health over short-term gains.
+                Every decision prioritizes community interests and long-term
+                ecosystem health over short-term gains.
               </p>
             </div>
 
@@ -168,7 +213,8 @@ export default function CommunityGovernancePage() {
                 Transparent Process
               </h3>
               <p className="metallic-text-secondary font-inter text-center leading-relaxed text-lg">
-                All governance activities are recorded on-chain with full transparency and public accessibility.
+                All governance activities are recorded on-chain with full
+                transparency and public accessibility.
               </p>
             </div>
 
@@ -182,7 +228,8 @@ export default function CommunityGovernancePage() {
                 Continuous Evolution
               </h3>
               <p className="metallic-text-secondary font-inter text-center leading-relaxed text-lg">
-                Governance mechanisms evolve based on community feedback and emerging best practices.
+                Governance mechanisms evolve based on community feedback and
+                emerging best practices.
               </p>
             </div>
           </div>

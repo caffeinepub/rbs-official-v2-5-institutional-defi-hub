@@ -1,223 +1,378 @@
-import { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { TrendingUp, Lock, Users, Droplet, Flame, Coins } from 'lucide-react';
+import React, { useState, useRef } from "react";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import {
+  useScrollAnimation,
+  useScrollAnimationClass,
+} from "../hooks/useScrollAnimation";
 
-export default function TokenomicsPage() {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+const TOTAL_SUPPLY = 100_000;
 
-  const tokenomicsData = [
-    { name: 'Liquidity', value: 40, color: '#DAA520', icon: TrendingUp },
-    { name: 'Presale', value: 20, color: '#4ADE80', icon: Coins },
-    { name: 'Burn', value: 15, color: '#EF4444', icon: Flame },
-    { name: 'Team', value: 10, color: '#8B5CF6', icon: Lock },
-    { name: 'Community Rewards', value: 8, color: '#3B82F6', icon: Users },
-    { name: 'Airdrop', value: 7, color: '#F59E0B', icon: Droplet },
-  ];
+const TOKENOMICS_DATA = [
+  {
+    name: "💧 Liquidity",
+    emoji: "💧",
+    percentage: 40,
+    amount: 40_000,
+    color: "#3B82F6",
+    description:
+      "Ensures deep liquidity pools for seamless trading and price stability.",
+  },
+  {
+    name: "🌱 Presale",
+    emoji: "🌱",
+    percentage: 20,
+    amount: 20_000,
+    color: "#10B981",
+    description:
+      "Early adopter allocation for presale participants at discounted rates.",
+  },
+  {
+    name: "🔥 Burn",
+    emoji: "🔥",
+    percentage: 15,
+    amount: 15_000,
+    color: "#EF4444",
+    description:
+      "Deflationary mechanism to reduce supply and increase token value over time.",
+  },
+  {
+    name: "👥 Team",
+    emoji: "👥",
+    percentage: 10,
+    amount: 10_000,
+    color: "#8B5CF6",
+    description:
+      "Core team allocation with vesting schedule to align long-term incentives.",
+  },
+  {
+    name: "🎁 Community Rewards",
+    emoji: "🎁",
+    percentage: 8,
+    amount: 8_000,
+    color: "#F59E0B",
+    description:
+      "Rewards for active community members, stakers, and governance participants.",
+  },
+  {
+    name: "🚀 Airdrop",
+    emoji: "🚀",
+    percentage: 7,
+    amount: 7_000,
+    color: "#EC4899",
+    description:
+      "Free distribution to eligible wallets to grow the RBS ecosystem.",
+  },
+];
 
-  const totalSupply = 100000;
+function AnimatedCounter({
+  target,
+  duration = 2000,
+}: { target: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.3 });
+  const hasAnimated = useRef(false);
+
+  React.useEffect(() => {
+    if (isVisible && !hasAnimated.current) {
+      hasAnimated.current = true;
+      const start = Date.now();
+      const tick = () => {
+        const elapsed = Date.now() - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - (1 - progress) ** 3;
+        setCount(Math.round(eased * target));
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }, [isVisible, target, duration]);
 
   return (
-    <div className="min-h-screen pt-24 pb-16 bg-gradient-to-b from-white via-gray-50 to-white">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-gold/10 border-2 border-gold/30 mb-8">
-              <Coins className="h-10 w-10 text-gold" />
-            </div>
-            <h1 className="text-5xl md:text-7xl font-poppins font-bold tracking-tight leading-tight metallic-text-hero mb-6">
-              Tokenomics
-            </h1>
-            <p className="text-xl metallic-text-secondary font-inter mb-6 leading-relaxed">
-              Strategic token distribution and economic model
-            </p>
-            <div className="inline-block glass-card-gold border-2 border-gold/30 rounded-lg px-8 py-4 mt-4">
-              <p className="text-3xl font-poppins font-bold text-gold">
-                Total Supply: {totalSupply.toLocaleString()} RBS (Fixed)
-              </p>
-            </div>
-          </div>
+    <span ref={ref as React.RefObject<HTMLSpanElement>}>
+      {count.toLocaleString()}
+    </span>
+  );
+}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 animate-fade-in-up animation-delay-200">
-            <div className="glass-card p-8 glow-border">
-              <h2 className="text-3xl font-poppins font-bold text-gold mb-8 text-center tracking-tight">
-                Distribution Breakdown
-              </h2>
-              <ResponsiveContainer width="100%" height={400}>
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+        <p className="font-bold text-foreground">{data.name}</p>
+        <p className="text-primary">
+          {data.percentage}% — {data.amount.toLocaleString()} RBS
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export default function TokenomicsPage() {
+  const heroAnim = useScrollAnimation({ threshold: 0.1 });
+  const chartAnim = useScrollAnimation({ threshold: 0.1 });
+  const statsAnim = useScrollAnimation({ threshold: 0.1 });
+  const utilityAnim = useScrollAnimation({ threshold: 0.1 });
+  const deflationAnim = useScrollAnimation({ threshold: 0.1 });
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero */}
+      <section
+        ref={heroAnim.ref as React.RefObject<HTMLElement>}
+        className={`relative py-24 px-4 text-center overflow-hidden ${useScrollAnimationClass(heroAnim.isVisible, "fade-up")}`}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 pointer-events-none" />
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-6">
+            <span className="text-primary text-sm font-semibold">
+              Token Distribution
+            </span>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black mb-6 bg-gradient-to-r from-primary via-yellow-400 to-primary bg-clip-text text-transparent">
+            RBS Tokenomics
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            A carefully designed token economy built for long-term
+            sustainability, community growth, and deflationary value.
+          </p>
+          <div className="inline-block bg-card border border-primary/40 rounded-2xl px-8 py-4 shadow-lg">
+            <p className="text-sm text-muted-foreground mb-1">Total Supply</p>
+            <p className="text-4xl font-black text-primary">
+              <AnimatedCounter target={TOTAL_SUPPLY} /> RBS
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pie Chart */}
+      <section
+        ref={chartAnim.ref as React.RefObject<HTMLElement>}
+        className={`py-16 px-4 ${useScrollAnimationClass(chartAnim.isVisible, "fade-up")}`}
+      >
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
+            Token Distribution
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={tokenomicsData}
+                    data={TOKENOMICS_DATA}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    outerRadius={120}
-                    innerRadius={60}
-                    fill="#8884d8"
-                    dataKey="value"
-                    onMouseEnter={(_, index) => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(null)}
+                    innerRadius={80}
+                    outerRadius={140}
+                    paddingAngle={3}
+                    dataKey="percentage"
                   >
-                    {tokenomicsData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        opacity={activeIndex === null || activeIndex === index ? 1 : 0.5}
-                        stroke={activeIndex === index ? '#DAA520' : 'none'}
-                        strokeWidth={activeIndex === index ? 3 : 0}
-                      />
+                    {TOKENOMICS_DATA.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      border: '2px solid #DAA520',
-                      borderRadius: '12px',
-                      color: '#0A0A0A',
-                      fontWeight: 600,
-                    }}
-                    formatter={(value: number) => [`${value}%`, 'Allocation']}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    iconType="circle"
                     formatter={(value) => (
-                      <span className="metallic-text-secondary font-inter text-sm">{value}</span>
+                      <span className="text-foreground text-sm">{value}</span>
                     )}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-
             <div className="space-y-4">
-              {tokenomicsData.map((item, index) => {
-                const Icon = item.icon;
-                const amount = (totalSupply * item.value) / 100;
-                return (
+              {TOKENOMICS_DATA.map((item, idx) => (
+                <div
+                  key={item.name}
+                  className="flex items-center gap-4 bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-all duration-300"
+                  style={{ transitionDelay: `${idx * 80}ms` }}
+                >
                   <div
-                    key={index}
-                    className={`glass-card p-6 transition-all duration-300 cursor-pointer ${
-                      activeIndex === index
-                        ? 'border-gold/50 shadow-lg shadow-gold/20 scale-105'
-                        : 'border-gray-200 hover:border-gold/30'
-                    }`}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(null)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="h-12 w-12 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: `${item.color}20`, border: `2px solid ${item.color}` }}
-                        >
-                          <Icon className="h-6 w-6" style={{ color: item.color }} />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-poppins font-bold text-gold">{item.name}</h3>
-                          <p className="text-sm font-inter metallic-text-secondary">
-                            {amount.toLocaleString()} RBS
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-poppins font-bold" style={{ color: item.color }}>
-                          {item.value}%
-                        </p>
-                      </div>
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-foreground">
+                        {item.name}
+                      </span>
+                      <span className="text-primary font-bold">
+                        {item.percentage}%
+                      </span>
                     </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-1000"
+                        style={{
+                          width: chartAnim.isVisible
+                            ? `${item.percentage}%`
+                            : "0%",
+                          backgroundColor: item.color,
+                          transitionDelay: `${idx * 100 + 300}ms`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {item.amount.toLocaleString()} RBS
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in-up animation-delay-400">
-            <div className="glass-card-gold p-10 glow-border">
-              <h3 className="text-3xl font-poppins font-bold text-gold mb-8 tracking-tight">Deflationary Model</h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Flame className="h-7 w-7 text-red-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Token Burns</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      15% of total supply allocated for strategic burns. Regular burn events reduce
-                      circulating supply, creating scarcity and supporting long-term value appreciation.
-                    </p>
-                  </div>
+      {/* Stats Cards */}
+      <section
+        ref={statsAnim.ref as React.RefObject<HTMLElement>}
+        className={`py-16 px-4 bg-card/30 ${useScrollAnimationClass(statsAnim.isVisible, "fade-up")}`}
+      >
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
+            Allocation Breakdown
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {TOKENOMICS_DATA.map((item, idx) => (
+              <div
+                key={item.name}
+                className="bg-card border border-border rounded-2xl p-6 hover:border-primary/50 hover:shadow-lg transition-all duration-300 group"
+                style={{
+                  transitionDelay: `${idx * 100}ms`,
+                  opacity: statsAnim.isVisible ? 1 : 0,
+                  transform: statsAnim.isVisible
+                    ? "translateY(0)"
+                    : "translateY(20px)",
+                  transition: `opacity 0.6s ease ${idx * 100}ms, transform 0.6s ease ${idx * 100}ms`,
+                }}
+              >
+                <div className="text-4xl mb-3">{item.emoji}</div>
+                <h3 className="text-lg font-bold text-foreground mb-2">
+                  {item.name.replace(`${item.emoji} `, "")}
+                </h3>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span
+                    className="text-3xl font-black"
+                    style={{ color: item.color }}
+                  >
+                    {item.percentage}%
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    of supply
+                  </span>
                 </div>
-                <div className="flex items-start gap-4">
-                  <TrendingUp className="h-7 w-7 text-green-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Transaction Fees</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      A portion of transaction fees contributes to the burn mechanism, ensuring
-                      continuous deflationary pressure as network activity increases.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Lock className="h-7 w-7 text-purple-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Vesting Schedule</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      Team tokens locked with 4-year vesting period, ensuring long-term alignment
-                      with project success and preventing market manipulation.
-                    </p>
-                  </div>
-                </div>
+                <p className="text-2xl font-bold text-foreground mb-3">
+                  <AnimatedCounter target={item.amount} /> RBS
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
               </div>
-            </div>
-
-            <div className="glass-card-gold p-10 glow-border">
-              <h3 className="text-3xl font-poppins font-bold text-gold mb-8 tracking-tight">Utility & Benefits</h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <Users className="h-7 w-7 text-blue-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Governance Rights</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      Token holders participate in protocol governance, voting on upgrades, treasury
-                      allocation, and strategic decisions shaping the ecosystem's future.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Coins className="h-7 w-7 text-yellow-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Staking Rewards</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      Earn passive income by staking RBS tokens. Stakers secure the network and
-                      receive rewards from transaction fees and protocol revenue.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Droplet className="h-7 w-7 text-orange-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-xl font-poppins font-bold metallic-text mb-2">Premium Access</h4>
-                    <p className="metallic-text-secondary font-inter text-base leading-relaxed">
-                      RBS tokens required for accessing premium features, institutional services,
-                      and advanced trading tools within the ecosystem.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-16 glass-card p-10 text-center animate-fade-in-up animation-delay-600 glow-border">
-            <h3 className="text-3xl font-poppins font-bold text-gold mb-6 tracking-tight">
-              Economic Sustainability
-            </h3>
-            <p className="metallic-text-secondary font-inter text-lg leading-relaxed max-w-4xl mx-auto">
-              RBS tokenomics are designed for long-term sustainability and value creation. The fixed
-              supply of 100,000 RBS combined with deflationary mechanisms ensures scarcity. Strategic
-              allocation supports ecosystem development, community growth, and institutional adoption.
-              Our economic model balances immediate utility with long-term value appreciation, creating
-              a sustainable foundation for the future of decentralized digital assets.
+      {/* Token Utility */}
+      <section
+        ref={utilityAnim.ref as React.RefObject<HTMLElement>}
+        className={`py-16 px-4 ${useScrollAnimationClass(utilityAnim.isVisible, "fade-up")}`}
+      >
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6 text-foreground">
+            Token Utility
+          </h2>
+          <p className="text-muted-foreground mb-12 text-lg">
+            RBS powers the entire ecosystem with multiple use cases designed for
+            long-term value.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              {
+                icon: "🗳️",
+                title: "Governance Voting",
+                desc: "Participate in protocol decisions and shape the future of RBS.",
+              },
+              {
+                icon: "💎",
+                title: "Staking Rewards",
+                desc: "Earn passive income by staking RBS in the community rewards pool.",
+              },
+              {
+                icon: "🔥",
+                title: "Deflationary Burns",
+                desc: "Regular burn events reduce supply, increasing scarcity and value.",
+              },
+              {
+                icon: "🌐",
+                title: "Ecosystem Access",
+                desc: "Unlock premium features, Market Intel, and exclusive community benefits.",
+              },
+            ].map((item, idx) => (
+              <div
+                key={item.title}
+                className="bg-card border border-border rounded-xl p-6 text-left hover:border-primary/50 transition-all duration-300"
+                style={{
+                  opacity: utilityAnim.isVisible ? 1 : 0,
+                  transform: utilityAnim.isVisible
+                    ? "translateY(0)"
+                    : "translateY(20px)",
+                  transition: `opacity 0.6s ease ${idx * 120}ms, transform 0.6s ease ${idx * 120}ms`,
+                }}
+              >
+                <div className="text-3xl mb-3">{item.icon}</div>
+                <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
+                <p className="text-muted-foreground text-sm">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Deflationary Model */}
+      <section
+        ref={deflationAnim.ref as React.RefObject<HTMLElement>}
+        className={`py-16 px-4 bg-card/30 ${useScrollAnimationClass(deflationAnim.isVisible, "fade-up")}`}
+      >
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6 text-foreground">
+            🔥 Deflationary Model
+          </h2>
+          <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">
+            15,000 RBS (15% of total supply) is allocated for systematic burns,
+            creating a deflationary pressure that increases the value of
+            remaining tokens over time.
+          </p>
+          <div className="bg-card border border-primary/30 rounded-2xl p-8">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-foreground font-semibold">
+                Burn Progress
+              </span>
+              <span className="text-primary font-bold">5,000 / 15,000 RBS</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
+              <div
+                className="h-4 rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all duration-2000"
+                style={{
+                  width: deflationAnim.isVisible ? "33.3%" : "0%",
+                  transition: "width 2s ease 0.3s",
+                }}
+              />
+            </div>
+            <p className="text-muted-foreground text-sm mt-3">
+              33.3% of burn target completed
             </p>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 interface PageHeadProps {
   title: string;
@@ -8,15 +8,15 @@ interface PageHeadProps {
 export function PageHead({ title, description }: PageHeadProps) {
   useEffect(() => {
     document.title = `${title} | RBS - Return. Be Superior.`;
-    
+
     if (description) {
       let metaDescription = document.querySelector('meta[name="description"]');
       if (!metaDescription) {
-        metaDescription = document.createElement('meta');
-        metaDescription.setAttribute('name', 'description');
+        metaDescription = document.createElement("meta");
+        metaDescription.setAttribute("name", "description");
         document.head.appendChild(metaDescription);
       }
-      metaDescription.setAttribute('content', description);
+      metaDescription.setAttribute("content", description);
     }
   }, [title, description]);
 

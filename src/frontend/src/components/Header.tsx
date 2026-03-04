@@ -1,261 +1,307 @@
-import { useState } from 'react';
-import { Link, useLocation } from '@tanstack/react-router';
-import { Menu, X, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useReliableAuth } from '@/hooks/useReliableAuth';
+  ChevronDown,
+  Loader2,
+  LogIn,
+  LogOut,
+  Menu,
+  User,
+  X,
+} from "lucide-react";
+import { useState } from "react";
+import { useReliableAuth } from "../hooks/useReliableAuth";
+
+type NavLeaf = { label: string; path: string };
+type NavGroup = { label: string; children: NavLeaf[] };
+type NavItem = NavLeaf | NavGroup;
+
+const navItems: NavItem[] = [
+  { label: "Home", path: "/" },
+  { label: "About", path: "/about" },
+  {
+    label: "Token",
+    children: [
+      { label: "Tokenomics", path: "/tokenomics" },
+      { label: "Whitepaper", path: "/whitepaper" },
+      { label: "Roadmap", path: "/roadmap" },
+    ],
+  },
+  {
+    label: "Market",
+    children: [
+      { label: "Market Dashboard", path: "/dashboard" },
+      { label: "Market Intelligence", path: "/market-intel" },
+      { label: "Live Prices", path: "/live-price" },
+      { label: "Market Pulse", path: "/market-pulse" },
+      { label: "AI Sentiment", path: "/sentiment" },
+      { label: "Advanced Analytics", path: "/analytics" },
+    ],
+  },
+  {
+    label: "Community",
+    children: [
+      { label: "Governance", path: "/governance" },
+      { label: "Community Voting", path: "/voting" },
+      { label: "Leaderboard", path: "/leaderboard" },
+      { label: "Highlights", path: "/community" },
+      { label: "Testimonials", path: "/testimonials" },
+    ],
+  },
+  {
+    label: "Acquire",
+    children: [
+      { label: "Acquisition", path: "/acquisition" },
+      { label: "Airdrop & Presale Hub", path: "/airdrop-presale" },
+    ],
+  },
+  {
+    label: "Resources",
+    children: [
+      { label: "Developer Blog", path: "/blog" },
+      { label: "Staking Calculator", path: "/staking" },
+      { label: "Partners", path: "/partners" },
+      { label: "Ecosystem", path: "/ecosystem" },
+      { label: "Security", path: "/security" },
+      { label: "Insights", path: "/insights" },
+      { label: "FAQ", path: "/faq" },
+      { label: "Contact", path: "/contact" },
+    ],
+  },
+  { label: "Alerts", path: "/alerts" },
+];
+
+function isGroup(item: NavItem): item is NavGroup {
+  return "children" in item;
+}
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
-  const { handleAuth, isAuthenticated, isDisabled, loginStatus } = useReliableAuth();
+  const { identity, isAuthenticated, isDisabled, handleLogin, handleLogout } =
+    useReliableAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const text = loginStatus === 'logging-in' ? 'Logging in...' : isAuthenticated ? 'Logout' : 'Login';
+  const handleAuth = async () => {
+    if (isAuthenticated) {
+      await handleLogout();
+    } else {
+      await handleLogin();
+    }
+  };
+
+  const handleNav = (path: string) => {
+    navigate({ to: path });
+    setMobileOpen(false);
+    setOpenDropdown(null);
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/about', label: 'About' },
-    { path: '/whitepaper', label: 'Whitepaper' },
-    { path: '/roadmap', label: 'Roadmap' },
-    { path: '/tokenomics', label: 'Tokenomics' },
-  ];
-
-  const resourcesLinks = [
-    { path: '/acquisition', label: 'Acquisition Portal' },
-    { path: '/adult-form', label: 'Adult Form' },
-    { path: '/faq', label: 'FAQ' },
-    { path: '/contact', label: 'Contact' },
-  ];
-
-  const communityLinks = [
-    { path: '/community-governance', label: 'Governance' },
-    { path: '/community-voting', label: 'Voting' },
-    { path: '/community-highlights', label: 'Highlights' },
-    { path: '/ecosystem-growth', label: 'Ecosystem' },
-    { path: '/security-transparency', label: 'Security' },
-    { path: '/testimonials', label: 'Testimonials' },
-  ];
-
-  const analyticsLinks = [
-    { path: '/market-intel', label: 'Market Intel' },
-    { path: '/market-pulse', label: 'Market Pulse' },
-    { path: '/live-price', label: 'Live Price' },
-    { path: '/crypto-news', label: 'Crypto News' },
-    { path: '/advanced-analytics', label: 'Advanced Analytics' },
-    { path: '/alerts-center', label: 'Alerts Center' },
-    { path: '/insights', label: 'Insights' },
-  ];
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gold/20">
-      <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2 mex-hover-lift">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gold to-gold/60 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">R</span>
-            </div>
-            <span className="text-2xl font-poppins font-bold metallic-text-hero">RBS</span>
-          </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <button
+            type="button"
+            onClick={() => handleNav("/")}
+            className="flex items-center gap-2 group"
+          >
+            <img
+              src="/assets/generated/rbs-logo-nav-transparent.dim_200x200.png"
+              alt="RBS Logo"
+              className="h-10 w-10 object-contain"
+            />
+            <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+              RBS<span className="text-primary">Superior</span>
+            </span>
+          </button>
 
-          <div className="hidden lg:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-lg transition-all duration-200 font-medium mex-hover-lift ${
-                  isActive(link.path)
-                    ? 'bg-gold/10 text-gold'
-                    : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navItems.map((item) =>
+              isGroup(item) ? (
+                <div
+                  key={item.label}
+                  className="relative"
+                  onMouseEnter={() => setOpenDropdown(item.label)}
+                  onMouseLeave={() => setOpenDropdown(null)}
                 >
-                  Resources
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {resourcesLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link
-                      to={link.path}
-                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    {item.label}
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  {openDropdown === item.label && (
+                    <div className="absolute top-full left-0 mt-1 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50">
+                      {item.children.map((child) => (
+                        <button
+                          type="button"
+                          key={child.path}
+                          onClick={() => handleNav(child.path)}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                            isActive(child.path)
+                              ? "text-primary bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {child.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  key={(item as NavLeaf).path}
+                  onClick={() => handleNav((item as NavLeaf).path)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive((item as NavLeaf).path)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  }`}
                 >
-                  Community
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {communityLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link
-                      to={link.path}
-                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {item.label}
+                </button>
+              ),
+            )}
+          </nav>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="px-4 py-2 text-gray-700 hover:bg-gold/5 hover:text-gold mex-hover-lift"
-                >
-                  Analytics
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {analyticsLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link
-                      to={link.path}
-                      className={`w-full ${isActive(link.path) ? 'bg-gold/10 text-gold' : ''}`}
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button
+          {/* Auth Button */}
+          <div className="hidden lg:flex items-center gap-3">
+            {isAuthenticated && identity && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span>Connected</span>
+              </div>
+            )}
+            <button
+              type="button"
               onClick={handleAuth}
               disabled={isDisabled}
-              className={`ml-4 mex-hover-lift transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 isAuthenticated
-                  ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  : 'bg-gold hover:bg-gold/90 text-black'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  ? "bg-muted hover:bg-muted/80 text-foreground"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              } disabled:opacity-50`}
             >
-              {text}
-            </Button>
+              {isDisabled ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isAuthenticated ? (
+                <LogOut className="h-4 w-4" />
+              ) : (
+                <LogIn className="h-4 w-4" />
+              )}
+              {isDisabled
+                ? "Connecting..."
+                : isAuthenticated
+                  ? "Logout"
+                  : "Login"}
+            </button>
           </div>
 
+          {/* Mobile Menu Toggle */}
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gold/10 transition-colors"
-            aria-label="Toggle menu"
+            type="button"
+            className="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground"
+            onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {isOpen ? <X className="h-6 w-6 text-gold" /> : <Menu className="h-6 w-6 text-gold" />}
+            {mobileOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
+      </div>
 
-        {isOpen && (
-          <div className="lg:hidden mt-4 pb-4 space-y-2 animate-fade-in">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsOpen(false)}
-                className={`block px-4 py-2 rounded-lg transition-colors ${
-                  isActive(link.path)
-                    ? 'bg-gold/10 text-gold'
-                    : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="pt-2 border-t border-gold/20">
-              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Resources</p>
-              {resourcesLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive(link.path)
-                      ? 'bg-gold/10 text-gold'
-                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div className="lg:hidden bg-background border-t border-border max-h-[80vh] overflow-y-auto">
+          <div className="px-4 py-3 space-y-1">
+            {navItems.map((item) =>
+              isGroup(item) ? (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenDropdown(
+                        openDropdown === item.label ? null : item.label,
+                      )
+                    }
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                  >
+                    {item.label}
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${openDropdown === item.label ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openDropdown === item.label && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {item.children.map((child) => (
+                        <button
+                          type="button"
+                          key={child.path}
+                          onClick={() => handleNav(child.path)}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                            isActive(child.path)
+                              ? "text-primary bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {child.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  key={(item as NavLeaf).path}
+                  onClick={() => handleNav((item as NavLeaf).path)}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive((item as NavLeaf).path)
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-gold/20">
-              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Community</p>
-              {communityLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive(link.path)
-                      ? 'bg-gold/10 text-gold'
-                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-gold/20">
-              <p className="px-4 py-2 text-sm font-semibold text-gray-500">Analytics</p>
-              {analyticsLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                    isActive(link.path)
-                      ? 'bg-gold/10 text-gold'
-                      : 'text-gray-700 hover:bg-gold/5 hover:text-gold'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-            <div className="pt-4">
-              <Button
+                  {item.label}
+                </button>
+              ),
+            )}
+            <div className="pt-3 border-t border-border">
+              <button
+                type="button"
                 onClick={handleAuth}
                 disabled={isDisabled}
-                className={`w-full transition-all duration-300 ${
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   isAuthenticated
-                    ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    : 'bg-gold hover:bg-gold/90 text-black'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    ? "bg-muted hover:bg-muted/80 text-foreground"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                } disabled:opacity-50`}
               >
-                {text}
-              </Button>
+                {isDisabled ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isAuthenticated ? (
+                  <LogOut className="h-4 w-4" />
+                ) : (
+                  <LogIn className="h-4 w-4" />
+                )}
+                {isDisabled
+                  ? "Connecting..."
+                  : isAuthenticated
+                    ? "Logout"
+                    : "Login"}
+              </button>
             </div>
           </div>
-        )}
-      </nav>
+        </div>
+      )}
     </header>
   );
 }
