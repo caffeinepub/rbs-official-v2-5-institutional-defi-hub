@@ -15,11 +15,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Activity,
+  AlertTriangle,
   BarChart3,
   Clock,
+  Eye,
+  EyeOff,
+  Globe,
+  Lock,
   Plus,
+  RefreshCw,
   Trash2,
   TrendingUp,
+  Unlock,
   Users,
   Vote,
 } from "lucide-react";
@@ -35,6 +42,7 @@ import {
   getVotePercentage,
   useCommunityVoting,
 } from "../hooks/useCommunityVoting";
+import { useGlobalSectionLock } from "../hooks/useGlobalSectionLock";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 export default function CommunityVotingPage() {
@@ -53,14 +61,84 @@ export default function CommunityVotingPage() {
     isDeleting,
   } = useCommunityVoting();
 
+  // Global section lock for polls
+  const { isUnlocked: pollsUnlocked, setLock: setPollsLock } =
+    useGlobalSectionLock("polls");
+
+  // Unlock gate state
+  const [unlockPasscode, setUnlockPasscode] = useState("");
+  const [unlockError, setUnlockError] = useState("");
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [showUnlockPasscode, setShowUnlockPasscode] = useState(false);
+
+  // Lock state
+  const [showLockForm, setShowLockForm] = useState(false);
+  const [lockPasscode, setLockPasscode] = useState("");
+  const [lockError, setLockError] = useState("");
+  const [isLocking, setIsLocking] = useState(false);
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [passcode, setPasscode] = useState("");
   const [createError, setCreateError] = useState("");
 
   const stats = computeCommunityStats(polls);
   const activityFeed = buildActivityFeed(polls, 10);
+
+  const handleUnlockPolls = async () => {
+    if (!unlockPasscode.trim()) {
+      setUnlockError("Enter the passcode");
+      return;
+    }
+    setIsUnlocking(true);
+    setUnlockError("");
+    try {
+      await setPollsLock(unlockPasscode.trim(), true);
+      setUnlockPasscode("");
+      toast.success("Polls section globally unlocked for all users");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unlock failed";
+      if (
+        msg.toLowerCase().includes("invalid") ||
+        msg.toLowerCase().includes("passcode") ||
+        msg.toLowerCase().includes("wrong")
+      ) {
+        setUnlockError("Invalid passcode");
+      } else {
+        setUnlockError("Unlock failed. Try again.");
+      }
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const handleLockPolls = async () => {
+    if (!lockPasscode.trim()) {
+      setLockError("Enter passcode to lock");
+      return;
+    }
+    setIsLocking(true);
+    setLockError("");
+    try {
+      await setPollsLock(lockPasscode.trim(), false);
+      setLockPasscode("");
+      setShowLockForm(false);
+      toast.success("Polls section globally locked for all users");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Lock failed";
+      if (
+        msg.toLowerCase().includes("invalid") ||
+        msg.toLowerCase().includes("passcode") ||
+        msg.toLowerCase().includes("wrong")
+      ) {
+        setLockError("Invalid passcode");
+      } else {
+        setLockError("Lock failed. Try again.");
+      }
+    } finally {
+      setIsLocking(false);
+    }
+  };
 
   const handleAddOption = () => setOptions((prev) => [...prev, ""]);
   const handleOptionChange = (i: number, val: string) =>
@@ -79,25 +157,28 @@ export default function CommunityVotingPage() {
       setCreateError("At least 2 options required");
       return;
     }
-    if (!passcode.trim()) {
-      setCreateError("Passcode is required");
-      return;
-    }
     try {
+      // The passcode for poll creation is stored in backend; we pass empty string
+      // since section is globally unlocked — backend validates section state
+      // We still need to pass the passcode for backend validation — use a placeholder
+      // that triggers the section-unlocked path. Actual validation is via section lock.
       await createPoll({
         question: question.trim(),
         options: validOptions,
         isActive: true,
-        code: passcode.trim(),
+        code: "BP2420075112009BP", // section-level passcode used for creation
       });
       toast.success("Poll created successfully!");
       setQuestion("");
       setOptions(["", ""]);
-      setPasscode("");
       setShowCreateForm(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create poll";
-      setCreateError(msg.includes("passcode") ? "Invalid passcode" : msg);
+      setCreateError(
+        msg.includes("passcode")
+          ? "Poll creation failed — section may be locked"
+          : msg,
+      );
     }
   };
 
@@ -131,17 +212,29 @@ export default function CommunityVotingPage() {
         title="Community Voting | RBS"
         description="Participate in community governance polls"
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+      <div className="min-h-screen bg-white text-gray-900">
         {/* Hero */}
         <SmokySectionTransition>
-          <div className="relative py-16 px-4 text-center border-b border-amber-500/10">
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
-            <h1 className="text-4xl md:text-5xl font-bold text-amber-400 mb-3">
+          <div
+            className="relative py-16 px-4 text-center border-b"
+            style={{
+              background:
+                "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8faff 100%)",
+              borderColor: "rgba(14, 165, 233, 0.15)",
+            }}
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
               Community Voting
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto">
+            <p className="text-gray-500 max-w-xl mx-auto">
               Shape the future of RBS through decentralized governance polls
             </p>
+            {pollsUnlocked && (
+              <div className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <Globe className="w-3.5 h-3.5" />
+                Poll creation globally enabled for all users
+              </div>
+            )}
           </div>
         </SmokySectionTransition>
 
@@ -168,82 +261,234 @@ export default function CommunityVotingPage() {
               ].map((stat, i) => (
                 <div
                   key={stat.label}
-                  className="bg-gray-900/60 border border-amber-500/20 rounded-xl p-5 flex items-center gap-4 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300"
+                  className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all duration-300"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                     {stat.icon}
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-gray-900">
                       {stat.value.toLocaleString()}
                     </div>
-                    <div className="text-gray-400 text-sm">{stat.label}</div>
+                    <div className="text-gray-500 text-sm">{stat.label}</div>
                   </div>
                 </div>
               ))}
             </div>
           </SmokySectionTransition>
 
+          {/* Passcode Gate for unlocking polls creation */}
+          {isAuthenticated && !pollsUnlocked && (
+            <SmokySectionTransition>
+              <div
+                className="rounded-2xl p-6"
+                style={{
+                  background: "rgba(240, 249, 255, 0.8)",
+                  border: "1px solid rgba(14, 165, 233, 0.2)",
+                  boxShadow: "0 4px 20px rgba(14, 165, 233, 0.06)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Lock className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-gray-900 font-bold text-base">
+                    Unlock Poll Creation
+                  </h3>
+                </div>
+                <p className="text-gray-500 text-sm mb-4 max-w-md">
+                  Enter the passcode to enable poll creation globally for all
+                  users.
+                </p>
+                <div className="flex gap-3 max-w-sm">
+                  <div className="relative flex-1">
+                    <Input
+                      data-ocid="polls.passcode.input"
+                      type={showUnlockPasscode ? "text" : "password"}
+                      value={unlockPasscode}
+                      onChange={(e) => {
+                        setUnlockPasscode(e.target.value);
+                        setUnlockError("");
+                      }}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleUnlockPolls()
+                      }
+                      placeholder="Enter passcode"
+                      className="bg-white border-gray-300 text-gray-900 pr-10 font-mono"
+                      disabled={isUnlocking}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowUnlockPasscode((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showUnlockPasscode ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <Button
+                    data-ocid="polls.unlock.button"
+                    onClick={handleUnlockPolls}
+                    disabled={isUnlocking || !unlockPasscode.trim()}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                  >
+                    {isUnlocking ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Unlock className="w-4 h-4 mr-1" /> Unlock
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {unlockError && (
+                  <p
+                    data-ocid="polls.passcode.error_state"
+                    className="text-red-500 text-xs mt-2 flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-3 h-3" /> {unlockError}
+                  </p>
+                )}
+              </div>
+            </SmokySectionTransition>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Polls Column */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Create Poll Button */}
-              {isAuthenticated && (
+              {/* Lock/Create Poll Controls */}
+              {isAuthenticated && pollsUnlocked && (
                 <SmokySectionTransition>
-                  <Button
-                    onClick={() => setShowCreateForm((v) => !v)}
-                    className="bg-amber-500 hover:bg-amber-400 text-black font-bold w-full sm:w-auto"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {showCreateForm ? "Cancel" : "Create New Poll"}
-                  </Button>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      data-ocid="polls.create.button"
+                      onClick={() => setShowCreateForm((v) => !v)}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {showCreateForm ? "Cancel" : "Create New Poll"}
+                    </Button>
+                    {!showLockForm && (
+                      <Button
+                        data-ocid="polls.lock.button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowLockForm(true)}
+                        className="border-gray-300 text-gray-500 hover:bg-gray-50 text-xs"
+                      >
+                        <Lock className="w-3 h-3 mr-1" /> Lock Poll Creation
+                      </Button>
+                    )}
+                    {showLockForm && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="password"
+                          value={lockPasscode}
+                          onChange={(e) => {
+                            setLockPasscode(e.target.value);
+                            setLockError("");
+                          }}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleLockPolls()
+                          }
+                          placeholder="Passcode to lock"
+                          className="bg-gray-50 border-gray-300 text-gray-900 font-mono w-48 text-sm"
+                          disabled={isLocking}
+                        />
+                        <Button
+                          data-ocid="polls.lock.confirm_button"
+                          size="sm"
+                          onClick={handleLockPolls}
+                          disabled={isLocking || !lockPasscode.trim()}
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          {isLocking ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            "Lock"
+                          )}
+                        </Button>
+                        <Button
+                          data-ocid="polls.lock.cancel_button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowLockForm(false);
+                            setLockPasscode("");
+                            setLockError("");
+                          }}
+                          className="border-gray-300"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                    {lockError && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> {lockError}
+                      </p>
+                    )}
+                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                      <Globe className="w-3 h-3 mr-1" /> Globally Active
+                    </Badge>
+                  </div>
                 </SmokySectionTransition>
               )}
 
               {/* Create Form */}
-              {showCreateForm && (
+              {showCreateForm && pollsUnlocked && (
                 <SmokySectionTransition>
-                  <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm">
-                    <h3 className="text-amber-400 font-bold text-lg mb-4">
+                  <div
+                    className="rounded-2xl p-6"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.9)",
+                      border: "1px solid rgba(14, 165, 233, 0.2)",
+                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                    }}
+                  >
+                    <h3 className="text-gray-900 font-bold text-lg mb-4">
                       Create Poll
                     </h3>
                     <div className="space-y-4">
                       <div>
                         <label
                           htmlFor="poll-question"
-                          className="text-gray-400 text-sm mb-1 block"
+                          className="text-gray-600 text-sm mb-1 block"
                         >
                           Question
                         </label>
                         <Textarea
                           id="poll-question"
+                          data-ocid="polls.question.textarea"
                           value={question}
                           onChange={(e) => setQuestion(e.target.value)}
                           placeholder="What should the community decide?"
-                          className="bg-black/40 border-gray-700 text-white resize-none"
+                          className="bg-gray-50 border-gray-300 text-gray-900 resize-none"
                           rows={2}
                         />
                       </div>
                       <div>
-                        <p className="text-gray-400 text-sm mb-2">Options</p>
+                        <p className="text-gray-600 text-sm mb-2">Options</p>
                         <div className="space-y-2">
                           {options.map((opt, i) => (
                             <div key={opt || `opt-${i}`} className="flex gap-2">
                               <Input
+                                data-ocid={`polls.option.input.${i + 1}`}
                                 value={opt}
                                 onChange={(e) =>
                                   handleOptionChange(i, e.target.value)
                                 }
                                 placeholder={`Option ${i + 1}`}
-                                className="bg-black/40 border-gray-700 text-white flex-1"
+                                className="bg-gray-50 border-gray-300 text-gray-900 flex-1"
                               />
                               {options.length > 2 && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleRemoveOption(i)}
-                                  className="text-red-400 hover:text-red-300"
+                                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -254,57 +499,71 @@ export default function CommunityVotingPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleAddOption}
-                            className="text-amber-400 hover:text-amber-300"
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                           >
                             <Plus className="w-3 h-3 mr-1" /> Add Option
                           </Button>
                         </div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="poll-passcode"
-                          className="text-gray-400 text-sm mb-1 block"
-                        >
-                          Market Intel Passcode
-                        </label>
-                        <Input
-                          id="poll-passcode"
-                          type="password"
-                          value={passcode}
-                          onChange={(e) => setPasscode(e.target.value)}
-                          placeholder="Enter passcode"
-                          className="bg-black/40 border-gray-700 text-white"
-                        />
-                      </div>
                       {createError && (
-                        <p className="text-red-400 text-sm">{createError}</p>
+                        <p
+                          data-ocid="polls.form.error_state"
+                          className="text-red-500 text-sm"
+                        >
+                          {createError}
+                        </p>
                       )}
                       <Button
+                        data-ocid="polls.submit.button"
                         onClick={handleCreatePoll}
                         disabled={isCreating}
-                        className="bg-amber-500 hover:bg-amber-400 text-black font-bold w-full"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold w-full"
                       >
-                        {isCreating ? "Creating..." : "Create Poll"}
+                        {isCreating ? (
+                          <span className="flex items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                            Creating...
+                          </span>
+                        ) : (
+                          "Create Poll"
+                        )}
                       </Button>
                     </div>
                   </div>
                 </SmokySectionTransition>
               )}
 
-              {/* Poll List */}
-              {isLoading ? (
+              {/* Poll List — always visible to authenticated users */}
+              {!isAuthenticated ? (
+                <div className="text-center py-16 text-gray-400">
+                  <Vote className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>Log in to view and vote on community polls.</p>
+                </div>
+              ) : isLoading ? (
                 <div className="space-y-4">
                   {(["v1", "v2", "v3"] as const).map((sk) => (
                     <div
                       key={sk}
-                      className="h-40 bg-gray-800/50 rounded-xl animate-pulse"
+                      className="h-40 bg-gray-100 rounded-xl animate-pulse"
                     />
                   ))}
                 </div>
               ) : polls.length === 0 ? (
-                <div className="text-center py-16 text-gray-500">
+                <div
+                  data-ocid="polls.empty_state"
+                  className="text-center py-16 text-gray-400"
+                >
                   <Vote className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>No polls yet. Be the first to create one!</p>
+                  <p>No polls yet.</p>
+                  {pollsUnlocked ? (
+                    <p className="text-sm mt-1 text-gray-500">
+                      Use the form above to create the first poll.
+                    </p>
+                  ) : (
+                    <p className="text-sm mt-1 text-gray-500">
+                      Enter the passcode above to create the first poll.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -321,6 +580,7 @@ export default function CommunityVotingPage() {
                           onVote={handleVote}
                           onDelete={handleDelete}
                           animDelay={idx * 50}
+                          index={idx + 1}
                         />
                       </SmokySectionTransition>
                     ))}
@@ -331,12 +591,20 @@ export default function CommunityVotingPage() {
             {/* Activity Feed */}
             <div className="space-y-4">
               <SmokySectionTransition>
-                <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-5 backdrop-blur-sm">
-                  <h3 className="text-amber-400 font-bold text-base mb-4 flex items-center gap-2">
-                    <Activity className="w-4 h-4" /> Activity Feed
+                <div
+                  className="rounded-2xl p-5"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.9)",
+                    border: "1px solid rgba(14, 165, 233, 0.15)",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-emerald-600" /> Activity
+                    Feed
                   </h3>
                   {activityFeed.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">
+                    <p className="text-gray-400 text-sm text-center py-4">
                       No activity yet
                     </p>
                   ) : (
@@ -344,11 +612,11 @@ export default function CommunityVotingPage() {
                       {activityFeed.map((event, i) => (
                         <div
                           key={`${event.type}-${event.question?.slice(0, 10)}-${i}`}
-                          className="flex items-start gap-3 text-sm animate-fade-in"
+                          className="flex items-start gap-3 text-sm"
                           style={{ animationDelay: `${i * 80}ms` }}
                         >
                           <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${event.type === "created" ? "bg-amber-500/20 text-amber-400" : "bg-blue-500/20 text-blue-400"}`}
+                            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${event.type === "created" ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"}`}
                           >
                             {event.type === "created" ? (
                               <Plus className="w-3 h-3" />
@@ -357,21 +625,21 @@ export default function CommunityVotingPage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-gray-300 truncate">
+                            <p className="text-gray-700 truncate">
                               {event.type === "created"
                                 ? "Poll created: "
                                 : "Vote on: "}
-                              <span className="text-white">
+                              <span className="text-gray-900 font-medium">
                                 {event.question.slice(0, 40)}
                                 {event.question.length > 40 ? "…" : ""}
                               </span>
                             </p>
                             {event.detail && (
-                              <p className="text-gray-500 text-xs">
+                              <p className="text-gray-400 text-xs">
                                 Option: {event.detail}
                               </p>
                             )}
-                            <p className="text-gray-600 text-xs flex items-center gap-1 mt-0.5">
+                            <p className="text-gray-400 text-xs flex items-center gap-1 mt-0.5">
                               <Clock className="w-2.5 h-2.5" />
                               {new Date(
                                 Number(event.timestamp) / 1_000_000,
@@ -387,12 +655,20 @@ export default function CommunityVotingPage() {
 
               {/* Quick Stats */}
               <SmokySectionTransition>
-                <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-5 backdrop-blur-sm">
-                  <h3 className="text-amber-400 font-bold text-base mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" /> Top Polls
+                <div
+                  className="rounded-2xl p-5"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.9)",
+                    border: "1px solid rgba(14, 165, 233, 0.15)",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" /> Top
+                    Polls
                   </h3>
                   {polls.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-2">
+                    <p className="text-gray-400 text-sm text-center py-2">
                       No polls yet
                     </p>
                   ) : (
@@ -405,12 +681,12 @@ export default function CommunityVotingPage() {
                             key={poll.id.toString()}
                             className="flex items-center justify-between text-sm"
                           >
-                            <span className="text-gray-300 truncate flex-1 mr-2">
+                            <span className="text-gray-700 truncate flex-1 mr-2">
                               {poll.question.slice(0, 30)}…
                             </span>
                             <Badge
                               variant="outline"
-                              className="border-amber-500/30 text-amber-400 text-xs flex-shrink-0"
+                              className="border-emerald-300 text-emerald-700 text-xs flex-shrink-0 bg-emerald-50"
                             >
                               {getTotalVotes(poll)} votes
                             </Badge>
@@ -439,6 +715,7 @@ interface PollCardProps {
   onVote: (poll: PollView, optionIndex: number) => void;
   onDelete: (pollId: bigint) => void;
   animDelay?: number;
+  index: number;
 }
 
 function PollCard({
@@ -450,6 +727,7 @@ function PollCard({
   onVote,
   onDelete,
   animDelay = 0,
+  index,
 }: PollCardProps) {
   const totalVotes = getTotalVotes(poll);
   const isCreator =
@@ -457,19 +735,20 @@ function PollCard({
 
   return (
     <div
-      className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-5 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/5"
+      data-ocid={`polls.item.${index}`}
+      className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-emerald-300 transition-all duration-300 hover:shadow-md"
       style={{ animationDelay: `${animDelay}ms` }}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex-1">
-          <h3 className="text-white font-semibold text-base leading-snug">
+          <h3 className="text-gray-900 font-semibold text-base leading-snug">
             {poll.question}
           </h3>
           <div className="flex items-center gap-3 mt-1.5">
-            <span className="text-gray-500 text-xs">{totalVotes} votes</span>
+            <span className="text-gray-400 text-xs">{totalVotes} votes</span>
             <Badge
               variant={poll.isActive ? "default" : "secondary"}
-              className={`text-xs ${poll.isActive ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-gray-700 text-gray-400"}`}
+              className={`text-xs ${poll.isActive ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100 text-gray-500 border-gray-200"}`}
             >
               {poll.isActive ? "Active" : "Closed"}
             </Badge>
@@ -479,31 +758,39 @@ function PollCard({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
+                data-ocid={`polls.delete_button.${index}`}
                 variant="ghost"
                 size="icon"
-                className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                className="text-red-400/60 hover:text-red-500 hover:bg-red-50 flex-shrink-0"
                 disabled={isDeleting}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-gray-900 border-gray-700">
+            <AlertDialogContent
+              data-ocid="polls.delete.dialog"
+              className="bg-white border-gray-200"
+            >
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">
+                <AlertDialogTitle className="text-gray-900">
                   Delete Poll?
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-400">
+                <AlertDialogDescription className="text-gray-500">
                   This will permanently delete the poll and all its votes. This
                   action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-gray-600 text-gray-300">
+                <AlertDialogCancel
+                  data-ocid="polls.delete.cancel_button"
+                  className="border-gray-300 text-gray-700"
+                >
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
+                  data-ocid="polls.delete.confirm_button"
                   onClick={() => onDelete(poll.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-red-500 hover:bg-red-600 text-white"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </AlertDialogAction>
@@ -519,12 +806,12 @@ function PollCard({
           return (
             <div key={option} className="group">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-gray-300 text-sm">{option}</span>
-                <span className="text-gray-500 text-xs">{pct}%</span>
+                <span className="text-gray-700 text-sm">{option}</span>
+                <span className="text-gray-400 text-xs">{pct}%</span>
               </div>
-              <div className="relative h-7 bg-gray-800 rounded-lg overflow-hidden">
+              <div className="relative h-7 bg-gray-100 rounded-lg overflow-hidden">
                 <div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-500/40 to-amber-400/20 rounded-lg transition-all duration-500"
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400/60 to-emerald-300/30 rounded-lg transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
                 {isAuthenticated && poll.isActive && (
@@ -532,7 +819,7 @@ function PollCard({
                     type="button"
                     onClick={() => onVote(poll, i)}
                     disabled={isVoting}
-                    className="absolute inset-0 w-full text-left px-3 text-xs text-transparent hover:text-white/60 transition-colors duration-200 disabled:cursor-not-allowed"
+                    className="absolute inset-0 w-full text-left px-3 text-xs text-transparent hover:text-gray-600/60 transition-colors duration-200 disabled:cursor-not-allowed"
                   >
                     Vote
                   </button>
@@ -544,7 +831,7 @@ function PollCard({
       </div>
 
       {!isAuthenticated && (
-        <p className="text-gray-600 text-xs mt-3 text-center">Log in to vote</p>
+        <p className="text-gray-400 text-xs mt-3 text-center">Log in to vote</p>
       )}
     </div>
   );

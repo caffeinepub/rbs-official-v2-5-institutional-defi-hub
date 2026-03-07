@@ -29,7 +29,7 @@ export default function CommunityGovernancePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 animate-fade-in-up animation-delay-200">
-            <div className="glass-card-gold p-10 glow-border hover-lift soft-glow">
+            <div className="bg-white border border-gray-200 shadow-sm-gold p-10 glow-border hover-lift soft-glow">
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <FileText className="h-7 w-7 text-gold" />
@@ -64,7 +64,7 @@ export default function CommunityGovernancePage() {
               </ul>
             </div>
 
-            <div className="glass-card-gold p-10 glow-border hover-lift soft-glow">
+            <div className="bg-white border border-gray-200 shadow-sm-gold p-10 glow-border hover-lift soft-glow">
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <CheckCircle className="h-7 w-7 text-gold" />
@@ -99,7 +99,7 @@ export default function CommunityGovernancePage() {
             </div>
           </div>
 
-          <div className="glass-card p-10 md:p-12 mb-12 animate-fade-in-up animation-delay-400 glow-border">
+          <div className="bg-white border border-gray-200 shadow-sm p-10 md:p-12 mb-12 animate-fade-in-up animation-delay-400 glow-border">
             <h2 className="text-4xl font-poppins font-bold text-gold mb-10 text-center tracking-tight">
               Governance Structure
             </h2>
@@ -188,7 +188,7 @@ export default function CommunityGovernancePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up animation-delay-600">
-            <div className="glass-card p-8 glow-border hover-lift">
+            <div className="bg-white border border-gray-200 shadow-sm p-8 glow-border hover-lift">
               <div className="flex items-center justify-center mb-6">
                 <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <Users className="h-8 w-8 text-gold" />
@@ -203,7 +203,7 @@ export default function CommunityGovernancePage() {
               </p>
             </div>
 
-            <div className="glass-card p-8 glow-border hover-lift">
+            <div className="bg-white border border-gray-200 shadow-sm p-8 glow-border hover-lift">
               <div className="flex items-center justify-center mb-6">
                 <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <Clock className="h-8 w-8 text-gold" />
@@ -218,7 +218,7 @@ export default function CommunityGovernancePage() {
               </p>
             </div>
 
-            <div className="glass-card p-8 glow-border hover-lift">
+            <div className="bg-white border border-gray-200 shadow-sm p-8 glow-border hover-lift">
               <div className="flex items-center justify-center mb-6">
                 <div className="h-16 w-16 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
                   <TrendingUp className="h-8 w-8 text-gold" />

@@ -41,54 +41,47 @@ export default function StakingSimulatorPage() {
         title="Staking Simulator | RBS"
         description="Calculate your RBS staking rewards with compound interest"
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white relative overflow-hidden">
-        {/* Background particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 20 }, (_, i) => i).map((i) => (
-            <div
-              key={`particle-${i}`}
-              className="absolute w-1 h-1 bg-amber-400/20 rounded-full animate-pulse"
-              style={{
-                left: `${(i * 37 + 13) % 100}%`,
-                top: `${(i * 53 + 7) % 100}%`,
-                animationDelay: `${(i * 0.3) % 3}s`,
-                animationDuration: `${2 + (i % 3)}s`,
-              }}
-            />
-          ))}
-        </div>
-
+      <div className="min-h-screen bg-white text-gray-900">
         {/* Hero */}
         <SmokySectionTransition>
-          <div className="relative py-16 px-4 text-center border-b border-amber-500/10">
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
+          <div
+            className="py-16 px-4 text-center border-b border-gray-100 bg-white pt-20"
+            style={{
+              background: "linear-gradient(135deg, #f0f9ff 0%, #ffffff 60%)",
+            }}
+          >
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Coins className="w-8 h-8 text-amber-400" />
-              <h1 className="text-4xl md:text-5xl font-bold text-amber-400">
+              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <Coins className="w-7 h-7 text-emerald-600" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
                 Staking Simulator
               </h1>
             </div>
-            <p className="text-gray-400 max-w-xl mx-auto">
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">
               Calculate compound staking rewards with tier-based APY and
               multi-milestone projections
             </p>
           </div>
         </SmokySectionTransition>
 
-        <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 relative z-10">
+        <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
           {/* Input Panel */}
           <SmokySectionTransition>
-            <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm">
-              <h2 className="text-amber-400 font-bold text-xl mb-6 flex items-center gap-2">
-                <Zap className="w-5 h-5" /> Configure Stake
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-gray-900 font-bold text-xl mb-6 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-emerald-600" /> Configure Stake
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Amount */}
                 <div>
-                  <p className="text-gray-300 text-sm font-medium mb-3">
+                  <p
+                    className="text-gray-600 text-sm font-medium mb-3"
+                    data-ocid="staking.amount.label"
+                  >
                     Stake Amount:{" "}
-                    <span className="text-amber-400 font-bold">
+                    <span className="text-emerald-600 font-bold">
                       {amount.toLocaleString()} RBS
                     </span>
                   </p>
@@ -99,8 +92,9 @@ export default function StakingSimulatorPage() {
                     value={[amount]}
                     onValueChange={([v]) => setAmount(v)}
                     className="mb-2"
+                    data-ocid="staking.amount.input"
                   />
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-gray-400">
                     <span>100 RBS</span>
                     <span>1,000,000 RBS</span>
                   </div>
@@ -108,9 +102,9 @@ export default function StakingSimulatorPage() {
 
                 {/* Duration */}
                 <div>
-                  <p className="text-gray-300 text-sm font-medium mb-3">
+                  <p className="text-gray-600 text-sm font-medium mb-3">
                     Duration:{" "}
-                    <span className="text-amber-400 font-bold">
+                    <span className="text-emerald-600 font-bold">
                       {durationDays} days
                     </span>
                   </p>
@@ -121,8 +115,9 @@ export default function StakingSimulatorPage() {
                     value={[durationDays]}
                     onValueChange={([v]) => setDurationDays(v)}
                     className="mb-2"
+                    data-ocid="staking.duration.input"
                   />
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-gray-400">
                     <span>30 days</span>
                     <span>365 days</span>
                   </div>
@@ -133,10 +128,11 @@ export default function StakingSimulatorPage() {
                         key={tier.days}
                         type="button"
                         onClick={() => setDurationDays(tier.days)}
+                        data-ocid="staking.tier.button"
                         className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
                           durationDays === tier.days
-                            ? "bg-amber-500 text-black border-amber-500"
-                            : "bg-gray-800 text-gray-400 border-gray-700 hover:border-amber-500/50"
+                            ? "bg-emerald-600 text-white border-emerald-500"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-600"
                         }`}
                       >
                         {tier.days}d
@@ -148,7 +144,7 @@ export default function StakingSimulatorPage() {
 
               {/* Compounding Frequency */}
               <div className="mt-6">
-                <p className="text-gray-300 text-sm font-medium mb-3">
+                <p className="text-gray-600 text-sm font-medium mb-3">
                   Compounding Frequency
                 </p>
                 <RadioGroup
@@ -157,17 +153,18 @@ export default function StakingSimulatorPage() {
                     setCompoundFrequency(v as "daily" | "monthly" | "annually")
                   }
                   className="flex gap-6"
+                  data-ocid="staking.frequency.radio"
                 >
                   {(["daily", "monthly", "annually"] as const).map((freq) => (
                     <div key={freq} className="flex items-center gap-2">
                       <RadioGroupItem
                         value={freq}
                         id={`freq-${freq}`}
-                        className="border-amber-500 text-amber-500"
+                        className="border-emerald-400 text-emerald-600"
                       />
                       <Label
                         htmlFor={`freq-${freq}`}
-                        className="text-gray-300 capitalize cursor-pointer"
+                        className="text-gray-600 capitalize cursor-pointer"
                       >
                         {freq}
                       </Label>
@@ -177,68 +174,75 @@ export default function StakingSimulatorPage() {
               </div>
 
               {/* Selected Tier Info */}
-              <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between">
+              <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
                 <div>
-                  <p className="text-amber-400 font-bold text-sm">
+                  <p className="text-emerald-700 font-bold text-sm">
                     Active Tier
                   </p>
-                  <p className="text-gray-300 text-xs mt-0.5">
+                  <p className="text-gray-500 text-xs mt-0.5">
                     {selectedTier.label}
                   </p>
                 </div>
-                <Badge className="bg-amber-500 text-black font-bold text-base px-4 py-1">
+                <Badge className="bg-emerald-600 text-white font-bold text-base px-4 py-1">
                   {selectedTier.apy}% APY
                 </Badge>
               </div>
             </div>
           </SmokySectionTransition>
 
-          {/* Gradient Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-emerald-300 to-transparent" />
 
           {/* Results */}
           <SmokySectionTransition>
-            <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm">
-              <h2 className="text-amber-400 font-bold text-xl mb-6 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" /> Projected Results
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-gray-900 font-bold text-xl mb-6 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-600" /> Projected
+                Results
               </h2>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 {[
                   {
-                    icon: <Coins className="w-5 h-5 text-amber-400" />,
+                    icon: <Coins className="w-5 h-5 text-emerald-600" />,
                     label: "Principal",
                     value: `${fmt(result.principal)} RBS`,
-                    color: "text-white",
+                    color: "text-gray-900",
+                    bg: "bg-emerald-50",
                   },
                   {
-                    icon: <TrendingUp className="w-5 h-5 text-green-400" />,
+                    icon: <TrendingUp className="w-5 h-5 text-green-600" />,
                     label: "Total Reward",
                     value: `+${fmt(result.totalReward)} RBS`,
-                    color: "text-green-400",
+                    color: "text-green-600",
+                    bg: "bg-green-50",
                   },
                   {
-                    icon: <Award className="w-5 h-5 text-amber-400" />,
+                    icon: <Award className="w-5 h-5 text-emerald-600" />,
                     label: "Final Amount",
                     value: `${fmt(result.finalAmount)} RBS`,
-                    color: "text-amber-400",
+                    color: "text-emerald-600",
+                    bg: "bg-emerald-50",
                   },
                   {
-                    icon: <Clock className="w-5 h-5 text-blue-400" />,
+                    icon: <Clock className="w-5 h-5 text-blue-600" />,
                     label: "APY",
                     value: `${result.apy}%`,
-                    color: "text-blue-400",
+                    color: "text-blue-600",
+                    bg: "bg-blue-50",
                   },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="bg-black/30 border border-gray-700/50 rounded-xl p-4 hover:border-amber-500/30 transition-all duration-300 hover:scale-105"
+                    className={`${item.bg} border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-all duration-300`}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       {item.icon}
                     </div>
-                    <p className="text-xs text-gray-400 mb-1">{item.label}</p>
-                    <p className={`text-base font-bold ${item.color}`}>
+                    <p className="text-xs text-gray-500 mb-1">{item.label}</p>
+                    <p
+                      className={`text-base font-bold font-jetbrains ${item.color}`}
+                    >
                       {item.value}
                     </p>
                   </div>
@@ -246,15 +250,15 @@ export default function StakingSimulatorPage() {
               </div>
 
               {/* Pool Share */}
-              <div className="bg-black/30 border border-amber-500/20 rounded-xl p-4 mb-6">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-gray-300">
+                    <BarChart3 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm font-semibold text-gray-700">
                       Pool Share
                     </span>
                   </div>
-                  <span className="text-amber-400 font-bold">
+                  <span className="text-emerald-600 font-bold">
                     {result.poolSharePct.toFixed(4)}%
                   </span>
                 </div>
@@ -262,7 +266,7 @@ export default function StakingSimulatorPage() {
                   value={Math.min(result.poolSharePct * 100, 100)}
                   className="h-2"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-400 mt-2">
                   Your stake represents {result.poolSharePct.toFixed(4)}% of the
                   total pool
                 </p>
@@ -270,21 +274,21 @@ export default function StakingSimulatorPage() {
 
               {/* Milestones Table */}
               <div>
-                <h3 className="text-gray-300 font-semibold text-sm mb-3 flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-amber-400" /> Projection
+                <h3 className="text-gray-700 font-semibold text-sm mb-3 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-emerald-600" /> Projection
                   Milestones
                 </h3>
-                <div className="rounded-xl overflow-hidden border border-gray-700/50">
-                  <Table>
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <Table data-ocid="staking.milestones.table">
                     <TableHeader>
-                      <TableRow className="border-gray-700 bg-gray-800/50">
-                        <TableHead className="text-gray-400 text-xs">
+                      <TableRow className="border-gray-200 bg-gray-50">
+                        <TableHead className="text-gray-500 text-xs">
                           Milestone
                         </TableHead>
-                        <TableHead className="text-gray-400 text-xs text-right">
+                        <TableHead className="text-gray-500 text-xs text-right">
                           Reward
                         </TableHead>
-                        <TableHead className="text-gray-400 text-xs text-right">
+                        <TableHead className="text-gray-500 text-xs text-right">
                           Total Value
                         </TableHead>
                       </TableRow>
@@ -293,20 +297,20 @@ export default function StakingSimulatorPage() {
                       {result.milestones.map((m) => (
                         <TableRow
                           key={m.days}
-                          className={`border-gray-700/50 ${m.days === durationDays ? "bg-amber-500/10" : "bg-gray-900/30"}`}
+                          className={`border-gray-100 ${m.days === durationDays ? "bg-emerald-50" : "bg-white hover:bg-gray-50"}`}
                         >
-                          <TableCell className="text-gray-300 text-sm font-medium">
+                          <TableCell className="text-gray-700 text-sm font-medium">
                             {m.days} days
                             {m.days === durationDays && (
-                              <Badge className="ml-2 bg-amber-500 text-black text-xs py-0">
+                              <Badge className="ml-2 bg-emerald-600 text-white text-xs py-0">
                                 Selected
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-green-400 text-sm text-right font-mono">
+                          <TableCell className="text-green-600 text-sm text-right font-mono">
                             +{fmt(m.reward)}
                           </TableCell>
-                          <TableCell className="text-amber-400 text-sm text-right font-mono">
+                          <TableCell className="text-emerald-600 text-sm text-right font-mono">
                             {fmt(m.total)}
                           </TableCell>
                         </TableRow>
@@ -320,27 +324,28 @@ export default function StakingSimulatorPage() {
 
           {/* Info */}
           <SmokySectionTransition>
-            <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm">
-              <h3 className="text-amber-400 font-bold text-base mb-4">
-                📊 Staking Details
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-gray-900 font-bold text-base mb-4 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-600" /> Staking
+                Details
               </h3>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <ul className="space-y-2 text-sm text-gray-500">
                 <li>
                   • Community Rewards Pool:{" "}
-                  <span className="text-amber-400 font-semibold">
+                  <span className="text-emerald-600 font-semibold">
                     8,000 RBS
                   </span>{" "}
                   (8% of total supply)
                 </li>
                 <li>
                   • Tier APYs:{" "}
-                  <span className="text-amber-400 font-semibold">
+                  <span className="text-emerald-600 font-semibold">
                     30d=8% · 90d=12% · 180d=15% · 365d=20%
                   </span>
                 </li>
                 <li>
                   • Compound interest formula:{" "}
-                  <span className="text-amber-400 font-mono text-xs">
+                  <span className="text-emerald-600 font-mono text-xs">
                     A = P × (1 + r/n)^(n×t)
                   </span>
                 </li>

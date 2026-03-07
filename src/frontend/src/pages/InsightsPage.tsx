@@ -117,7 +117,7 @@ export default function InsightsPage() {
         {/* Refresh Status Bar */}
         <SmokySectionTransition>
           <div className="max-w-5xl mx-auto px-6 mb-6">
-            <div className="glass-card rounded-xl p-4 border border-gold/10 flex items-center justify-between flex-wrap gap-3">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 border border-gold/10 flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4 text-gold" />
                 {lastUpdated ? (
@@ -189,7 +189,7 @@ export default function InsightsPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Total Market Cap */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   <Globe className="w-8 h-8 text-gold mb-3" />
                   <div
                     className={`text-2xl font-black ${marketCapChange >= 0 ? "text-green-500" : "text-red-500"}`}
@@ -215,7 +215,7 @@ export default function InsightsPage() {
                 </div>
 
                 {/* 24h Volume */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   <Activity className="w-8 h-8 text-blue-500 mb-3" />
                   <div className="text-2xl font-black text-blue-500">
                     ${volCount.toLocaleString()}B
@@ -226,7 +226,7 @@ export default function InsightsPage() {
                 </div>
 
                 {/* BTC Dominance */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   <TrendingUp className="w-8 h-8 text-gold mb-3" />
                   <div className="text-2xl font-black text-gold">
                     {(btcDomCount / 10).toFixed(1)}%
@@ -243,7 +243,7 @@ export default function InsightsPage() {
                 </div>
 
                 {/* ETH Dominance */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   <TrendingUp className="w-8 h-8 text-purple-500 mb-3" />
                   <div className="text-2xl font-black text-purple-500">
                     {(ethDomCount / 10).toFixed(1)}%
@@ -260,9 +260,9 @@ export default function InsightsPage() {
                 </div>
 
                 {/* Active Cryptocurrencies */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <Globe className="w-8 h-8 text-cyan-500 mb-3" />
-                  <div className="text-2xl font-black text-cyan-500">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                  <Globe className="w-8 h-8 text-emerald-600 mb-3" />
+                  <div className="text-2xl font-black text-emerald-600">
                     {cryptoCount.toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground mt-2">
@@ -271,7 +271,7 @@ export default function InsightsPage() {
                 </div>
 
                 {/* Market Trend */}
-                <div className="glass-card rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   {marketCapChange >= 0 ? (
                     <TrendingUp className="w-8 h-8 text-green-500 mb-3" />
                   ) : (

@@ -234,6 +234,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(CryptoCurrency)],
       ['query'],
     ),
+  'getGlobalSectionLock' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
   'getMarketIntelPasscode' : IDL.Func([], [IDL.Text], ['query']),
   'getMarketIntelligence' : IDL.Func(
       [IDL.Nat],
@@ -271,6 +272,7 @@ export const idlService = IDL.Service({
     ),
   'revokeMarketIntelAccessWithPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setGlobalSectionLock' : IDL.Func([IDL.Text, IDL.Text, IDL.Bool], [], []),
   'setMarketIntelPasscode' : IDL.Func([IDL.Text], [], []),
   'setTimerEnd' : IDL.Func([TimerType, IDL.Int], [], []),
   'storeMarketIntelligence' : IDL.Func(
@@ -296,6 +298,7 @@ export const idlService = IDL.Service({
     ),
   'submitVote' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Bool], []),
   'toggleAlertTrigger' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'toggleGlobalSectionLock' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'toggleTimer' : IDL.Func([TimerType], [TimerState], []),
   'transform' : IDL.Func(
       [TransformationInput],
@@ -536,6 +539,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(CryptoCurrency)],
         ['query'],
       ),
+    'getGlobalSectionLock' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'getMarketIntelPasscode' : IDL.Func([], [IDL.Text], ['query']),
     'getMarketIntelligence' : IDL.Func(
         [IDL.Nat],
@@ -577,6 +581,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setGlobalSectionLock' : IDL.Func([IDL.Text, IDL.Text, IDL.Bool], [], []),
     'setMarketIntelPasscode' : IDL.Func([IDL.Text], [], []),
     'setTimerEnd' : IDL.Func([TimerType, IDL.Int], [], []),
     'storeMarketIntelligence' : IDL.Func(
@@ -602,6 +607,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'submitVote' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Bool], []),
     'toggleAlertTrigger' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'toggleGlobalSectionLock' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'toggleTimer' : IDL.Func([TimerType], [TimerState], []),
     'transform' : IDL.Func(
         [TransformationInput],

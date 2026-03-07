@@ -295,6 +295,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
+    getGlobalSectionLock(section: string): Promise<boolean>;
     getMarketIntelPasscode(): Promise<string>;
     getMarketIntelligence(id: bigint): Promise<MarketIntelligence | null>;
     getMarketPulseTally(): Promise<VoteTally>;
@@ -322,6 +323,7 @@ export interface backendInterface {
     }>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setGlobalSectionLock(section: string, passcode: string, unlock: boolean): Promise<void>;
     setMarketIntelPasscode(newPasscode: string): Promise<void>;
     setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;
     storeMarketIntelligence(asset: string, timeframe: string, indicators: Array<TechnicalIndicator>, overallSignal: SignalConfidence, historicalAccuracy: number): Promise<MarketIntelligence>;
@@ -329,6 +331,7 @@ export interface backendInterface {
     submitPresaleForm(name: string, country: string, walletAddress: string, rbsAmount: number): Promise<FormSubmission>;
     submitVote(pollId: bigint, optionIndex: bigint): Promise<boolean>;
     toggleAlertTrigger(alertId: bigint): Promise<boolean>;
+    toggleGlobalSectionLock(section: string, passcode: string): Promise<boolean>;
     toggleTimer(timerType: TimerType): Promise<TimerState>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     updateCryptoCurrency(symbol: string, priceUsd: number, updateIntervalSecs: bigint): Promise<void>;
@@ -792,6 +795,20 @@ export class Backend implements backendInterface {
             return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getGlobalSectionLock(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getGlobalSectionLock(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getGlobalSectionLock(arg0);
+            return result;
+        }
+    }
     async getMarketIntelPasscode(): Promise<string> {
         if (this.processError) {
             try {
@@ -1092,6 +1109,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setGlobalSectionLock(arg0: string, arg1: string, arg2: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setGlobalSectionLock(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setGlobalSectionLock(arg0, arg1, arg2);
+            return result;
+        }
+    }
     async setMarketIntelPasscode(arg0: string): Promise<void> {
         if (this.processError) {
             try {
@@ -1187,6 +1218,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.toggleAlertTrigger(arg0);
+            return result;
+        }
+    }
+    async toggleGlobalSectionLock(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.toggleGlobalSectionLock(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.toggleGlobalSectionLock(arg0, arg1);
             return result;
         }
     }

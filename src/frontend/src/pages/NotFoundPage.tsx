@@ -52,7 +52,7 @@ export default function NotFoundPage() {
               </Button>
             </div>
 
-            <div className="mt-16 glass-card p-8 animate-fade-in-up animation-delay-600">
+            <div className="mt-16 bg-white border border-gray-200 shadow-sm p-8 animate-fade-in-up animation-delay-600">
               <h3 className="text-2xl font-poppins font-bold metallic-text mb-4">
                 Explore RBS
               </h3>

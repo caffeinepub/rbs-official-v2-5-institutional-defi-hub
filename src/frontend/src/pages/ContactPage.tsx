@@ -64,7 +64,7 @@ export default function ContactPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             <div className="space-y-6 mex-fade-up">
-              <div className="glass-card-gold p-10 glow-border">
+              <div className="bg-white border border-gray-200 shadow-sm-gold p-10 glow-border">
                 <h2 className="text-3xl font-poppins font-bold text-gold mb-8 tracking-tight">
                   Direct Channels
                 </h2>
@@ -74,7 +74,7 @@ export default function ContactPage() {
                     href={SOCIAL_LINKS.telegram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-4 p-6 glass-card hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 group"
+                    className="flex items-center gap-4 p-6 bg-white border border-gray-200 shadow-sm hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 group"
                   >
                     <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 group-hover:bg-gold/20 transition-colors">
                       <SiTelegram className="h-7 w-7 text-gold" />
@@ -93,7 +93,7 @@ export default function ContactPage() {
                     href={SOCIAL_LINKS.whatsappChannel}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-4 p-6 glass-card hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 group"
+                    className="flex items-center gap-4 p-6 bg-white border border-gray-200 shadow-sm hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 transition-all duration-300 group"
                   >
                     <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 group-hover:bg-gold/20 transition-colors">
                       <SiWhatsapp className="h-7 w-7 text-gold" />
@@ -110,7 +110,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="glass-card-gold p-10 glow-border">
+              <div className="bg-white border border-gray-200 shadow-sm-gold p-10 glow-border">
                 <div className="flex items-start gap-4">
                   <MessageSquare className="h-10 w-10 text-gold flex-shrink-0 mt-1" />
                   <div>
@@ -128,7 +128,7 @@ export default function ContactPage() {
             </div>
 
             <div className="mex-fade-up">
-              <div className="glass-card p-10 glow-border">
+              <div className="bg-white border border-gray-200 shadow-sm p-10 glow-border">
                 <div className="flex items-center gap-3 mb-8">
                   <Mail className="h-7 w-7 text-gold" />
                   <h2 className="text-3xl font-poppins font-bold text-gold tracking-tight">
@@ -235,7 +235,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <div className="glass-card p-10 text-center mex-fade-up glow-border">
+          <div className="bg-white border border-gray-200 shadow-sm p-10 text-center mex-fade-up glow-border">
             <h3 className="text-3xl font-poppins font-bold text-gold mb-6 tracking-tight">
               Partnership Inquiries
             </h3>

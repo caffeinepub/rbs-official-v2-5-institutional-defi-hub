@@ -111,7 +111,7 @@ export default function AISentimentPage() {
                 <div
                   // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton array
                   key={i}
-                  className="glass-card p-5 animate-pulse"
+                  className="bg-white border border-gray-200 shadow-sm p-5 animate-pulse"
                 >
                   <div className="h-5 bg-muted rounded mb-3 w-3/4" />
                   <div className="h-4 bg-muted rounded w-1/2" />
@@ -119,7 +119,7 @@ export default function AISentimentPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="glass-card p-8 text-center">
+            <div className="bg-white border border-gray-200 shadow-sm p-8 text-center">
               <Newspaper className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
                 Unable to load news. CryptoPanic API may be temporarily
@@ -137,7 +137,7 @@ export default function AISentimentPage() {
                 return (
                   <div
                     key={item.id}
-                    className="glass-card p-5 hover:scale-[1.005] transition-transform"
+                    className="bg-white border border-gray-200 shadow-sm p-5 hover:scale-[1.005] transition-transform"
                   >
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">

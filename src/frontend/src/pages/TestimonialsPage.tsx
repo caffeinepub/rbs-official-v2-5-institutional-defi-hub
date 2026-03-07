@@ -108,7 +108,7 @@ export default function TestimonialsPage() {
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="glass-card-gold p-8 text-center glow-border transition-all duration-700 hover:scale-105"
+                className="bg-white border border-gray-200 shadow-sm-gold p-8 text-center glow-border transition-all duration-700 hover:scale-105"
               >
                 <div className="flex justify-center mb-4">
                   <div className="h-14 w-14 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30">
@@ -136,7 +136,7 @@ export default function TestimonialsPage() {
                     className="md:basis-1/2 lg:basis-1/3"
                   >
                     <div className="p-4 h-full">
-                      <div className="glass-card p-8 h-full flex flex-col glow-border transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-gold/20">
+                      <div className="bg-white border border-gray-200 shadow-sm p-8 h-full flex flex-col glow-border transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-gold/20">
                         <div className="flex items-center gap-4 mb-6">
                           <div className="h-16 w-16 rounded-full bg-gradient-to-br from-gold/40 to-gold/15 border-2 border-gold/60 flex items-center justify-center flex-shrink-0">
                             <span className="text-gold font-poppins font-bold text-lg">
@@ -184,7 +184,7 @@ export default function TestimonialsPage() {
             </Carousel>
           </div>
 
-          <div className="glass-card-gold p-12 text-center glow-border animate-fade-in-up animation-delay-400">
+          <div className="bg-white border border-gray-200 shadow-sm-gold p-12 text-center glow-border animate-fade-in-up animation-delay-400">
             <h2 className="text-4xl font-poppins font-bold text-gold mb-6">
               Join Our Growing Community
             </h2>

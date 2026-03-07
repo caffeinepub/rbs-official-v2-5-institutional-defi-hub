@@ -9,11 +9,11 @@ import Text "mo:core/Text";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 
-
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
+
 
 
 actor {
@@ -278,6 +278,7 @@ actor {
   let alertsStore = Map.empty<Principal, [Alert]>();
   let livePriceSnapshots = Map.empty<Nat, LivePriceSnapshot>();
   let aiSentimentsStore = Map.empty<Nat, AISentiment>();
+  let globalSectionLocks = Map.empty<Text, Bool>();
 
   var currentId = 0;
   var nextMIId = 1;
@@ -345,6 +346,9 @@ actor {
     };
     scheduledTasks.add(priceTask.name, priceTask);
     scheduledTasks.add(cleanupTask.name, cleanupTask);
+    globalSectionLocks.add("marketIntel", false);
+    globalSectionLocks.add("developerBlog", false);
+    globalSectionLocks.add("polls", false);
     initialized := true;
   };
 
@@ -357,7 +361,7 @@ actor {
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
+      Runtime.trap("Unauthorized: Can only view your own profile unless admin");
     };
     userProfiles.get(user);
   };
@@ -377,7 +381,6 @@ actor {
   };
 
   public query ({ caller = _ }) func hasMarketIntelAccessCheck(principal : Principal) : async Bool {
-    // public call, no auth required
     marketIntelAccess.containsKey(principal);
   };
 
@@ -392,7 +395,6 @@ actor {
     true;
   };
 
-  // Explicit admin function to grant (manual) access
   public shared ({ caller }) func adminGrantMarketIntelAccess(principal : Principal) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can grant Market Intel access");
@@ -435,9 +437,6 @@ actor {
     airdropEndTime;
   };
 
-  // Returns timer state for the given timer type.
-  // Accessible by authenticated users; timer end times are also exposed via
-  // the fully-public getPresaleTimerEnd / getAirdropTimerEnd helpers.
   public query ({ caller }) func getTimerState(timerType : TimerType) : async TimerState {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view timer state");
@@ -502,7 +501,7 @@ actor {
           case (?state) {
             timers.add("presale", { state with endTime = endTime; lastUpdate = Int.abs(Time.now()) });
           };
-          case (null) {};
+          case (null) { };
         };
       };
       case (#airdrop) {
@@ -511,7 +510,7 @@ actor {
           case (?state) {
             timers.add("airdrop", { state with endTime = endTime; lastUpdate = Int.abs(Time.now()) });
           };
-          case (null) {};
+          case (null) { };
         };
       };
     };
@@ -678,6 +677,63 @@ actor {
     passcode == hiddenMarketIntelPassword;
   };
 
+  // --- GLOBAL SECTION LOCKS ---
+
+  // Returns the current global lock state for a section.
+  // Sections: "marketIntel", "developerBlog", "polls"
+  // If not found, defaults to false (locked).
+  public query ({ caller = _ }) func getGlobalSectionLock(section : Text) : async Bool {
+    switch (globalSectionLocks.get(section)) {
+      case (?isUnlocked) { isUnlocked };
+      case (null) { false };
+    };
+  };
+
+  // Sets the global lock/unlock state for a section.
+  // Authenticated user required. Requires Market Intel passcode verification.
+  public shared ({ caller }) func setGlobalSectionLock(section : Text, passcode : Text, unlock : Bool) : async () {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can modify section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
+    if (passcode != hiddenMarketIntelPassword) {
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to modify section locks");
+    };
+    // Validate section name before updating
+    if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
+      Runtime.trap("Invalid section name - use marketIntel, developerBlog, or polls");
+    };
+    // Store new state (overwrite existing value if set previously)
+    globalSectionLocks.add(section, unlock);
+  };
+
+  // Toggle (invert) the global lock/unlock state for a section.
+  // Authenticated user required. Requires Market Intel passcode verification.
+  // Returns the new state (true = unlocked, false = locked).
+  public shared ({ caller }) func toggleGlobalSectionLock(section : Text, passcode : Text) : async Bool {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can toggle section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
+    if (passcode != hiddenMarketIntelPassword) {
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to toggle section locks");
+    };
+    // Validate section name before updating
+    if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
+      Runtime.trap("Invalid section name - use marketIntel, developerBlog, or polls");
+    };
+    // Flip existing value (locked/unlocked), default to false if not found
+    let currentState = switch (globalSectionLocks.get(section)) {
+      case (?isUnlocked) { isUnlocked };
+      case (null) { false };
+    };
+    let newState = not currentState;
+    globalSectionLocks.add(section, newState);
+    newState;
+  };
+
   public type CreatePollInput = {
     question : Text;
     options : [Text];
@@ -795,22 +851,16 @@ actor {
     };
   };
 
-  // Delete a poll: caller must be the poll creator or an admin.
-  // The poll creator is identified by their principal (set at creation time).
-  // Admins can delete any poll regardless of ownership.
   public shared ({ caller }) func deletePoll(pollId : Nat) : async { #ok : (); #err : Text } {
-    // Require at minimum an authenticated user
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #err("Unauthorized: Only authenticated users can delete polls");
     };
     switch (polls.get(pollId)) {
       case (?poll) {
-        // Allow if caller is the poll creator
         if (poll.creator == caller) {
           polls.remove(pollId);
           return #ok(());
         };
-        // Otherwise require admin
         if (not AccessControl.isAdmin(accessControlState, caller)) {
           return #err("Unauthorized: Only admins or the poll creator can delete this poll");
         };
@@ -818,7 +868,7 @@ actor {
         #ok(());
       };
       case (null) {
-        #err("POLL_ID_NOT_FOUND");
+        return #err("POLL_ID_NOT_FOUND");
       };
     };
   };
@@ -1014,13 +1064,11 @@ actor {
       case (_) { Runtime.trap("Invalid sentiment: must be bullish, bearish, or neutral") };
     };
 
-    // Check if this caller has already voted and undo their previous vote
     switch (voteCounts.get(caller)) {
       case (?previousVote) {
         if (previousVote == newVote) {
           Runtime.trap("You have already voted with this sentiment");
         };
-        // Undo the previous vote
         switch (previousVote) {
           case (#bullish) { bullishVotes -= 1 };
           case (#bearish) { bearishVotes -= 1 };
@@ -1030,10 +1078,8 @@ actor {
       case (null) {};
     };
 
-    // Record the new vote for this caller
     voteCounts.add(caller, newVote);
 
-    // Increment the new vote counter
     switch (newVote) {
       case (#bullish) { bullishVotes += 1 };
       case (#bearish) { bearishVotes += 1 };
@@ -1062,14 +1108,10 @@ actor {
     };
   };
 
-  // Publish a blog post — requires authenticated user who has verified the Market Intel passcode.
-  // The passcode is verified server-side via the passcode parameter to prevent unauthorized publishing.
   public shared ({ caller }) func publishBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
-    // Must be an authenticated user
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #err("Unauthorized: Only authenticated users can publish blog posts");
     };
-    // Verify the Market Intel passcode server-side
     if (passcode != hiddenMarketIntelPassword) {
       return #err("Unauthorized: Valid Market Intel passcode required to publish blog posts");
     };
@@ -1090,8 +1132,6 @@ actor {
     #ok("BLOG_PUBLISHED");
   };
 
-  // Create a blog post — requires authenticated user with valid Market Intel passcode.
-  // Alias for publishBlogPost used by frontend queries.
   public shared ({ caller }) func createBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #err("Unauthorized: Only authenticated users can create blog posts");
@@ -1116,19 +1156,16 @@ actor {
     #ok("BLOG_CREATED");
   };
 
-  // Get all published blog posts — public, no auth required (blog feed is public).
   public query func getAllBlogPosts() : async [BlogPost] {
     let allPosts = blogStore.values().toArray();
     allPosts.filter(func(p) { p.isPublished });
   };
 
-  // Alias used by the implementation plan: getPublishedPosts — public, no auth required.
   public query func getPublishedPosts() : async [BlogPost] {
     let allPosts = blogStore.values().toArray();
     allPosts.filter(func(p) { p.isPublished });
   };
 
-  // Get a single blog post by ID — public, no auth required.
   public query func getBlogPostById(id : Nat) : async ?BlogPost {
     switch (blogStore.get(id)) {
       case (?post) {
@@ -1138,7 +1175,6 @@ actor {
     };
   };
 
-  // Admin: get all blog posts including unpublished.
   public query ({ caller }) func getAllBlogPostsAdmin() : async [BlogPost] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view all blog posts including unpublished");
@@ -1146,22 +1182,12 @@ actor {
     blogStore.values().toArray();
   };
 
-  // Delete a blog post.
-  // Allowed if:
-  //   (a) the caller is an admin, OR
-  //   (b) the caller is an authenticated user who provides the correct Market Intel passcode
-  //       (matching the plan's authorCode parameter).
-  // The passcode check ensures only authorised community members (those who know the passcode)
-  // can delete posts, preventing arbitrary authenticated users from removing content.
   public shared ({ caller }) func deleteBlogPost(id : Nat, authorCode : Text) : async { #ok : (); #err : Text } {
-    // Must be at minimum an authenticated user
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #err("Unauthorized: Only authenticated users can delete blog posts");
     };
-    // Admins may delete without a passcode check
     let isAdmin = AccessControl.isAdmin(accessControlState, caller);
     if (not isAdmin) {
-      // Non-admins must supply the correct Market Intel passcode
       if (authorCode != hiddenMarketIntelPassword) {
         return #err("Unauthorized: Valid Market Intel passcode required to delete blog posts");
       };

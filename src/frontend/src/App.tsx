@@ -27,6 +27,7 @@ import ContactPage from "./pages/ContactPage";
 import DeveloperBlogPage from "./pages/DeveloperBlogPage";
 import EcosystemGrowthPage from "./pages/EcosystemGrowthPage";
 import FAQPage from "./pages/FAQPage";
+import FearGreedPage from "./pages/FearGreedPage";
 import HomePage from "./pages/HomePage";
 import InsightsPage from "./pages/InsightsPage";
 import LivePricePage from "./pages/LivePricePage";
@@ -40,6 +41,7 @@ import SecurityTransparencyPage from "./pages/SecurityTransparencyPage";
 import StakingSimulatorPage from "./pages/StakingSimulatorPage";
 import TestimonialsPage from "./pages/TestimonialsPage";
 import TokenomicsPage from "./pages/TokenomicsPage";
+import TradingToolsPage from "./pages/TradingToolsPage";
 import WhitepaperPage from "./pages/WhitepaperPage";
 
 const queryClient = new QueryClient({
@@ -207,6 +209,16 @@ const adultFormRoute = createRoute({
   path: "/adult-form",
   component: AdultFormPage,
 });
+const tradingToolsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/trading-tools",
+  component: TradingToolsPage,
+});
+const fearGreedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/fear-greed",
+  component: FearGreedPage,
+});
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -242,6 +254,8 @@ const routeTree = rootRoute.addChildren([
   stakingSimulatorRoute,
   communityLeaderboardRoute,
   adultFormRoute,
+  tradingToolsRoute,
+  fearGreedRoute,
   notFoundRoute,
 ]);
 
@@ -249,7 +263,7 @@ const router = createRouter({ routeTree });
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light">
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
         <Toaster richColors position="top-right" />

@@ -122,7 +122,7 @@ export default function RoadmapPage() {
         title="Roadmap | RBS Superior"
         description="RBS Superior development roadmap from 2026 to 2030 — community growth, presale, partnerships, airdrop, and full mainnet launch."
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+      <div className="min-h-screen bg-white text-gray-900">
         {/* Hero */}
         <section className="relative py-24 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-amber-500/5 pointer-events-none" />
@@ -136,7 +136,7 @@ export default function RoadmapPage() {
               <h1 className="text-5xl md:text-7xl font-bold mb-6 shimmer-gold">
                 The RBS Journey
               </h1>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-500 max-w-2xl mx-auto">
                 Five transformative phases from community building to full
                 mainnet launch — charting the path to a decentralized future.
               </p>
@@ -174,7 +174,7 @@ export default function RoadmapPage() {
                         background: `linear-gradient(135deg, ${phase.gradientFrom}, ${phase.gradientTo})`,
                       }}
                     >
-                      <Icon className="w-7 h-7 text-white" />
+                      <Icon className="w-7 h-7 text-gray-900" />
                     </div>
                   </div>
 
@@ -182,7 +182,7 @@ export default function RoadmapPage() {
                   <div
                     className={`ml-24 md:ml-0 ${isLeft ? "md:mr-auto md:pr-16 md:pl-0 md:w-5/12" : "md:ml-auto md:pl-16 md:pr-0 md:w-5/12"} w-full`}
                   >
-                    <div className="bg-gray-900/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1 group">
+                    <div className="bg-white/60 border border-amber-500/20 rounded-2xl p-6 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1 group">
                       <div className="flex items-center gap-3 mb-4">
                         <span
                           className="text-3xl font-bold"
@@ -191,7 +191,7 @@ export default function RoadmapPage() {
                           {phase.year}
                         </span>
                         <div>
-                          <h3 className="text-lg font-bold text-white">
+                          <h3 className="text-lg font-bold text-gray-900">
                             {phase.title}
                           </h3>
                           <span
@@ -207,7 +207,7 @@ export default function RoadmapPage() {
                         {phase.milestones.map((m) => (
                           <li
                             key={m}
-                            className="flex items-start gap-2 text-sm text-gray-400 group-hover:text-gray-300 transition-colors"
+                            className="flex items-start gap-2 text-sm text-gray-500 group-hover:text-gray-300 transition-colors"
                           >
                             <CheckCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                             {m}
@@ -224,7 +224,7 @@ export default function RoadmapPage() {
 
         {/* Stats */}
         <AnimatedSection direction="up" delay={100}>
-          <section className="py-16 px-6 bg-black/30 border-t border-amber-500/10">
+          <section className="py-16 px-6 bg-gray-50 border-t border-amber-500/10">
             <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
                 { label: "Phases", value: phases5 },
@@ -234,12 +234,12 @@ export default function RoadmapPage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="bg-gray-900/60 border border-amber-500/20 rounded-xl p-6 hover:border-amber-500/40 transition-all duration-300"
+                  className="bg-white/60 border border-amber-500/20 rounded-xl p-6 hover:border-amber-500/40 transition-all duration-300"
                 >
                   <div className="text-4xl font-bold text-amber-400">
                     {stat.value.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
+                  <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>

@@ -12,6 +12,7 @@ import {
 import React, { useState } from "react";
 import { PageHead } from "../components/PageHead";
 import { SmokySectionTransition } from "../components/SmokySectionTransition";
+import { Button } from "../components/ui/button";
 import { useTokenAdvancedAnalytics } from "../hooks/useTokenAdvancedAnalytics";
 
 function formatNumber(n: number, decimals = 2): string {
@@ -26,11 +27,20 @@ function formatNumber(n: number, decimals = 2): string {
 export default function AdvancedAnalyticsPage() {
   const [inputSymbol, setInputSymbol] = useState("");
   const [searchSymbol, setSearchSymbol] = useState("");
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
-  const { data, isLoading, error } = useTokenAdvancedAnalytics(searchSymbol);
+  const { data, isLoading, error, refetch } =
+    useTokenAdvancedAnalytics(searchSymbol);
 
   const handleSearch = () => {
     if (inputSymbol.trim()) setSearchSymbol(inputSymbol.trim().toUpperCase());
+  };
+
+  const handleRefresh = async () => {
+    if (!searchSymbol) return;
+    setIsManualRefreshing(true);
+    await refetch();
+    setIsManualRefreshing(false);
   };
 
   const trendColor =
@@ -78,8 +88,8 @@ export default function AdvancedAnalyticsPage() {
           </div>
 
           {/* Search */}
-          <div className="glass-card p-6 mb-8">
-            <div className="flex gap-3">
+          <div className="bg-white border border-gray-200 shadow-sm p-6 mb-8">
+            <div className="flex gap-3 flex-wrap">
               <input
                 type="text"
                 value={inputSymbol}
@@ -101,11 +111,25 @@ export default function AdvancedAnalyticsPage() {
                 )}
                 Analyze
               </button>
+              {searchSymbol && (
+                <Button
+                  data-ocid="analytics.refresh.button"
+                  onClick={handleRefresh}
+                  variant="outline"
+                  disabled={isManualRefreshing || isLoading}
+                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 px-4 py-3 h-auto"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 mr-1 ${isManualRefreshing ? "animate-spin" : ""}`}
+                  />
+                  {isManualRefreshing ? "Refreshing..." : "Refresh"}
+                </Button>
+              )}
             </div>
           </div>
 
           {error && (
-            <div className="glass-card p-6 mb-6 border border-destructive/30 text-center">
+            <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6 border border-destructive/30 text-center">
               <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-2" />
               <p className="text-destructive">
                 Token not found or API error. Try a different symbol.
@@ -118,7 +142,10 @@ export default function AdvancedAnalyticsPage() {
               {(
                 ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"] as const
               ).map((sk) => (
-                <div key={sk} className="glass-card p-5 animate-pulse">
+                <div
+                  key={sk}
+                  className="bg-white border border-gray-200 shadow-sm p-5 animate-pulse"
+                >
                   <div className="h-4 bg-muted rounded mb-3 w-1/2" />
                   <div className="h-8 bg-muted rounded" />
                 </div>
@@ -129,7 +156,7 @@ export default function AdvancedAnalyticsPage() {
           {data && !isLoading && (
             <>
               {/* Header */}
-              <div className="glass-card p-6 mb-6">
+              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">
@@ -154,7 +181,7 @@ export default function AdvancedAnalyticsPage() {
               </div>
 
               {/* Market Strength */}
-              <div className="glass-card p-6 mb-6">
+              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Zap className="w-5 h-5 text-primary" />
                   <h3 className="text-lg font-bold text-foreground">
@@ -191,7 +218,7 @@ export default function AdvancedAnalyticsPage() {
               {/* Main Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {/* RSI */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Activity className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -219,7 +246,7 @@ export default function AdvancedAnalyticsPage() {
                 </div>
 
                 {/* Volume Trend */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <BarChart2 className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -235,7 +262,7 @@ export default function AdvancedAnalyticsPage() {
                 </div>
 
                 {/* Risk Level */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -251,7 +278,7 @@ export default function AdvancedAnalyticsPage() {
                 </div>
 
                 {/* 7d Change */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -267,7 +294,7 @@ export default function AdvancedAnalyticsPage() {
                 </div>
 
                 {/* 30d Change */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -283,7 +310,7 @@ export default function AdvancedAnalyticsPage() {
                 </div>
 
                 {/* ATH */}
-                <div className="glass-card p-5">
+                <div className="bg-white border border-gray-200 shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-4 h-4 text-primary" />
                     <span className="text-sm text-muted-foreground">
@@ -302,7 +329,7 @@ export default function AdvancedAnalyticsPage() {
               </div>
 
               {/* Bollinger Bands */}
-              <div className="glass-card p-6 mb-6">
+              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart2 className="w-5 h-5 text-primary" />
                   <h3 className="text-lg font-bold text-foreground">
@@ -354,7 +381,7 @@ export default function AdvancedAnalyticsPage() {
               </div>
 
               {/* Supply Info */}
-              <div className="glass-card p-5">
+              <div className="bg-white border border-gray-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Activity className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-muted-foreground">
@@ -377,7 +404,7 @@ export default function AdvancedAnalyticsPage() {
           )}
 
           {!searchSymbol && !isLoading && (
-            <div className="glass-card p-12 text-center">
+            <div className="bg-white border border-gray-200 shadow-sm p-12 text-center">
               <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
                 Enter a token symbol above to see advanced analytics

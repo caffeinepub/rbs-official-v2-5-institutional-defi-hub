@@ -102,6 +102,7 @@ export function useGetAllPolls() {
       return actor.getAllPolls();
     },
     enabled: !!actor && !actorFetching,
+    refetchInterval: 15000,
     retry: false,
   });
 }
@@ -244,7 +245,7 @@ export function usePublishedPosts() {
       if (!actor) return [];
       return actor.getPublishedPosts();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !actorFetching,
     retry: false,
   });
 }

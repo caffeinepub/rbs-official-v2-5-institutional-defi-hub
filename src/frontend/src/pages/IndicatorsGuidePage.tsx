@@ -45,7 +45,7 @@ export default function IndicatorsGuidePage() {
               </p>
             </div>
 
-            <Card className="glass-card-gold glow-border mb-8 mex-fade-up animation-delay-200">
+            <Card className="bg-white border border-gray-200 shadow-sm-gold glow-border mb-8 mex-fade-up animation-delay-200">
               <CardHeader>
                 <CardTitle className="text-gold">
                   About Technical Indicators
@@ -65,7 +65,7 @@ export default function IndicatorsGuidePage() {
             >
               <AccordionItem
                 value="rsi"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ export default function IndicatorsGuidePage() {
 
               <AccordionItem
                 value="macd"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export default function IndicatorsGuidePage() {
 
               <AccordionItem
                 value="bollinger"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export default function IndicatorsGuidePage() {
 
               <AccordionItem
                 value="vwap"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -216,7 +216,10 @@ export default function IndicatorsGuidePage() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="ma" className="glass-card glow-border px-6">
+              <AccordionItem
+                value="ma"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
+              >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
                     <Move className="h-5 w-5" />
@@ -261,7 +264,7 @@ export default function IndicatorsGuidePage() {
 
               <AccordionItem
                 value="fvg"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -302,7 +305,7 @@ export default function IndicatorsGuidePage() {
 
               <AccordionItem
                 value="orderblocks"
-                className="glass-card glow-border px-6"
+                className="bg-white border border-gray-200 shadow-sm glow-border px-6"
               >
                 <AccordionTrigger className="text-gold font-poppins font-bold hover:no-underline">
                   <div className="flex items-center gap-3">
@@ -339,7 +342,7 @@ export default function IndicatorsGuidePage() {
               </AccordionItem>
             </Accordion>
 
-            <Card className="glass-card-gold glow-border mt-8 mex-fade-up animation-delay-600">
+            <Card className="bg-white border border-gray-200 shadow-sm-gold glow-border mt-8 mex-fade-up animation-delay-600">
               <CardHeader>
                 <CardTitle className="text-gold">Best Practices</CardTitle>
               </CardHeader>

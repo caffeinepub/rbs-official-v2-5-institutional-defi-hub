@@ -1,7 +1,8 @@
 import { Lock, RefreshCw, TrendingDown, TrendingUp, Zap } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { PageHead } from "../components/PageHead";
 import { SmokySectionTransition } from "../components/SmokySectionTransition";
+import { Button } from "../components/ui/button";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useLivePrice } from "../hooks/useLivePrice";
 
@@ -36,7 +37,15 @@ export default function LivePricePage() {
     isRefetching,
     error,
     dataUpdatedAt,
+    refetch,
   } = useLivePrice();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsManualRefreshing(true);
+    await refetch();
+    setIsManualRefreshing(false);
+  };
 
   if (!identity) {
     return (
@@ -45,7 +54,7 @@ export default function LivePricePage() {
           title="Live Prices | RBS"
           description="Real-time cryptocurrency prices for top 5 coins."
         />
-        <div className="glass-card p-8 text-center max-w-md">
+        <div className="bg-white border border-gray-200 shadow-sm p-8 text-center max-w-md">
           <Lock className="w-12 h-12 text-primary mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">
             Authentication Required
@@ -94,11 +103,24 @@ export default function LivePricePage() {
                   {new Date(dataUpdatedAt).toLocaleTimeString()}
                 </span>
               )}
+              <Button
+                data-ocid="live-price.refresh.button"
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                disabled={isManualRefreshing || isRefetching}
+                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-1 ${isManualRefreshing || isRefetching ? "animate-spin" : ""}`}
+                />
+                {isManualRefreshing ? "Refreshing..." : "Refresh"}
+              </Button>
             </div>
           </div>
 
           {error && (
-            <div className="glass-card p-4 mb-6 border border-destructive/30">
+            <div className="bg-white border border-gray-200 shadow-sm p-4 mb-6 border border-destructive/30">
               <p className="text-destructive text-sm">
                 Failed to fetch prices. Retrying automatically...
               </p>
@@ -108,7 +130,10 @@ export default function LivePricePage() {
           {isLoading ? (
             <div className="space-y-4">
               {(["s1", "s2", "s3", "s4", "s5"] as const).map((sk) => (
-                <div key={sk} className="glass-card p-6 animate-pulse">
+                <div
+                  key={sk}
+                  className="bg-white border border-gray-200 shadow-sm p-6 animate-pulse"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-muted rounded-full" />
@@ -132,7 +157,7 @@ export default function LivePricePage() {
                 return (
                   <div
                     key={coin.symbol}
-                    className="glass-card p-5 hover:scale-[1.01] transition-transform"
+                    className="bg-white border border-gray-200 shadow-sm p-5 hover:scale-[1.01] transition-transform"
                   >
                     <div className="flex items-center justify-between flex-wrap gap-4">
                       <div className="flex items-center gap-4">

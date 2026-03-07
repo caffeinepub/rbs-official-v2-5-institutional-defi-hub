@@ -87,7 +87,7 @@ export default function WhitepaperPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Chapter Navigation Sidebar */}
             <div className="lg:col-span-1 animate-fade-in-up animation-delay-200">
-              <div className="sticky top-24 glass-card-gold p-6 glow-border">
+              <div className="sticky top-24 bg-white border border-gray-200 shadow-sm-gold p-6 glow-border">
                 <h2 className="text-xl font-poppins font-bold text-gold mb-4">
                   Chapters
                 </h2>
@@ -129,7 +129,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.executive = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("executive")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -174,7 +174,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.tokenomics = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("tokenomics")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -223,7 +223,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.mesh = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("mesh")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -276,7 +276,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.governance = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("governance")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -326,7 +326,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.security = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("security")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -374,7 +374,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.institutional = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("institutional")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -415,7 +415,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.roadmap = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("roadmap")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -429,7 +429,7 @@ export default function WhitepaperPage() {
                   </div>
                   <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
                   <div className="space-y-6">
-                    <div className="glass-card-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
+                    <div className="bg-white border border-gray-200 shadow-sm-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-3 w-3 rounded-full bg-gold animate-pulse" />
                         <h3 className="text-2xl font-poppins text-gold font-bold">
@@ -443,7 +443,7 @@ export default function WhitepaperPage() {
                       </p>
                     </div>
 
-                    <div className="glass-card-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
+                    <div className="bg-white border border-gray-200 shadow-sm-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-3 w-3 rounded-full bg-gold animate-pulse animation-delay-200" />
                         <h3 className="text-2xl font-poppins text-gold font-bold">
@@ -457,7 +457,7 @@ export default function WhitepaperPage() {
                       </p>
                     </div>
 
-                    <div className="glass-card-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
+                    <div className="bg-white border border-gray-200 shadow-sm-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-3 w-3 rounded-full bg-gold animate-pulse animation-delay-400" />
                         <h3 className="text-2xl font-poppins text-gold font-bold">
@@ -471,7 +471,7 @@ export default function WhitepaperPage() {
                       </p>
                     </div>
 
-                    <div className="glass-card-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
+                    <div className="bg-white border border-gray-200 shadow-sm-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-3 w-3 rounded-full bg-gold animate-pulse animation-delay-600" />
                         <h3 className="text-2xl font-poppins text-gold font-bold">
@@ -485,7 +485,7 @@ export default function WhitepaperPage() {
                       </p>
                     </div>
 
-                    <div className="glass-card-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
+                    <div className="bg-white border border-gray-200 shadow-sm-gold p-6 hover:bg-gold/5 rounded-lg transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="h-3 w-3 rounded-full bg-gold/50 animate-pulse animation-delay-800" />
                         <h3 className="text-2xl font-poppins text-gold/70 font-bold">
@@ -506,7 +506,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.technical = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("technical")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"
@@ -558,7 +558,7 @@ export default function WhitepaperPage() {
                   ref={(el) => {
                     sectionRefs.current.conclusion = el;
                   }}
-                  className={`glass-card p-10 glow-border transition-all duration-700 ${
+                  className={`bg-white border border-gray-200 shadow-sm p-10 glow-border transition-all duration-700 ${
                     visibleSections.has("conclusion")
                       ? "opacity-100 translate-y-0"
                       : "opacity-0 translate-y-8"

@@ -138,7 +138,7 @@ export default function FAQPage() {
                   setOpenFaq(openFaq === index ? null : index)
                 }
               >
-                <div className="glass-card overflow-hidden hover:border-gold/30 transition-all duration-300 glow-border">
+                <div className="bg-white border border-gray-200 shadow-sm overflow-hidden hover:border-gold/30 transition-all duration-300 glow-border">
                   <CollapsibleTrigger className="w-full p-8 flex items-center justify-between text-left group">
                     <h3 className="text-xl font-poppins font-bold text-gold group-hover:text-gold/90 transition-colors pr-4 tracking-tight">
                       {faq.question}
@@ -163,7 +163,7 @@ export default function FAQPage() {
           </div>
 
           <div className="mt-12 text-center animate-fade-in-up animation-delay-400">
-            <div className="glass-card-gold p-10 glow-border">
+            <div className="bg-white border border-gray-200 shadow-sm-gold p-10 glow-border">
               <h3 className="text-3xl font-poppins font-bold text-gold mb-6 tracking-tight">
                 Still have questions?
               </h3>

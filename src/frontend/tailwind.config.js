@@ -15,7 +15,17 @@ export default {
             }
         },
         extend: {
+            fontFamily: {
+                outfit: ['Outfit', 'sans-serif'],
+                jetbrains: ['"JetBrains Mono"', 'monospace'],
+            },
             colors: {
+                turquoise: {
+                    DEFAULT: '#00d4ff',
+                    light: '#22d3ee',
+                    dark: '#0891b2',
+                    glow: 'rgba(0,212,255,0.3)',
+                },
                 border: 'oklch(var(--border))',
                 input: 'oklch(var(--input))',
                 ring: 'oklch(var(--ring) / <alpha-value>)',
@@ -78,12 +88,16 @@ export default {
                 sm: 'calc(var(--radius) - 4px)'
             },
             boxShadow: {
-                'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.08)',
-                'glass-gold': '0 8px 32px 0 rgba(218, 165, 32, 0.15)',
-                'gold-sm': '0 2px 12px rgba(218, 165, 32, 0.2)',
-                'gold-md': '0 4px 24px rgba(218, 165, 32, 0.25)',
-                'gold-lg': '0 8px 48px rgba(218, 165, 32, 0.3)',
-                'gold-xl': '0 12px 64px rgba(218, 165, 32, 0.35)',
+                'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+                'glass-cyan': '0 8px 32px 0 rgba(0, 212, 255, 0.15)',
+                'cyan-sm': '0 2px 12px rgba(0, 212, 255, 0.2)',
+                'cyan-md': '0 4px 24px rgba(0, 212, 255, 0.25)',
+                'cyan-lg': '0 8px 48px rgba(0, 212, 255, 0.3)',
+                'cyan-xl': '0 12px 64px rgba(0, 212, 255, 0.35)',
+                'gold-sm': '0 2px 12px rgba(0, 212, 255, 0.2)',
+                'gold-md': '0 4px 24px rgba(0, 212, 255, 0.25)',
+                'gold-lg': '0 8px 48px rgba(0, 212, 255, 0.3)',
+                'gold-xl': '0 12px 64px rgba(0, 212, 255, 0.35)',
             },
             keyframes: {
                 'accordion-down': {

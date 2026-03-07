@@ -193,6 +193,7 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCryptoCurrency' : ActorMethod<[string], [] | [CryptoCurrency]>,
+  'getGlobalSectionLock' : ActorMethod<[string], boolean>,
   'getMarketIntelPasscode' : ActorMethod<[], string>,
   'getMarketIntelligence' : ActorMethod<[bigint], [] | [MarketIntelligence]>,
   'getMarketPulseTally' : ActorMethod<[], VoteTally>,
@@ -218,6 +219,7 @@ export interface _SERVICE {
   >,
   'revokeMarketIntelAccessWithPassword' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setGlobalSectionLock' : ActorMethod<[string, string, boolean], undefined>,
   'setMarketIntelPasscode' : ActorMethod<[string], undefined>,
   'setTimerEnd' : ActorMethod<[TimerType, bigint], undefined>,
   'storeMarketIntelligence' : ActorMethod<
@@ -234,6 +236,7 @@ export interface _SERVICE {
   >,
   'submitVote' : ActorMethod<[bigint, bigint], boolean>,
   'toggleAlertTrigger' : ActorMethod<[bigint], boolean>,
+  'toggleGlobalSectionLock' : ActorMethod<[string, string], boolean>,
   'toggleTimer' : ActorMethod<[TimerType], TimerState>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateCryptoCurrency' : ActorMethod<[string, number, bigint], undefined>,

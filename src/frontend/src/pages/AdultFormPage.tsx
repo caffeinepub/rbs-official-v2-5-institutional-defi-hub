@@ -124,7 +124,7 @@ export default function AdultFormPage() {
               </p>
             </div>
 
-            <div className="glass-card-gold p-10 md:p-12 glow-border mex-fade-up">
+            <div className="bg-white border border-gray-200 shadow-sm-gold p-10 md:p-12 glow-border mex-fade-up">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <Label

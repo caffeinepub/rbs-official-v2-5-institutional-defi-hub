@@ -100,7 +100,7 @@ const milestones = [
     icon: Zap,
     value: "99.9%",
     label: "Platform Uptime",
-    color: "text-cyan-400",
+    color: "text-emerald-500",
   },
   {
     icon: Rocket,
@@ -117,7 +117,7 @@ export default function EcosystemGrowthPage() {
         title="Ecosystem Growth | RBS"
         description="RBS ecosystem growth strategies and community expansion"
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white py-20 px-4">
+      <div className="min-h-screen bg-white text-gray-900 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Hero */}
           <AnimatedSection direction="up" className="text-center mb-16 pt-8">
@@ -127,7 +127,7 @@ export default function EcosystemGrowthPage() {
             <h1 className="text-4xl md:text-6xl font-bold shimmer-gold mb-6">
               Growing Together
             </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Strategic initiatives driving RBS adoption and community expansion
               across the globe
             </p>
@@ -146,7 +146,7 @@ export default function EcosystemGrowthPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="p-4 rounded-xl bg-white/3 border border-white/8 hover:border-amber-500/30 transition-all duration-300 text-center group"
+                className="p-4 rounded-xl bg-white border border-gray-200 hover:border-amber-500/30 transition-all duration-300 text-center group"
               >
                 <m.icon
                   className={`w-6 h-6 mx-auto mb-2 ${m.color} group-hover:scale-110 transition-transform`}
@@ -181,15 +181,15 @@ export default function EcosystemGrowthPage() {
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div
-                      className={`p-3 rounded-xl bg-black/30 ${strategy.iconColor} group-hover:scale-110 transition-transform duration-300`}
+                      className={`p-3 rounded-xl bg-gray-50 ${strategy.iconColor} group-hover:scale-110 transition-transform duration-300`}
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-gray-900">
                       {strategy.title}
                     </h3>
                   </div>
-                  <p className="text-gray-400 leading-relaxed mb-4">
+                  <p className="text-gray-500 leading-relaxed mb-4">
                     {strategy.description}
                   </p>
                   <div>
@@ -217,10 +217,10 @@ export default function EcosystemGrowthPage() {
           <AnimatedSection direction="scale" delay={200}>
             <div className="p-8 rounded-2xl bg-gradient-to-br from-amber-500/10 to-purple-500/10 border border-amber-500/20 text-center">
               <Rocket className="w-12 h-12 text-amber-400 mx-auto mb-4 animate-float" />
-              <h2 className="text-2xl font-bold text-white mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 The Path to 2030
               </h2>
-              <p className="text-gray-400 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-gray-500 leading-relaxed max-w-2xl mx-auto">
                 From community foundation in 2026 through strategic partnerships
                 in 2028 to full mainnet launch in 2030 — every phase of RBS
                 growth is planned with precision to deliver maximum value to our

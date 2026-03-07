@@ -146,7 +146,7 @@ export default function CommunityHighlightsPage() {
                 {stats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="glass-card-gold p-6 text-center glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20"
+                    className="bg-white border border-gray-200 shadow-sm-gold p-6 text-center glow-border transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-gold/20"
                   >
                     <stat.icon className="h-8 w-8 text-gold mx-auto mb-3" />
                     <p className="text-3xl font-poppins font-bold text-gold mb-2">
@@ -169,7 +169,7 @@ export default function CommunityHighlightsPage() {
                   {achievements.map((achievement) => (
                     <div
                       key={achievement.title}
-                      className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                      className="bg-white border border-gray-200 shadow-sm p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-start gap-4 mb-4">
                         <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
@@ -216,7 +216,7 @@ export default function CommunityHighlightsPage() {
                   {featuredMembers.map((member) => (
                     <div
                       key={member.name}
-                      className="glass-card-gold p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                      className="bg-white border border-gray-200 shadow-sm-gold p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-center gap-4 mb-4">
                         <div className="h-16 w-16 rounded-full bg-gold/20 flex items-center justify-center border-2 border-gold/40">
@@ -266,7 +266,7 @@ export default function CommunityHighlightsPage() {
                   {initiatives.map((initiative) => (
                     <div
                       key={initiative.title}
-                      className="glass-card p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
+                      className="bg-white border border-gray-200 shadow-sm p-6 glow-border transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-gold/20"
                     >
                       <div className="flex items-start gap-4">
                         <div className="h-12 w-12 rounded-full bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
@@ -294,7 +294,7 @@ export default function CommunityHighlightsPage() {
             </SmokySectionTransition>
 
             <SmokySectionTransition delay={500}>
-              <div className="glass-card-gold p-8 text-center glow-border">
+              <div className="bg-white border border-gray-200 shadow-sm-gold p-8 text-center glow-border">
                 <Heart className="h-12 w-12 text-gold mx-auto mb-4" />
                 <h3 className="text-2xl font-poppins font-bold text-gold mb-4">
                   Join Our Community

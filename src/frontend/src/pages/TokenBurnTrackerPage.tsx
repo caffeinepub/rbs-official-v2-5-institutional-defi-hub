@@ -11,10 +11,10 @@ export default function TokenBurnTrackerPage() {
         title="Burn Info | RBS"
         description="RBS token burn information"
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <Flame className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-white mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Token Burn Info
           </h1>
           <p className="text-gray-400 mb-6">

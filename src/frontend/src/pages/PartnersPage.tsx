@@ -72,7 +72,7 @@ export default function PartnersPage() {
                     key={category.title}
                     delay={100 * (index + 1)}
                   >
-                    <Card className="glass-card border-gold/20">
+                    <Card className="bg-white border border-gray-200 shadow-sm border-gold/20">
                       <CardHeader>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="p-2 rounded-lg bg-gold/10">
@@ -112,7 +112,7 @@ export default function PartnersPage() {
             </div>
 
             <SmokySectionTransition delay={400}>
-              <Card className="glass-card border-gold/20">
+              <Card className="bg-white border border-gray-200 shadow-sm border-gold/20">
                 <CardHeader>
                   <CardTitle>Partnership Benefits</CardTitle>
                   <CardDescription>

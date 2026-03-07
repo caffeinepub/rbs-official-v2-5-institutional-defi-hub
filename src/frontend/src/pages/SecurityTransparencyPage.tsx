@@ -93,7 +93,7 @@ export default function SecurityTransparencyPage() {
         title="Security & Transparency | RBS"
         description="RBS security measures and transparency commitments"
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white py-20 px-4">
+      <div className="min-h-screen bg-white text-gray-900 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Hero */}
           <AnimatedSection direction="up" className="text-center mb-16 pt-8">
@@ -103,7 +103,7 @@ export default function SecurityTransparencyPage() {
             <h1 className="text-4xl md:text-6xl font-bold shimmer-gold mb-6">
               Built for Trust
             </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Building confidence through robust security protocols and complete
               operational transparency
             </p>
@@ -122,7 +122,7 @@ export default function SecurityTransparencyPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="p-6 rounded-2xl bg-white/3 border border-white/8 hover:border-amber-500/30 transition-all duration-300 text-center"
+                className="p-6 rounded-2xl bg-white border border-gray-200 hover:border-amber-500/30 transition-all duration-300 text-center"
               >
                 <metric.icon
                   className={`w-8 h-8 mx-auto mb-3 ${metric.color}`}
@@ -130,7 +130,7 @@ export default function SecurityTransparencyPage() {
                 <div className={`text-3xl font-bold mb-1 ${metric.color}`}>
                   {metric.value}
                 </div>
-                <div className="text-gray-400 text-sm">{metric.label}</div>
+                <div className="text-gray-500 text-sm">{metric.label}</div>
               </motion.div>
             ))}
           </AnimatedSection>
@@ -159,15 +159,15 @@ export default function SecurityTransparencyPage() {
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div
-                      className={`p-3 rounded-xl bg-black/30 ${feature.iconColor} group-hover:scale-110 transition-transform duration-300`}
+                      className={`p-3 rounded-xl bg-gray-50 ${feature.iconColor} group-hover:scale-110 transition-transform duration-300`}
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-gray-900">
                       {feature.title}
                     </h3>
                   </div>
-                  <p className="text-gray-400 leading-relaxed mb-4">
+                  <p className="text-gray-500 leading-relaxed mb-4">
                     {feature.description}
                   </p>
                   <ul className="space-y-2">
@@ -191,18 +191,18 @@ export default function SecurityTransparencyPage() {
             <div className="p-8 rounded-2xl bg-amber-500/5 border border-amber-500/20 backdrop-blur-sm">
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="w-8 h-8 text-amber-400" />
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-bold text-gray-900">
                   Our Security Commitment
                 </h2>
               </div>
               <div className="grid md:grid-cols-2 gap-6">
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-500 leading-relaxed">
                   At RBS, security and transparency are not just
                   features—they're fundamental principles that guide every
                   decision we make. We believe trust is earned through
                   consistent action and complete openness with our community.
                 </p>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-500 leading-relaxed">
                   Our smart contracts undergo rigorous auditing by
                   industry-leading security firms, and we maintain an active bug
                   bounty program. All governance decisions and treasury

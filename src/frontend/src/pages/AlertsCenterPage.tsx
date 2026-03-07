@@ -44,7 +44,7 @@ function AlertCard({
   const ts = new Date(Number(alert.timestamp) / 1_000_000);
   return (
     <div
-      className={`glass-card rounded-2xl p-5 border transition-all duration-300 hover:scale-[1.01] ${alert.read ? "border-gold/10 opacity-70" : "border-gold/30 hover:border-gold/50"}`}
+      className={`bg-white border border-gray-200 shadow-sm rounded-2xl p-5 border transition-all duration-300 hover:scale-[1.01] ${alert.read ? "border-gold/10 opacity-70" : "border-gold/30 hover:border-gold/50"}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -327,7 +327,7 @@ export default function AlertsCenterPage() {
           {/* Create Alert Button / Form */}
           <SmokySectionTransition>
             {showCreate ? (
-              <div className="glass-card rounded-2xl p-6 border border-gold/20 mb-6">
+              <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/20 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gold">New Alert</h2>
                   <button
@@ -344,7 +344,7 @@ export default function AlertsCenterPage() {
               <button
                 type="button"
                 onClick={() => setShowCreate(true)}
-                className="w-full glass-card rounded-2xl p-4 border border-dashed border-gold/30 hover:border-gold/60 text-gold hover:text-gold-light transition-all duration-300 flex items-center justify-center gap-2 mb-6 hover:scale-[1.01]"
+                className="w-full bg-white border border-gray-200 shadow-sm rounded-2xl p-4 border border-dashed border-gold/30 hover:border-gold/60 text-gold hover:text-gold-light transition-all duration-300 flex items-center justify-center gap-2 mb-6 hover:scale-[1.01]"
               >
                 <Plus className="w-5 h-5" />
                 Create New Alert

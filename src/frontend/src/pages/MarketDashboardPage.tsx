@@ -4,6 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCryptoNews } from "@/hooks/useCryptoNews";
@@ -27,7 +34,7 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Cell,
   Legend,
@@ -124,13 +131,13 @@ function LivePricesTab() {
                 ${
                   inWatchlist
                     ? "border-[var(--rbs-gold)] bg-[var(--rbs-gold)]/5 shadow-[0_0_12px_rgba(184,134,11,0.2)]"
-                    : "border-zinc-700/50 bg-zinc-900/60"
+                    : "border-gray-200 bg-white"
                 }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-900"
                     style={{
                       backgroundColor: ASSET_COLORS[asset.symbol] || "#888",
                     }}
@@ -138,7 +145,9 @@ function LivePricesTab() {
                     {asset.symbol.slice(0, 2)}
                   </div>
                   <div>
-                    <div className="font-bold text-white">{asset.symbol}</div>
+                    <div className="font-bold text-gray-900">
+                      {asset.symbol}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {asset.name}
                     </div>
@@ -157,13 +166,13 @@ function LivePricesTab() {
                     className={
                       inWatchlist
                         ? "fill-[var(--rbs-gold)] text-[var(--rbs-gold)]"
-                        : "text-zinc-500"
+                        : "text-gray-500"
                     }
                   />
                 </button>
               </div>
 
-              <div className="text-2xl font-bold text-white mb-2">
+              <div className="text-2xl font-bold text-gray-900 mb-2">
                 {formatPrice(asset.price)}
               </div>
 
@@ -281,7 +290,7 @@ function MarketPulseTab() {
         </div>
         <div className="text-right">
           <div className="text-xs text-muted-foreground">BTC Price</div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-gray-900">
             {formatPrice(currentPrice)}
           </div>
           <div
@@ -296,7 +305,7 @@ function MarketPulseTab() {
       {/* Indicators Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* RSI */}
-        <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+        <div className="rounded-xl p-4 border border-gray-200 bg-white">
           <div className="text-xs text-muted-foreground mb-2">RSI (14)</div>
           <div
             className={`text-2xl font-bold mb-2 ${(pulse.rsi ?? 50) > 70 ? "text-red-400" : (pulse.rsi ?? 50) < 30 ? "text-emerald-400" : "text-yellow-400"}`}
@@ -314,7 +323,7 @@ function MarketPulseTab() {
         </div>
 
         {/* MACD */}
-        <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+        <div className="rounded-xl p-4 border border-gray-200 bg-white">
           <div className="text-xs text-muted-foreground mb-2">MACD</div>
           <div
             className={`text-2xl font-bold mb-2 ${macdValue >= 0 ? "text-emerald-400" : "text-red-400"}`}
@@ -332,7 +341,7 @@ function MarketPulseTab() {
         </div>
 
         {/* Histogram */}
-        <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+        <div className="rounded-xl p-4 border border-gray-200 bg-white">
           <div className="text-xs text-muted-foreground mb-2">
             MACD Histogram
           </div>
@@ -380,7 +389,7 @@ function CryptoNewsTab() {
       return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
     if (sentiment === "negative")
       return "bg-red-500/20 text-red-400 border-red-500/30";
-    return "bg-zinc-700/40 text-zinc-400 border-zinc-600/30";
+    return "bg-zinc-700/40 text-gray-400 border-zinc-600/30";
   };
 
   return (
@@ -391,11 +400,11 @@ function CryptoNewsTab() {
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 hover:bg-zinc-800/60 transition-all duration-200 hover:scale-[1.01]"
+          className="block rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 hover:bg-gray-50 transition-all duration-200 hover:scale-[1.01]"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-white text-sm leading-snug mb-2 line-clamp-2">
+              <div className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2">
                 {article.title}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -406,7 +415,7 @@ function CryptoNewsTab() {
                   <Badge
                     key={c}
                     variant="outline"
-                    className="text-xs px-1.5 py-0 border-zinc-600 text-zinc-400"
+                    className="text-xs px-1.5 py-0 border-zinc-600 text-gray-400"
                   >
                     {c}
                   </Badge>
@@ -460,7 +469,7 @@ function TokenAnalyticsTab() {
           value={searchSymbol}
           onChange={(e) => setSearchSymbol(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="bg-zinc-900/60 border-zinc-700 text-white placeholder:text-zinc-500"
+          className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-500"
         />
         <Button
           onClick={handleSearch}
@@ -509,31 +518,31 @@ function TokenAnalyticsTab() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">
                 Market Cap Rank
               </div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-xl font-bold text-gray-900">
                 #{analytics.marketCapRank ?? "N/A"}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">
                 24h Volume
               </div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-xl font-bold text-gray-900">
                 {analytics.volume24h
                   ? formatLargeNumber(analytics.volume24h)
                   : "N/A"}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">ATH</div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-xl font-bold text-gray-900">
                 {analytics.ath ? formatPrice(analytics.ath) : "N/A"}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">RSI (14)</div>
               <div
                 className={`text-xl font-bold ${(analytics.rsi ?? 50) > 70 ? "text-red-400" : (analytics.rsi ?? 50) < 30 ? "text-emerald-400" : "text-yellow-400"}`}
@@ -541,17 +550,17 @@ function TokenAnalyticsTab() {
                 {analytics.rsi ? analytics.rsi.toFixed(1) : "N/A"}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">
                 Volatility
               </div>
-              <div className="text-xl font-bold text-white">
+              <div className="text-xl font-bold text-gray-900">
                 {analytics.volatilityScore
                   ? analytics.volatilityScore.toFixed(2)
                   : "N/A"}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-3 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-1">
                 Risk Level
               </div>
@@ -564,7 +573,7 @@ function TokenAnalyticsTab() {
           </div>
 
           {analytics.supplyRatio != null && (
-            <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-4 border border-gray-200 bg-white">
               <div className="text-xs text-muted-foreground mb-2">
                 Supply Ratio
               </div>
@@ -661,14 +670,14 @@ function GlobalMarketsTab() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 transition-all">
+          <div className="rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 transition-all">
             <div className="flex items-center gap-2 mb-2">
               <Globe size={14} className="text-[var(--rbs-gold)]" />
               <span className="text-xs text-muted-foreground">
                 Total Market Cap
               </span>
             </div>
-            <div className="text-xl font-bold text-white">
+            <div className="text-xl font-bold text-gray-900">
               {formatLargeNumber(metrics.totalMarketCap)}
             </div>
             <div
@@ -684,14 +693,14 @@ function GlobalMarketsTab() {
             </div>
           </div>
 
-          <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 transition-all">
+          <div className="rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 transition-all">
             <div className="flex items-center gap-2 mb-2">
               <Activity size={14} className="text-[var(--rbs-gold)]" />
               <span className="text-xs text-muted-foreground">
                 24h Trading Volume
               </span>
             </div>
-            <div className="text-xl font-bold text-white">
+            <div className="text-xl font-bold text-gray-900">
               {formatLargeNumber(metrics.totalVolume)}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -699,14 +708,14 @@ function GlobalMarketsTab() {
             </div>
           </div>
 
-          <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 transition-all">
+          <div className="rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 transition-all">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs font-bold text-[#F7931A]">₿</span>
               <span className="text-xs text-muted-foreground">
                 BTC Dominance
               </span>
             </div>
-            <div className="text-xl font-bold text-white">
+            <div className="text-xl font-bold text-gray-900">
               {metrics.btcDominance.toFixed(1)}%
             </div>
             <div
@@ -722,14 +731,14 @@ function GlobalMarketsTab() {
             </div>
           </div>
 
-          <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 transition-all">
+          <div className="rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 transition-all">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs font-bold text-[#627EEA]">Ξ</span>
               <span className="text-xs text-muted-foreground">
                 ETH Dominance
               </span>
             </div>
-            <div className="text-xl font-bold text-white">
+            <div className="text-xl font-bold text-gray-900">
               {metrics.ethDominance.toFixed(1)}%
             </div>
             <div
@@ -745,14 +754,14 @@ function GlobalMarketsTab() {
             </div>
           </div>
 
-          <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60 hover:border-[var(--rbs-gold)]/40 transition-all">
+          <div className="rounded-xl p-4 border border-gray-200 bg-white hover:border-[var(--rbs-gold)]/40 transition-all">
             <div className="flex items-center gap-2 mb-2">
               <Zap size={14} className="text-[var(--rbs-gold)]" />
               <span className="text-xs text-muted-foreground">
                 Tracked Assets
               </span>
             </div>
-            <div className="text-xl font-bold text-white">
+            <div className="text-xl font-bold text-gray-900">
               {prices?.length || 0}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
@@ -804,7 +813,7 @@ function PortfolioTrackerTab() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+      <div className="rounded-xl p-4 border border-gray-200 bg-white">
         <h3 className="text-sm font-semibold text-[var(--rbs-gold)] mb-3 flex items-center gap-2">
           <DollarSign size={14} /> Enter Your Holdings
         </h3>
@@ -830,7 +839,7 @@ function PortfolioTrackerTab() {
                     Number.parseFloat(e.target.value) || 0,
                   )
                 }
-                className="bg-zinc-800/60 border-zinc-700 text-white text-sm h-8"
+                className="bg-zinc-800/60 border-gray-200 text-gray-900 text-sm h-8"
               />
               <div className="text-xs text-muted-foreground">
                 ≈ {formatUSD(portfolio.getAssetValue(sym))}
@@ -888,7 +897,7 @@ function PortfolioTrackerTab() {
           </div>
 
           {pieData.length > 0 && (
-            <div className="rounded-xl p-4 border border-zinc-700/50 bg-zinc-900/60">
+            <div className="rounded-xl p-4 border border-gray-200 bg-white">
               <h3 className="text-sm font-semibold text-[var(--rbs-gold)] mb-3 flex items-center gap-2">
                 <PieChartIcon size={14} /> Portfolio Allocation
               </h3>
@@ -954,13 +963,357 @@ function PortfolioTrackerTab() {
   );
 }
 
+// ─── Coin type for Screener ───────────────────────────────────────────────────
+interface CoinData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  total_volume: number;
+  market_cap: number;
+  market_cap_rank: number;
+}
+
+type SortKey =
+  | "market_cap"
+  | "current_price"
+  | "price_change_percentage_24h"
+  | "total_volume";
+
+// ─── Crypto Screener Tab ──────────────────────────────────────────────────────
+function CryptoScreenerTab() {
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("market_cap");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchCoins = useCallback(async () => {
+    try {
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false",
+      );
+      if (!res.ok) throw new Error("API error");
+      const data: CoinData[] = await res.json();
+      setCoins(data);
+      setLastUpdated(new Date());
+    } catch {
+      /* silent */
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCoins();
+    const interval = setInterval(fetchCoins, 60000);
+    return () => clearInterval(interval);
+  }, [fetchCoins]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchCoins();
+    setIsRefreshing(false);
+  };
+
+  const filtered = React.useMemo(() => {
+    let list = [...coins];
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.symbol.toLowerCase().includes(q),
+      );
+    }
+    list.sort((a, b) => {
+      if (sortKey === "price_change_percentage_24h") {
+        return (b[sortKey] ?? 0) - (a[sortKey] ?? 0);
+      }
+      return (b[sortKey] ?? 0) - (a[sortKey] ?? 0);
+    });
+    return list;
+  }, [coins, search, sortKey]);
+
+  return (
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            data-ocid="screener.search_input"
+            type="text"
+            placeholder="Search coin name or symbol..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+          />
+        </div>
+        <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+          <SelectTrigger
+            data-ocid="screener.sort.select"
+            className="w-44 border-gray-200 bg-white text-gray-900 text-sm"
+          >
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="market_cap">Market Cap</SelectItem>
+            <SelectItem value="current_price">Price</SelectItem>
+            <SelectItem value="price_change_percentage_24h">
+              24h Change
+            </SelectItem>
+            <SelectItem value="total_volume">Volume</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          data-ocid="screener.refresh.button"
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          disabled={isRefreshing || isLoading}
+          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+        >
+          <RefreshCw
+            className={`w-4 h-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </Button>
+        {lastUpdated && (
+          <span className="text-xs text-gray-400 hidden sm:block">
+            Updated {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {(
+            ["sk1", "sk2", "sk3", "sk4", "sk5", "sk6", "sk7", "sk8"] as const
+          ).map((sk) => (
+            <div
+              key={sk}
+              className="h-12 rounded-lg bg-gray-100 animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" data-ocid="screener.table">
+            <thead>
+              <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase">
+                <th className="text-left py-3 px-2">#</th>
+                <th className="text-left py-3 px-2">Coin</th>
+                <th className="text-right py-3 px-2">Price</th>
+                <th className="text-right py-3 px-2">24h %</th>
+                <th className="text-right py-3 px-2 hidden md:table-cell">
+                  Volume
+                </th>
+                <th className="text-right py-3 px-2 hidden lg:table-cell">
+                  Market Cap
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((coin, index) => {
+                const isPositive = coin.price_change_percentage_24h >= 0;
+                return (
+                  <tr
+                    key={coin.id}
+                    data-ocid={`screener.row.item.${index + 1}`}
+                    className="border-b border-gray-100 hover:bg-emerald-50 transition-colors"
+                  >
+                    <td className="py-3 px-2 text-gray-400 text-xs">
+                      {coin.market_cap_rank}
+                    </td>
+                    <td className="py-3 px-2">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={coin.image}
+                          alt={coin.name}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display =
+                              "none";
+                          }}
+                        />
+                        <span className="font-semibold text-gray-900">
+                          {coin.name}
+                        </span>
+                        <span className="text-gray-400 text-xs uppercase">
+                          {coin.symbol}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-2 text-right font-mono font-semibold text-gray-900">
+                      {formatPrice(coin.current_price)}
+                    </td>
+                    <td
+                      className={`py-3 px-2 text-right font-semibold ${isPositive ? "text-emerald-600" : "text-red-500"}`}
+                    >
+                      {isPositive ? "+" : ""}
+                      {coin.price_change_percentage_24h?.toFixed(2)}%
+                    </td>
+                    <td className="py-3 px-2 text-right text-gray-500 text-xs hidden md:table-cell">
+                      {formatLargeNumber(coin.total_volume)}
+                    </td>
+                    <td className="py-3 px-2 text-right text-gray-500 text-xs hidden lg:table-cell">
+                      {formatLargeNumber(coin.market_cap)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div
+              className="text-center py-12 text-gray-400"
+              data-ocid="screener.empty_state"
+            >
+              <Search size={32} className="mx-auto mb-2 opacity-40" />
+              <p>No coins match your search.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── On-chain Metrics Widget ──────────────────────────────────────────────────
+function OnChainMetricsWidget() {
+  const [metrics, setMetrics] = useState<{
+    total_market_cap: { usd: number };
+    market_cap_change_percentage_24h_usd: number;
+    btc_dominance: number;
+    eth_dominance: number;
+    active_cryptocurrencies: number;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const res = await fetch("https://api.coingecko.com/api/v3/global");
+      if (!res.ok) throw new Error("API error");
+      const json = await res.json();
+      setMetrics(json.data);
+      setLastUpdated(new Date());
+    } catch {
+      /* silent */
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 60000);
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchMetrics();
+    setIsRefreshing(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {(["om1", "om2", "om3", "om4"] as const).map((sk) => (
+          <div key={sk} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!metrics) return null;
+
+  const totalMcap = metrics.total_market_cap?.usd ?? 0;
+  const mcapChange = metrics.market_cap_change_percentage_24h_usd ?? 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+          <Globe size={14} /> On-chain Global Metrics
+        </h3>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-xs text-gray-400">
+              {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+          <Button
+            data-ocid="onchain.refresh.button"
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            disabled={isRefreshing}
+            className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          >
+            <RefreshCw
+              className={`w-3 h-3 mr-1 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="rounded-xl p-4 border border-emerald-200 bg-emerald-50">
+          <div className="text-xs text-gray-500 mb-1">Total Market Cap</div>
+          <div className="text-lg font-bold text-emerald-700">
+            {formatLargeNumber(totalMcap)}
+          </div>
+          <div
+            className={`text-xs ${mcapChange >= 0 ? "text-emerald-600" : "text-red-500"} mt-1`}
+          >
+            {mcapChange >= 0 ? "+" : ""}
+            {mcapChange.toFixed(2)}% (24h)
+          </div>
+        </div>
+        <div className="rounded-xl p-4 border border-orange-200 bg-orange-50">
+          <div className="text-xs text-gray-500 mb-1">BTC Dominance</div>
+          <div className="text-lg font-bold text-orange-600">
+            {metrics.btc_dominance?.toFixed(1)}%
+          </div>
+          <div className="text-xs text-gray-400 mt-1">of total market</div>
+        </div>
+        <div className="rounded-xl p-4 border border-blue-200 bg-blue-50">
+          <div className="text-xs text-gray-500 mb-1">ETH Dominance</div>
+          <div className="text-lg font-bold text-blue-600">
+            {metrics.eth_dominance?.toFixed(1)}%
+          </div>
+          <div className="text-xs text-gray-400 mt-1">of total market</div>
+        </div>
+        <div className="rounded-xl p-4 border border-purple-200 bg-purple-50">
+          <div className="text-xs text-gray-500 mb-1">Active Cryptos</div>
+          <div className="text-lg font-bold text-purple-600">
+            {(metrics.active_cryptocurrencies ?? 0).toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-400 mt-1">tracked tokens</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function MarketDashboardPage() {
   const { watchlist } = useWatchlist();
   const watchlistCount = watchlist.length;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <PageHead
         title="Market Dashboard | RBS Superior"
         description="Live crypto prices, market pulse, news, analytics, and portfolio tracker."
@@ -972,7 +1325,9 @@ export default function MarketDashboardPage() {
         <div className="relative max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
             <BarChart2 size={28} className="text-[var(--rbs-gold)]" />
-            <h1 className="text-3xl font-bold text-white">Market Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Market Dashboard
+            </h1>
           </div>
           <p className="text-muted-foreground text-sm">
             Real-time crypto intelligence — prices, pulse, news, analytics &
@@ -1026,7 +1381,19 @@ export default function MarketDashboardPage() {
             >
               Portfolio
             </TabsTrigger>
+            <TabsTrigger
+              value="screener"
+              data-ocid="dashboard.screener.tab"
+              className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+            >
+              Screener
+            </TabsTrigger>
           </TabsList>
+
+          {/* On-chain metrics always visible */}
+          <div className="mb-6">
+            <OnChainMetricsWidget />
+          </div>
 
           <TabsContent value="live-prices">
             <LivePricesTab />
@@ -1045,6 +1412,9 @@ export default function MarketDashboardPage() {
           </TabsContent>
           <TabsContent value="portfolio">
             <PortfolioTrackerTab />
+          </TabsContent>
+          <TabsContent value="screener">
+            <CryptoScreenerTab />
           </TabsContent>
         </Tabs>
       </div>
