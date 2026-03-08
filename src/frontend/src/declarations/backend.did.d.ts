@@ -10,123 +10,10 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Alert {
-  'id' : bigint,
-  'title' : string,
-  'read' : boolean,
-  'triggerEnabled' : boolean,
-  'message' : string,
-  'timestamp' : bigint,
-  'lastChecked' : bigint,
-  'autoCreated' : boolean,
-}
-export interface BlogPost {
-  'id' : bigint,
-  'title' : string,
-  'isPublished' : boolean,
-  'body' : string,
-  'createdAt' : bigint,
-  'tags' : Array<string>,
-  'author' : string,
-  'updatedAt' : [] | [bigint],
-  'category' : string,
-}
-export interface CreatePollInput {
-  'question' : string,
-  'code' : string,
-  'isActive' : boolean,
-  'options' : Array<string>,
-}
-export interface CryptoCurrency {
-  'lastUpdateTimestamp' : bigint,
-  'currentPriceUsd' : number,
-  'symbol' : string,
-  'updateIntervalSecs' : bigint,
-}
-export interface FormSubmission {
-  'id' : bigint,
-  'country' : string,
-  'isPresale' : boolean,
-  'name' : string,
-  'submittedBy' : Principal,
-  'walletAddress' : string,
-  'rbsAmount' : number,
-  'timestamp' : bigint,
-}
-export type IndicatorType = { 'fvg' : null } |
-  { 'rsi' : null } |
-  { 'macd' : null } |
-  { 'vwap' : null } |
-  { 'movingAverage' : null } |
-  { 'bollingerBands' : null } |
-  { 'orderBlocks' : null };
-export interface KeyVal { 'key' : string, 'value' : bigint }
-export interface MarketIntelligence {
-  'id' : bigint,
-  'historicalAccuracy' : number,
-  'asset' : string,
-  'timeframe' : string,
-  'overallSignal' : SignalConfidence,
-  'indicators' : Array<TechnicalIndicator>,
-  'timestamp' : bigint,
-}
-export type MarketPulseVote = { 'bullish' : null } |
-  { 'bearish' : null } |
-  { 'neutral' : null };
-export interface PollView {
-  'id' : bigint,
-  'creator' : Principal,
-  'question' : string,
-  'votes' : Array<KeyVal>,
-  'code' : string,
-  'createdAt' : Time,
-  'isActive' : boolean,
-  'options' : Array<string>,
-}
-export interface ScheduledTask {
-  'name' : string,
-  'lastRunTimestamp' : bigint,
-  'intervalSeconds' : bigint,
-}
-export type Signal = { 'buy' : null } |
-  { 'strongBuy' : null } |
-  { 'sell' : null } |
-  { 'neutral' : null } |
-  { 'strongSell' : null };
-export interface SignalConfidence { 'signal' : Signal, 'confidence' : bigint }
-export interface TechnicalIndicator {
-  'value' : number,
-  'indicatorType' : IndicatorType,
-  'signal' : SignalConfidence,
-}
-export type Time = bigint;
-export interface TimerState {
-  'endTime' : bigint,
-  'lastUpdate' : bigint,
-  'isUnlocked' : boolean,
-}
-export type TimerType = { 'presale' : null } |
-  { 'airdrop' : null };
-export interface TransformationInput {
-  'context' : Uint8Array,
-  'response' : http_request_result,
-}
-export interface TransformationOutput {
-  'status' : bigint,
-  'body' : Uint8Array,
-  'headers' : Array<http_header>,
-}
 export interface UserProfile { 'name' : string, 'email' : [] | [string] }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
-export interface VoteTally {
-  'total' : bigint,
-  'bullish' : bigint,
-  'bearish' : bigint,
-  'lastVoted' : [] | [MarketPulseVote],
-  'neutral' : bigint,
-}
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -137,12 +24,6 @@ export interface _CaffeineStorageRefillInformation {
 export interface _CaffeineStorageRefillResult {
   'success' : [] | [boolean],
   'topped_up_amount' : [] | [bigint],
-}
-export interface http_header { 'value' : string, 'name' : string }
-export interface http_request_result {
-  'status' : bigint,
-  'body' : Uint8Array,
-  'headers' : Array<http_header>,
 }
 export interface _SERVICE {
   '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
@@ -161,89 +42,17 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'adminGrantMarketIntelAccess' : ActorMethod<[Principal], boolean>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'checkAndCreateAutoAlert' : ActorMethod<[], [] | [Alert]>,
-  'createAlert' : ActorMethod<[string, string], Alert>,
-  'createBlogPost' : ActorMethod<
-    [BlogPost, string],
-    { 'ok' : string } |
-      { 'err' : string }
-  >,
-  'createPoll' : ActorMethod<[CreatePollInput], bigint>,
-  'deleteAlert' : ActorMethod<[bigint], boolean>,
-  'deleteBlogPost' : ActorMethod<
+  'deletePollWithPasscode' : ActorMethod<
     [bigint, string],
     { 'ok' : null } |
       { 'err' : string }
   >,
-  'deletePoll' : ActorMethod<[bigint], { 'ok' : null } | { 'err' : string }>,
-  'enableTrigger' : ActorMethod<[boolean], undefined>,
-  'getAirdropRemainingTime' : ActorMethod<[], bigint>,
-  'getAirdropTimerEnd' : ActorMethod<[], bigint>,
-  'getAlerts' : ActorMethod<[], Array<Alert>>,
-  'getAllBlogPosts' : ActorMethod<[], Array<BlogPost>>,
-  'getAllBlogPostsAdmin' : ActorMethod<[], Array<BlogPost>>,
-  'getAllCryptoCurrencies' : ActorMethod<[], Array<CryptoCurrency>>,
-  'getAllMarketIntelligence' : ActorMethod<[], Array<MarketIntelligence>>,
-  'getAllPolls' : ActorMethod<[], Array<PollView>>,
-  'getAllSubmissions' : ActorMethod<[], Array<FormSubmission>>,
-  'getBTCPriceFromCoingecko' : ActorMethod<[], string>,
-  'getBlogPostById' : ActorMethod<[bigint], [] | [BlogPost]>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getCryptoCurrency' : ActorMethod<[string], [] | [CryptoCurrency]>,
-  'getGlobalSectionLock' : ActorMethod<[string], boolean>,
-  'getMarketIntelPasscode' : ActorMethod<[], string>,
-  'getMarketIntelligence' : ActorMethod<[bigint], [] | [MarketIntelligence]>,
-  'getMarketPulseTally' : ActorMethod<[], VoteTally>,
-  'getMySubmissions' : ActorMethod<[], Array<FormSubmission>>,
-  'getPoll' : ActorMethod<[bigint], [] | [PollView]>,
-  'getPollsByCode' : ActorMethod<[string], Array<PollView>>,
-  'getPresaleRemainingTime' : ActorMethod<[], bigint>,
-  'getPresaleTimerEnd' : ActorMethod<[], bigint>,
-  'getPublishedPosts' : ActorMethod<[], Array<BlogPost>>,
-  'getScheduledTasks' : ActorMethod<[], Array<ScheduledTask>>,
-  'getTimerState' : ActorMethod<[TimerType], TimerState>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'grantMarketIntelAccess' : ActorMethod<[string], boolean>,
-  'hasMarketIntelAccess' : ActorMethod<[], boolean>,
-  'hasMarketIntelAccessCheck' : ActorMethod<[Principal], boolean>,
-  'initialize' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'markAlertAsRead' : ActorMethod<[bigint], boolean>,
-  'publishBlogPost' : ActorMethod<
-    [BlogPost, string],
-    { 'ok' : string } |
-      { 'err' : string }
-  >,
-  'revokeMarketIntelAccessWithPassword' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'setGlobalSectionLock' : ActorMethod<[string, string, boolean], undefined>,
-  'setMarketIntelPasscode' : ActorMethod<[string], undefined>,
-  'setTimerEnd' : ActorMethod<[TimerType, bigint], undefined>,
-  'storeMarketIntelligence' : ActorMethod<
-    [string, string, Array<TechnicalIndicator>, SignalConfidence, number],
-    MarketIntelligence
-  >,
-  'submitAirdropForm' : ActorMethod<
-    [string, string, string, number],
-    FormSubmission
-  >,
-  'submitPresaleForm' : ActorMethod<
-    [string, string, string, number],
-    FormSubmission
-  >,
-  'submitVote' : ActorMethod<[bigint, bigint], boolean>,
-  'toggleAlertTrigger' : ActorMethod<[bigint], boolean>,
-  'toggleGlobalSectionLock' : ActorMethod<[string, string], boolean>,
-  'toggleTimer' : ActorMethod<[TimerType], TimerState>,
-  'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
-  'updateCryptoCurrency' : ActorMethod<[string, number, bigint], undefined>,
-  'updateRecord' : ActorMethod<[string, bigint, string], undefined>,
-  'verifyMarketIntelPasscode' : ActorMethod<[string], boolean>,
-  'vote' : ActorMethod<[bigint, string], boolean>,
-  'voteMarketPulse' : ActorMethod<[string], VoteTally>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

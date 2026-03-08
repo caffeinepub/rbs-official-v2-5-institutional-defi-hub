@@ -280,6 +280,13 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
+    deletePollWithPasscode(pollId: bigint, passcode: string): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
     getAirdropTimerEnd(): Promise<bigint>;
@@ -582,6 +589,26 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deletePoll(arg0);
+            return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async deletePollWithPasscode(arg0: bigint, arg1: string): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).deletePollWithPasscode(arg0, arg1);
+                return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).deletePollWithPasscode(arg0, arg1);
             return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
         }
     }

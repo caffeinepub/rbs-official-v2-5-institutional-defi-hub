@@ -94,16 +94,16 @@ const TOOLS: ToolCard[] = [
   },
   {
     icon: TrendingUp,
-    title: "Market Pulse",
+    title: "Market Dashboard",
     description:
-      "Real-time Bitcoin market sentiment tracker with live RSI and MACD indicators. Vote and see community consensus.",
+      "Comprehensive crypto market overview with real-time prices, volume, and analytics data for traders.",
     features: [
-      "Live BTC RSI/MACD",
-      "Community voting",
-      "Sentiment gauge",
-      "Auto-refresh 20s",
+      "Live crypto prices",
+      "Market analytics",
+      "Volume tracking",
+      "Auto-refresh 30s",
     ],
-    path: "/market-pulse",
+    path: "/dashboard",
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
     border: "border-blue-200 hover:border-blue-400",
@@ -173,12 +173,63 @@ const TOOLS: ToolCard[] = [
     iconColor: "text-indigo-600",
     border: "border-indigo-200 hover:border-indigo-400",
   },
+  {
+    icon: Globe,
+    title: "Crypto Heatmap",
+    description:
+      "Visual market heatmap of top 50 coins colored by 24h % change. Spot trends at a glance.",
+    features: [
+      "Top 50 coins",
+      "Color by % change",
+      "Market cap sizing",
+      "Real-time refresh",
+    ],
+    path: "/crypto-heatmap",
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-600",
+    border: "border-teal-200 hover:border-teal-400",
+    badge: "New",
+  },
+  {
+    icon: Activity,
+    title: "Funding Rates",
+    description:
+      "Live Binance futures funding rates across 10 major pairs. Know who pays and who earns.",
+    features: [
+      "10 major pairs",
+      "Annualized rate",
+      "Direction signal",
+      "Auto-refresh 60s",
+    ],
+    path: "/funding-rates",
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    border: "border-violet-200 hover:border-violet-400",
+    badge: "New",
+  },
+  {
+    icon: Coins,
+    title: "Portfolio Tracker",
+    description:
+      "Track your crypto portfolio value in real-time with live prices and % allocation breakdown.",
+    features: [
+      "Live prices",
+      "% allocation",
+      "localStorage save",
+      "P&L tracking",
+    ],
+    path: "/portfolio-tracker",
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+    border: "border-cyan-200 hover:border-cyan-400",
+    badge: "New",
+  },
 ];
 
 const QUICK_STATS = [
   {
     label: "Live Tools",
-    value: "8+",
+    value: "12+",
     icon: Activity,
     color: "text-emerald-600",
     bg: "bg-emerald-50",
@@ -1001,6 +1052,992 @@ function PipCalculatorTool() {
   );
 }
 
+// ─── Leverage Risk Calculator ─────────────────────────────────────────────────
+function LeverageCalculatorTool() {
+  const [accountSize, setAccountSize] = useState("10000");
+  const [leverage, setLeverage] = useState("10");
+  const [entryPrice, setEntryPrice] = useState("50000");
+  const [liquidationPrice, setLiquidationPrice] = useState("45000");
+
+  const account = Number.parseFloat(accountSize) || 0;
+  const lev = Number.parseFloat(leverage) || 1;
+  const entry = Number.parseFloat(entryPrice) || 0;
+  const liq = Number.parseFloat(liquidationPrice) || 0;
+
+  const marginUsed = account / lev;
+  const liqDistance = entry > 0 ? (Math.abs(entry - liq) / entry) * 100 : 0;
+  const effectiveRisk = account > 0 ? (marginUsed / account) * 100 : 0;
+
+  let riskLevel = "Safe";
+  let riskColor = "text-green-700";
+  let riskBg = "bg-green-50 border-green-200";
+  if (lev > 20 || liqDistance < 3) {
+    riskLevel = "Extreme Risk";
+    riskColor = "text-red-700";
+    riskBg = "bg-red-50 border-red-200";
+  } else if (lev > 10 || liqDistance < 8) {
+    riskLevel = "Risky";
+    riskColor = "text-orange-700";
+    riskBg = "bg-orange-50 border-orange-200";
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <h3 className="font-bold text-gray-900 flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4 text-orange-600" /> Leverage Risk
+        Calculator
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Account Size ($)</Label>
+          <Input
+            data-ocid="leverage.account.input"
+            type="number"
+            value={accountSize}
+            onChange={(e) => setAccountSize(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Leverage (x)</Label>
+          <Input
+            data-ocid="leverage.leverage.input"
+            type="number"
+            value={leverage}
+            onChange={(e) => setLeverage(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Entry Price</Label>
+          <Input
+            data-ocid="leverage.entry.input"
+            type="number"
+            value={entryPrice}
+            onChange={(e) => setEntryPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Liquidation Price</Label>
+          <Input
+            data-ocid="leverage.liq.input"
+            type="number"
+            value={liquidationPrice}
+            onChange={(e) => setLiquidationPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+      </div>
+      {marginUsed > 0 && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              {
+                label: "Margin Used",
+                value: `$${marginUsed.toFixed(2)}`,
+                color: "text-blue-700",
+                bg: "bg-blue-50 border-blue-200",
+              },
+              {
+                label: "Effective Risk %",
+                value: `${effectiveRisk.toFixed(1)}%`,
+                color: "text-orange-700",
+                bg: "bg-orange-50 border-orange-200",
+              },
+              {
+                label: "Liq. Distance",
+                value: `${liqDistance.toFixed(2)}%`,
+                color: "text-purple-700",
+                bg: "bg-purple-50 border-purple-200",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={`rounded-xl border p-4 ${item.bg}`}
+              >
+                <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+                <div className={`text-lg font-bold ${item.color}`}>
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className={`rounded-xl border p-4 text-center ${riskBg}`}>
+            <div className="text-xs text-gray-500 mb-1">Risk Assessment</div>
+            <div className={`text-2xl font-bold ${riskColor}`}>{riskLevel}</div>
+            <div className="text-xs text-gray-400 mt-1">
+              {riskLevel === "Safe"
+                ? "Trade looks reasonable"
+                : riskLevel === "Risky"
+                  ? "Consider reducing leverage or widening stop"
+                  : "High probability of liquidation — reduce position size"}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Breakeven Calculator ─────────────────────────────────────────────────────
+function BreakevenCalculatorTool() {
+  const [buyPrice, setBuyPrice] = useState("100");
+  const [buyFee, setBuyFee] = useState("0.1");
+  const [sellFee, setSellFee] = useState("0.1");
+  const [targetProfit, setTargetProfit] = useState("5");
+  const [tradeSize, setTradeSize] = useState("1000");
+
+  const buy = Number.parseFloat(buyPrice) || 0;
+  const bFee = Number.parseFloat(buyFee) / 100 || 0;
+  const sFee = Number.parseFloat(sellFee) / 100 || 0;
+  const target = Number.parseFloat(targetProfit) / 100 || 0;
+  const size = Number.parseFloat(tradeSize) || 0;
+
+  const breakevenPrice = buy > 0 ? (buy * (1 + bFee)) / (1 - sFee) : 0;
+  const targetSellPrice =
+    buy > 0 ? (buy * (1 + target + bFee)) / (1 - sFee) : 0;
+  const totalFeesCost = size > 0 ? size * bFee + size * (1 + target) * sFee : 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <h3 className="font-bold text-gray-900 flex items-center gap-2">
+        <Calculator className="w-4 h-4 text-emerald-600" /> Breakeven Calculator
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Buy Price</Label>
+          <Input
+            data-ocid="breakeven.buy.input"
+            type="number"
+            value={buyPrice}
+            onChange={(e) => setBuyPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Buy Fee %</Label>
+          <Input
+            data-ocid="breakeven.buyfee.input"
+            type="number"
+            value={buyFee}
+            onChange={(e) => setBuyFee(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Sell Fee %</Label>
+          <Input
+            data-ocid="breakeven.sellfee.input"
+            type="number"
+            value={sellFee}
+            onChange={(e) => setSellFee(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Target Profit %</Label>
+          <Input
+            data-ocid="breakeven.profit.input"
+            type="number"
+            value={targetProfit}
+            onChange={(e) => setTargetProfit(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Trade Size ($)</Label>
+          <Input
+            data-ocid="breakeven.size.input"
+            type="number"
+            value={tradeSize}
+            onChange={(e) => setTradeSize(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+      </div>
+      {breakevenPrice > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {
+              label: "Breakeven Price",
+              value: `$${breakevenPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}`,
+              color: "text-blue-700",
+              bg: "bg-blue-50 border-blue-200",
+            },
+            {
+              label: "Target Sell Price",
+              value: `$${targetSellPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}`,
+              color: "text-emerald-700",
+              bg: "bg-emerald-50 border-emerald-200",
+            },
+            {
+              label: "Total Fees Cost",
+              value: `$${totalFeesCost.toFixed(4)}`,
+              color: "text-red-700",
+              bg: "bg-red-50 border-red-200",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl border p-4 ${item.bg}`}
+            >
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className={`text-lg font-bold ${item.color}`}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ATH Distance Tool ────────────────────────────────────────────────────────
+interface ATHCoin {
+  id: string;
+  symbol: string;
+  name: string;
+  currentPrice: number;
+  ath: number;
+  atl: number;
+  pctFromATH: number;
+  pctFromATL: number;
+  positionPct: number;
+  color: string;
+  bg: string;
+}
+
+function ATHDistanceTool() {
+  const [coins, setCoins] = useState<ATHCoin[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const COIN_IDS = ["bitcoin", "ethereum", "solana", "binancecoin"];
+
+  const fetchATH = useCallback(async () => {
+    setLoading(true);
+    try {
+      const results = await Promise.all(
+        COIN_IDS.map(async (id) => {
+          const res = await fetch(
+            `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&community_data=false&developer_data=false`,
+          );
+          if (!res.ok) throw new Error("CoinGecko error");
+          const data = await res.json();
+          const current = data.market_data.current_price.usd as number;
+          const ath = data.market_data.ath.usd as number;
+          const atl = data.market_data.atl.usd as number;
+          const pctFromATH = ((current - ath) / ath) * 100;
+          const pctFromATL = ((current - atl) / atl) * 100;
+          const range = ath - atl;
+          const positionPct = range > 0 ? ((current - atl) / range) * 100 : 50;
+
+          let color = "text-green-700";
+          let bg = "bg-green-50 border-green-200";
+          if (pctFromATH < -50) {
+            color = "text-red-700";
+            bg = "bg-red-50 border-red-200";
+          } else if (pctFromATH < -20) {
+            color = "text-yellow-700";
+            bg = "bg-yellow-50 border-yellow-200";
+          }
+
+          return {
+            id,
+            symbol: (data.symbol as string).toUpperCase(),
+            name: data.name as string,
+            currentPrice: current,
+            ath,
+            atl,
+            pctFromATH,
+            pctFromATL,
+            positionPct,
+            color,
+            bg,
+          } satisfies ATHCoin;
+        }),
+      );
+      setCoins(results);
+      setLastUpdated(new Date());
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchATH();
+  }, [fetchATH]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchATH();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-purple-600" /> ATH Distance
+          Tracker
+        </h3>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-xs text-gray-400">
+              {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+          <Button
+            data-ocid="ath.refresh.button"
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            disabled={refreshing || loading}
+            className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          >
+            <RefreshCw
+              className={`w-3 h-3 mr-1 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      <p className="text-gray-500 text-sm">
+        How far is each coin from its All-Time High and Low?
+      </p>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((k) => (
+            <div
+              key={k}
+              className="h-28 bg-gray-100 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {coins.map((c) => (
+            <div key={c.id} className={`rounded-xl border p-4 ${c.bg}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="font-bold text-gray-900">{c.symbol}</span>
+                  <span className="text-gray-400 text-xs ml-2">{c.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono font-bold text-gray-900 text-sm">
+                    $
+                    {c.currentPrice.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>
+                  ATL: $
+                  {c.atl < 1
+                    ? c.atl.toFixed(4)
+                    : c.atl.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                </span>
+                <span>
+                  ATH: $
+                  {c.ath.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+              <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div
+                  className="absolute h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min(Math.max(c.positionPct, 2), 98)}%`,
+                    background:
+                      "linear-gradient(to right, #dc2626, #f59e0b, #10b981)",
+                  }}
+                />
+                <div
+                  className="absolute top-0 w-2 h-full bg-white border border-gray-300 rounded-full"
+                  style={{
+                    left: `calc(${Math.min(Math.max(c.positionPct, 2), 98)}% - 4px)`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className={`font-semibold ${c.color}`}>
+                  ATH: {c.pctFromATH.toFixed(1)}%
+                </span>
+                <span className="font-semibold text-emerald-600">
+                  +{c.pctFromATL.toFixed(0)}% from ATL
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Position Size Calculator v2 ─────────────────────────────────────────────
+function PositionSizeCalcTool() {
+  const [accountSize, setAccountSize] = useState("10000");
+  const [riskPct, setRiskPct] = useState("2");
+  const [entryPrice, setEntryPrice] = useState("50000");
+  const [stopLossPrice, setStopLossPrice] = useState("48000");
+
+  const account = Number.parseFloat(accountSize) || 0;
+  const risk = Number.parseFloat(riskPct) || 0;
+  const entry = Number.parseFloat(entryPrice) || 0;
+  const stop = Number.parseFloat(stopLossPrice) || 0;
+
+  const riskDollar = (account * risk) / 100;
+  const priceRange = Math.abs(entry - stop);
+  const positionUnits = priceRange > 0 ? riskDollar / priceRange : 0;
+  const positionDollar = positionUnits * entry;
+
+  const handleClear = () => {
+    setAccountSize("");
+    setRiskPct("");
+    setEntryPrice("");
+    setStopLossPrice("");
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-blue-600" /> Position Size Calculator
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="text-gray-400 hover:text-gray-600 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Account Size ($)</Label>
+          <Input
+            data-ocid="pos-size.account.input"
+            type="number"
+            value={accountSize}
+            onChange={(e) => setAccountSize(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Risk % per Trade</Label>
+          <Input
+            data-ocid="pos-size.risk.input"
+            type="number"
+            value={riskPct}
+            onChange={(e) => setRiskPct(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Entry Price ($)</Label>
+          <Input
+            data-ocid="pos-size.entry.input"
+            type="number"
+            value={entryPrice}
+            onChange={(e) => setEntryPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Stop Loss Price ($)</Label>
+          <Input
+            data-ocid="pos-size.stoploss.input"
+            type="number"
+            value={stopLossPrice}
+            onChange={(e) => setStopLossPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+      </div>
+      {positionUnits > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            {
+              label: "Position Size (units)",
+              value: positionUnits.toFixed(6),
+              color: "text-blue-700",
+              bg: "bg-blue-50 border-blue-200",
+            },
+            {
+              label: "Position Size ($)",
+              value: `$${positionDollar.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              color: "text-emerald-700",
+              bg: "bg-emerald-50 border-emerald-200",
+            },
+            {
+              label: "Risk Amount ($)",
+              value: `$${riskDollar.toFixed(2)}`,
+              color: "text-red-600",
+              bg: "bg-red-50 border-red-200",
+            },
+            {
+              label: "Risk %",
+              value: `${risk}%`,
+              color: "text-orange-700",
+              bg: "bg-orange-50 border-orange-200",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl border p-4 ${item.bg}`}
+            >
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className={`text-lg font-bold ${item.color}`}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Compound Interest Calculator ────────────────────────────────────────────
+function CompoundInterestTool() {
+  const [principal, setPrincipal] = useState("10000");
+  const [apy, setApy] = useState("15");
+  const [durationMonths, setDurationMonths] = useState("12");
+  const [frequency, setFrequency] = useState("12"); // 12 = monthly
+
+  const P = Number.parseFloat(principal) || 0;
+  const r = (Number.parseFloat(apy) || 0) / 100;
+  const n = Number.parseFloat(frequency) || 12;
+  const t = (Number.parseFloat(durationMonths) || 12) / 12;
+
+  const finalAmount = P * (1 + r / n) ** (n * t);
+  const totalGain = finalAmount - P;
+  const gainPct = P > 0 ? (totalGain / P) * 100 : 0;
+
+  const handleClear = () => {
+    setPrincipal("");
+    setApy("");
+    setDurationMonths("");
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-emerald-600" /> Compound Interest
+          Calculator
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="text-gray-400 hover:text-gray-600 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Principal ($)</Label>
+          <Input
+            data-ocid="compound.principal.input"
+            type="number"
+            value={principal}
+            onChange={(e) => setPrincipal(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">APY (%)</Label>
+          <Input
+            data-ocid="compound.apy.input"
+            type="number"
+            value={apy}
+            onChange={(e) => setApy(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Duration (months)</Label>
+          <Input
+            data-ocid="compound.duration.input"
+            type="number"
+            value={durationMonths}
+            onChange={(e) => setDurationMonths(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Compound Freq.</Label>
+          <Select value={frequency} onValueChange={setFrequency}>
+            <SelectTrigger
+              data-ocid="compound.frequency.select"
+              className="border-gray-200"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Yearly</SelectItem>
+              <SelectItem value="4">Quarterly</SelectItem>
+              <SelectItem value="12">Monthly</SelectItem>
+              <SelectItem value="365">Daily</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {finalAmount > 0 && P > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            {
+              label: "Final Amount",
+              value: `$${finalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              color: "text-emerald-700",
+              bg: "bg-emerald-50 border-emerald-200",
+            },
+            {
+              label: "Total Gain",
+              value: `+$${totalGain.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              color: "text-green-700",
+              bg: "bg-green-50 border-green-200",
+            },
+            {
+              label: "Gain %",
+              value: `+${gainPct.toFixed(2)}%`,
+              color: "text-blue-700",
+              bg: "bg-blue-50 border-blue-200",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl border p-4 text-center ${item.bg}`}
+            >
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className={`text-xl font-bold ${item.color}`}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── DCA Buy Calculator ───────────────────────────────────────────────────────
+function DCABuyTool() {
+  const [monthlyInvest, setMonthlyInvest] = useState("500");
+  const [buyPrice, setBuyPrice] = useState("50000");
+  const [targetPrice, setTargetPrice] = useState("100000");
+  const [months, setMonths] = useState("12");
+
+  const monthly = Number.parseFloat(monthlyInvest) || 0;
+  const buy = Number.parseFloat(buyPrice) || 0;
+  const target = Number.parseFloat(targetPrice) || 0;
+  const n = Math.min(Number.parseInt(months) || 12, 120);
+
+  const totalInvested = monthly * n;
+  const totalTokens = buy > 0 ? totalInvested / buy : 0;
+  const avgPrice = totalTokens > 0 ? totalInvested / totalTokens : 0;
+  const valueAtTarget = totalTokens * target;
+  const profit = valueAtTarget - totalInvested;
+  const roi = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
+
+  const handleClear = () => {
+    setMonthlyInvest("");
+    setBuyPrice("");
+    setTargetPrice("");
+    setMonths("");
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <Coins className="w-4 h-4 text-cyan-600" /> DCA Buy Calculator
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="text-gray-400 hover:text-gray-600 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">
+            Monthly Investment ($)
+          </Label>
+          <Input
+            data-ocid="dca-buy.monthly.input"
+            type="number"
+            value={monthlyInvest}
+            onChange={(e) => setMonthlyInvest(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Buy Price ($)</Label>
+          <Input
+            data-ocid="dca-buy.buyprice.input"
+            type="number"
+            value={buyPrice}
+            onChange={(e) => setBuyPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Target Price ($)</Label>
+          <Input
+            data-ocid="dca-buy.target.input"
+            type="number"
+            value={targetPrice}
+            onChange={(e) => setTargetPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Months</Label>
+          <Input
+            data-ocid="dca-buy.months.input"
+            type="number"
+            value={months}
+            onChange={(e) => setMonths(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+      </div>
+      {totalInvested > 0 && buy > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            {
+              label: "Total Invested",
+              value: `$${totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+              color: "text-blue-700",
+              bg: "bg-blue-50 border-blue-200",
+            },
+            {
+              label: "Total Tokens",
+              value: totalTokens.toFixed(6),
+              color: "text-purple-700",
+              bg: "bg-purple-50 border-purple-200",
+            },
+            {
+              label: "Avg Price",
+              value: `$${avgPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              color: "text-gray-700",
+              bg: "bg-gray-50 border-gray-200",
+            },
+            {
+              label: "Value at Target",
+              value: `$${valueAtTarget.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+              color: profit >= 0 ? "text-emerald-700" : "text-red-700",
+              bg:
+                profit >= 0
+                  ? "bg-emerald-50 border-emerald-200"
+                  : "bg-red-50 border-red-200",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl border p-4 ${item.bg}`}
+            >
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className={`text-sm font-bold ${item.color}`}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {roi !== 0 && totalInvested > 0 && (
+        <div
+          className={`rounded-xl border p-4 text-center ${roi >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+        >
+          <div className="text-xs text-gray-500 mb-1">ROI at Target</div>
+          <div
+            className={`text-3xl font-bold ${roi >= 0 ? "text-green-700" : "text-red-700"}`}
+          >
+            {roi >= 0 ? "+" : ""}
+            {roi.toFixed(1)}%
+          </div>
+          <div
+            className={`text-sm mt-1 ${roi >= 0 ? "text-green-600" : "text-red-600"}`}
+          >
+            {roi >= 0
+              ? `+$${profit.toLocaleString(undefined, { maximumFractionDigits: 0 })} profit`
+              : `$${Math.abs(profit).toLocaleString(undefined, { maximumFractionDigits: 0 })} loss`}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Profit/Loss Calculator ───────────────────────────────────────────────────
+function ProfitLossCalcTool() {
+  const [entryPrice, setEntryPrice] = useState("50000");
+  const [exitPrice, setExitPrice] = useState("60000");
+  const [positionSize, setPositionSize] = useState("1000");
+  const [leverage, setLeverage] = useState("1");
+  const [direction, setDirection] = useState<"long" | "short">("long");
+
+  const entry = Number.parseFloat(entryPrice) || 0;
+  const exitP = Number.parseFloat(exitPrice) || 0;
+  const size = Number.parseFloat(positionSize) || 0;
+  const lev = Math.max(1, Number.parseFloat(leverage) || 1);
+
+  const priceDiff = exitP - entry;
+  const pnlPct = entry > 0 ? (priceDiff / entry) * 100 : 0;
+  const dirMultiplier = direction === "long" ? 1 : -1;
+  const pnlDollar = size * (priceDiff / entry) * dirMultiplier;
+  const roePct = pnlPct * lev * dirMultiplier;
+
+  const handleClear = () => {
+    setEntryPrice("");
+    setExitPrice("");
+    setPositionSize("");
+    setLeverage("1");
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-green-600" /> Profit / Loss
+          Calculator
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="text-gray-400 hover:text-gray-600 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Entry Price ($)</Label>
+          <Input
+            data-ocid="pnl.entry.input"
+            type="number"
+            value={entryPrice}
+            onChange={(e) => setEntryPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Exit Price ($)</Label>
+          <Input
+            data-ocid="pnl.exit.input"
+            type="number"
+            value={exitPrice}
+            onChange={(e) => setExitPrice(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Position Size ($)</Label>
+          <Input
+            data-ocid="pnl.size.input"
+            type="number"
+            value={positionSize}
+            onChange={(e) => setPositionSize(e.target.value)}
+            className="border-gray-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-gray-600 text-sm">Leverage (x)</Label>
+          <Input
+            data-ocid="pnl.leverage.input"
+            type="number"
+            value={leverage}
+            onChange={(e) => setLeverage(e.target.value)}
+            className="border-gray-200"
+            min="1"
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-gray-600 text-sm">Direction</Label>
+        <Select
+          value={direction}
+          onValueChange={(v) => setDirection(v as "long" | "short")}
+        >
+          <SelectTrigger
+            data-ocid="pnl.direction.select"
+            className="border-gray-200"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="long">Long (Buy)</SelectItem>
+            <SelectItem value="short">Short (Sell)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {entry > 0 && exitP > 0 && size > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            {
+              label: "PnL ($)",
+              value: `${pnlDollar >= 0 ? "+" : ""}$${Math.abs(pnlDollar).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+              color: pnlDollar >= 0 ? "text-green-700" : "text-red-700",
+              bg:
+                pnlDollar >= 0
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200",
+            },
+            {
+              label: "PnL %",
+              value: `${(pnlPct * dirMultiplier) >= 0 ? "+" : ""}${(pnlPct * dirMultiplier).toFixed(2)}%`,
+              color:
+                pnlPct * dirMultiplier >= 0 ? "text-green-700" : "text-red-700",
+              bg:
+                pnlPct * dirMultiplier >= 0
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200",
+            },
+            {
+              label: `ROE % (${lev}x leverage)`,
+              value: `${roePct >= 0 ? "+" : ""}${roePct.toFixed(2)}%`,
+              color: roePct >= 0 ? "text-blue-700" : "text-red-700",
+              bg:
+                roePct >= 0
+                  ? "bg-blue-50 border-blue-200"
+                  : "bg-red-50 border-red-200",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl border p-4 text-center ${item.bg}`}
+            >
+              <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+              <div className={`text-xl font-bold ${item.color}`}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TradingToolsPage() {
   const navigate = useNavigate();
   const [btcPrice, setBtcPrice] = useState<number | null>(null);
@@ -1033,7 +2070,7 @@ export default function TradingToolsPage() {
       <div className="min-h-screen bg-white text-gray-900">
         {/* Hero */}
         <section
-          className="pt-24 pb-16 px-4 text-center border-b border-gray-100"
+          className="pt-20 sm:pt-24 pb-10 sm:pb-16 px-3 sm:px-4 md:px-6 text-center border-b border-gray-100"
           style={{
             background:
               "linear-gradient(135deg, #ffffff 0%, #f0f9ff 60%, #e0f2fe 100%)",
@@ -1045,13 +2082,13 @@ export default function TradingToolsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 sm:mb-6">
                 <BarChart2 className="w-4 h-4" /> Professional Trading Tools
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
+              <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-3 sm:mb-4">
                 Your <span className="shimmer-turquoise">Trading Arsenal</span>
               </h1>
-              <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-8">
+              <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-6 sm:mb-8 px-2">
                 Professional-grade tools to help you trade smarter, stay ahead
                 of markets, and make data-driven decisions.
               </p>
@@ -1084,9 +2121,9 @@ export default function TradingToolsPage() {
         </section>
 
         {/* Quick Stats */}
-        <section className="py-8 px-4 bg-white border-b border-gray-100">
+        <section className="py-6 sm:py-8 px-3 sm:px-4 md:px-6 bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {QUICK_STATS.map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -1113,18 +2150,18 @@ export default function TradingToolsPage() {
         </section>
 
         {/* Tools Grid */}
-        <section className="py-16 px-4">
+        <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
                 All Trading Tools
               </h2>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm sm:text-base">
                 Click any tool to open it instantly
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
               {TOOLS.map((tool, i) => (
                 <motion.div
                   key={tool.title}
@@ -1189,16 +2226,16 @@ export default function TradingToolsPage() {
         </section>
 
         {/* ── NEW: Interactive Calculators Hub ─────────────────────────────── */}
-        <section className="py-16 px-4 bg-gray-50 border-t border-gray-100">
+        <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-gray-50 border-t border-gray-100">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
+            <div className="text-center mb-7 sm:mb-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
                 <Calculator className="w-4 h-4" /> Interactive Calculators
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Professional Trading Calculators
               </h2>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm sm:text-base">
                 Powerful tools to fine-tune your trades and strategy
               </p>
             </div>
@@ -1247,6 +2284,55 @@ export default function TradingToolsPage() {
                 >
                   P&L Calculator
                 </TabsTrigger>
+                <TabsTrigger
+                  value="leverage"
+                  data-ocid="calc.leverage.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  Leverage Risk
+                </TabsTrigger>
+                <TabsTrigger
+                  value="breakeven"
+                  data-ocid="calc.breakeven.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  Breakeven
+                </TabsTrigger>
+                <TabsTrigger
+                  value="ath"
+                  data-ocid="calc.ath.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  ATH Distance
+                </TabsTrigger>
+                <TabsTrigger
+                  value="pos-size-v2"
+                  data-ocid="calc.pos-size-v2.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  Pos. Size
+                </TabsTrigger>
+                <TabsTrigger
+                  value="compound"
+                  data-ocid="calc.compound.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  Compound
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dca-buy"
+                  data-ocid="calc.dca-buy.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  DCA Buy
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profit-loss"
+                  data-ocid="calc.profit-loss.tab"
+                  className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+                >
+                  Profit/Loss
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="converter">
@@ -1267,14 +2353,35 @@ export default function TradingToolsPage() {
               <TabsContent value="pip">
                 <PipCalculatorTool />
               </TabsContent>
+              <TabsContent value="leverage">
+                <LeverageCalculatorTool />
+              </TabsContent>
+              <TabsContent value="breakeven">
+                <BreakevenCalculatorTool />
+              </TabsContent>
+              <TabsContent value="ath">
+                <ATHDistanceTool />
+              </TabsContent>
+              <TabsContent value="pos-size-v2">
+                <PositionSizeCalcTool />
+              </TabsContent>
+              <TabsContent value="compound">
+                <CompoundInterestTool />
+              </TabsContent>
+              <TabsContent value="dca-buy">
+                <DCABuyTool />
+              </TabsContent>
+              <TabsContent value="profit-loss">
+                <ProfitLossCalcTool />
+              </TabsContent>
             </Tabs>
           </div>
         </section>
 
         {/* CTA section */}
-        <section className="py-16 px-4 bg-white border-t border-gray-100">
+        <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-white border-t border-gray-100">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
               Ready to Trade Smarter?
             </h2>
             <p className="text-gray-500 mb-8">

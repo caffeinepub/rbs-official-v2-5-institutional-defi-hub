@@ -1,419 +1,393 @@
 import {
   Activity,
-  AlertTriangle,
-  BarChart2,
-  Minus,
+  AlertCircle,
+  Clock,
+  Globe,
   RefreshCw,
-  Search,
   TrendingDown,
   TrendingUp,
-  Zap,
 } from "lucide-react";
-import React, { useState } from "react";
+import { motion } from "motion/react";
+import React, { useCallback, useEffect, useState } from "react";
 import { PageHead } from "../components/PageHead";
 import { SmokySectionTransition } from "../components/SmokySectionTransition";
 import { Button } from "../components/ui/button";
-import { useTokenAdvancedAnalytics } from "../hooks/useTokenAdvancedAnalytics";
 
-function formatNumber(n: number, decimals = 2): string {
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(decimals)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(decimals)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(decimals)}M`;
+interface CoinData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  price_change_percentage_24h: number;
+  total_volume: number;
+}
+
+interface GlobalData {
+  btcDominance: number;
+  ethDominance: number;
+  totalMarketCap: number;
+  change24h: number;
+}
+
+function formatBig(n: number): string {
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+  return `$${n.toFixed(2)}`;
+}
+
+function formatPrice(n: number): string {
   if (n >= 1000)
-    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-  return `$${n.toFixed(decimals)}`;
+    return `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  return `$${n.toFixed(6)}`;
 }
 
 export default function AdvancedAnalyticsPage() {
-  const [inputSymbol, setInputSymbol] = useState("");
-  const [searchSymbol, setSearchSymbol] = useState("");
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [globalData, setGlobalData] = useState<GlobalData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const { data, isLoading, error, refetch } =
-    useTokenAdvancedAnalytics(searchSymbol);
+  const fetchData = useCallback(async () => {
+    setError(false);
+    try {
+      const [coinsRes, globalRes] = await Promise.all([
+        fetch(
+          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false",
+        ),
+        fetch("https://api.coingecko.com/api/v3/global"),
+      ]);
 
-  const handleSearch = () => {
-    if (inputSymbol.trim()) setSearchSymbol(inputSymbol.trim().toUpperCase());
-  };
+      if (!coinsRes.ok || !globalRes.ok) throw new Error("API error");
+
+      const [coinsData, globalJson] = await Promise.all([
+        coinsRes.json(),
+        globalRes.json(),
+      ]);
+
+      setCoins(coinsData);
+
+      const g = globalJson.data;
+      setGlobalData({
+        btcDominance: g.market_cap_percentage?.btc ?? 0,
+        ethDominance: g.market_cap_percentage?.eth ?? 0,
+        totalMarketCap: g.total_market_cap?.usd ?? 0,
+        change24h: g.market_cap_change_percentage_24h_usd ?? 0,
+      });
+      setLastUpdated(new Date());
+    } catch {
+      setError(true);
+    }
+  }, []);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    await fetchData();
+    setIsLoading(false);
+  }, [fetchData]);
 
   const handleRefresh = async () => {
-    if (!searchSymbol) return;
-    setIsManualRefreshing(true);
-    await refetch();
-    setIsManualRefreshing(false);
+    setIsRefreshing(true);
+    await fetchData();
+    setIsRefreshing(false);
   };
 
-  const trendColor =
-    data?.trendSignal === "Bullish"
-      ? "text-green-500"
-      : data?.trendSignal === "Bearish"
-        ? "text-red-500"
-        : "text-yellow-500";
-  const TrendIcon =
-    data?.trendSignal === "Bullish"
-      ? TrendingUp
-      : data?.trendSignal === "Bearish"
-        ? TrendingDown
-        : Minus;
-  const riskColor =
-    data?.riskLevel === "Low"
-      ? "text-green-500"
-      : data?.riskLevel === "High"
-        ? "text-red-500"
-        : "text-yellow-500";
-  const volTrendColor =
-    data?.volumeTrend === "Rising"
-      ? "text-green-500"
-      : data?.volumeTrend === "Falling"
-        ? "text-red-500"
-        : "text-yellow-500";
+  useEffect(() => {
+    load();
+    const id = setInterval(fetchData, 60000); // 1 min
+    return () => clearInterval(id);
+  }, [load, fetchData]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <PageHead
         title="Advanced Analytics | RBS"
-        description="Deep token analytics with Bollinger Bands, RSI, MACD, and market strength."
+        description="Top 20 crypto by market cap — live prices, 24h change, volume, and BTC/ETH dominance from CoinGecko."
       />
 
-      <SmokySectionTransition>
-        <section className="py-16 px-4 max-w-5xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Advanced Analytics
-            </h1>
-            <p className="text-muted-foreground">
-              Deep token analysis with Bollinger Bands, RSI, MACD, volume
-              trends, and market strength
-            </p>
-          </div>
-
-          {/* Search */}
-          <div className="bg-white border border-gray-200 shadow-sm p-6 mb-8">
-            <div className="flex gap-3 flex-wrap">
-              <input
-                type="text"
-                value={inputSymbol}
-                onChange={(e) => setInputSymbol(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Enter token symbol (e.g. BTC, ETH, SOL)"
-                className="flex-1 bg-background/50 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="button"
-                onClick={handleSearch}
-                disabled={isLoading || !inputSymbol.trim()}
-                className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-                Analyze
-              </button>
-              {searchSymbol && (
-                <Button
-                  data-ocid="analytics.refresh.button"
-                  onClick={handleRefresh}
-                  variant="outline"
-                  disabled={isManualRefreshing || isLoading}
-                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 px-4 py-3 h-auto"
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 mr-1 ${isManualRefreshing ? "animate-spin" : ""}`}
-                  />
-                  {isManualRefreshing ? "Refreshing..." : "Refresh"}
-                </Button>
+      {/* Header */}
+      <div
+        className="border-b pt-20 pb-8 px-4"
+        style={{
+          background:
+            "linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 50%, #f8faff 100%)",
+          borderColor: "rgba(14, 165, 233, 0.15)",
+        }}
+      >
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                Advanced Analytics
+              </h1>
+              <p className="text-gray-500 mt-1">
+                Top 20 by market cap — live from CoinGecko
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              {lastUpdated && (
+                <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastUpdated.toLocaleTimeString()}
+                </span>
               )}
+              {isRefreshing && (
+                <RefreshCw className="w-4 h-4 text-emerald-600 animate-spin" />
+              )}
+              <Button
+                data-ocid="analytics.refresh.button"
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                disabled={isRefreshing || isLoading}
+                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                {isRefreshing ? "Refreshing..." : "Refresh"}
+              </Button>
             </div>
           </div>
+        </div>
+      </div>
 
+      <SmokySectionTransition>
+        <section className="py-8 px-4 max-w-5xl mx-auto space-y-6">
+          {/* Error */}
           {error && (
-            <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6 border border-destructive/30 text-center">
-              <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-2" />
-              <p className="text-destructive">
-                Token not found or API error. Try a different symbol.
+            <div
+              data-ocid="analytics.error_state"
+              className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center"
+            >
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+              <p className="text-red-600 font-semibold">
+                Failed to load market data
               </p>
+              <p className="text-red-400 text-sm mt-1">
+                CoinGecko API may be temporarily unavailable.
+              </p>
+              <Button
+                data-ocid="analytics.retry.button"
+                onClick={load}
+                variant="outline"
+                size="sm"
+                className="mt-3 border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Retry
+              </Button>
             </div>
           )}
 
-          {isLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(
-                ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"] as const
-              ).map((sk) => (
-                <div
-                  key={sk}
-                  className="bg-white border border-gray-200 shadow-sm p-5 animate-pulse"
+          {/* Global stats */}
+          {globalData && !isLoading && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                {
+                  label: "BTC Dominance",
+                  value: `${globalData.btcDominance.toFixed(1)}%`,
+                  icon: TrendingUp,
+                  color: "text-orange-600",
+                  bg: "bg-orange-50",
+                },
+                {
+                  label: "ETH Dominance",
+                  value: `${globalData.ethDominance.toFixed(1)}%`,
+                  icon: Activity,
+                  color: "text-purple-600",
+                  bg: "bg-purple-50",
+                },
+                {
+                  label: "Total Market Cap",
+                  value: formatBig(globalData.totalMarketCap),
+                  icon: Globe,
+                  color: "text-blue-600",
+                  bg: "bg-blue-50",
+                },
+                {
+                  label: "24h Market Change",
+                  value: `${globalData.change24h >= 0 ? "+" : ""}${globalData.change24h.toFixed(2)}%`,
+                  icon: globalData.change24h >= 0 ? TrendingUp : TrendingDown,
+                  color:
+                    globalData.change24h >= 0
+                      ? "text-emerald-600"
+                      : "text-red-600",
+                  bg: globalData.change24h >= 0 ? "bg-emerald-50" : "bg-red-50",
+                },
+              ].map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm"
                 >
-                  <div className="h-4 bg-muted rounded mb-3 w-1/2" />
-                  <div className="h-8 bg-muted rounded" />
+                  <div
+                    className={`w-8 h-8 ${stat.bg} rounded-lg flex items-center justify-center mb-2`}
+                  >
+                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                  </div>
+                  <p className={`font-black text-xl ${stat.color}`}>
+                    {stat.value}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* BTC Dominance bar */}
+          {globalData && !isLoading && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+              <h3 className="font-bold text-gray-900 text-sm mb-3">
+                Market Dominance
+              </h3>
+              <div className="h-4 bg-gray-100 rounded-full overflow-hidden flex">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${globalData.btcDominance}%` }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-orange-500 flex items-center justify-center"
+                >
+                  {globalData.btcDominance > 10 && (
+                    <span className="text-white text-[9px] font-bold px-1">
+                      BTC {globalData.btcDominance.toFixed(1)}%
+                    </span>
+                  )}
+                </motion.div>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${globalData.ethDominance}%` }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="h-full bg-purple-500 flex items-center justify-center"
+                >
+                  {globalData.ethDominance > 5 && (
+                    <span className="text-white text-[9px] font-bold px-1">
+                      ETH {globalData.ethDominance.toFixed(1)}%
+                    </span>
+                  )}
+                </motion.div>
+                <div className="flex-1 bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-500 text-[9px] font-bold px-1">
+                    Other
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading state */}
+          {isLoading && (
+            <div
+              data-ocid="analytics.loading_state"
+              className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+            >
+              {Array.from({ length: 10 }, (_, i) => i).map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 p-4 border-b border-gray-100 animate-pulse"
+                >
+                  <div className="w-6 h-4 bg-gray-100 rounded" />
+                  <div className="w-8 h-8 bg-gray-100 rounded-full" />
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-100 rounded w-24 mb-1" />
+                    <div className="h-3 bg-gray-100 rounded w-12" />
+                  </div>
+                  <div className="h-5 bg-gray-100 rounded w-24" />
+                  <div className="h-4 bg-gray-100 rounded w-16 hidden sm:block" />
+                  <div className="h-4 bg-gray-100 rounded w-20 hidden md:block" />
                 </div>
               ))}
             </div>
           )}
 
-          {data && !isLoading && (
-            <>
-              {/* Header */}
-              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">
-                      {data.name} ({data.symbol})
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Rank #{data.marketCapRank}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold font-mono text-foreground">
-                      {formatNumber(data.price)}
-                    </p>
-                    <div
-                      className={`flex items-center gap-1 justify-end ${trendColor}`}
-                    >
-                      <TrendIcon className="w-4 h-4" />
-                      <span className="font-semibold">{data.trendSignal}</span>
+          {/* Coins table */}
+          {!isLoading && coins.length > 0 && (
+            <div
+              data-ocid="analytics.table"
+              className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm"
+            >
+              {/* Table header */}
+              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <div className="col-span-1 text-center">#</div>
+                <div className="col-span-5 sm:col-span-4">Name</div>
+                <div className="col-span-3 sm:col-span-3 text-right">Price</div>
+                <div className="col-span-3 sm:col-span-2 text-right">24h</div>
+                <div className="col-span-2 text-right hidden sm:block">
+                  Market Cap
+                </div>
+                <div className="col-span-2 text-right hidden md:block">
+                  Volume
+                </div>
+              </div>
+
+              {coins.map((coin, idx) => {
+                const isUp = coin.price_change_percentage_24h >= 0;
+                return (
+                  <motion.div
+                    key={coin.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.03 }}
+                    data-ocid={`analytics.row.${idx + 1}`}
+                    className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center"
+                  >
+                    <div className="col-span-1 text-center text-sm text-gray-400 font-medium">
+                      {coin.market_cap_rank}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Market Strength */}
-              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Zap className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-bold text-foreground">
-                    Market Strength Score
-                  </h3>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                    <div className="col-span-5 sm:col-span-4 flex items-center gap-2">
+                      <img
+                        src={coin.image}
+                        alt={coin.name}
+                        className="w-7 h-7 rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm truncate">
+                          {coin.name}
+                        </p>
+                        <p className="text-xs text-gray-400 uppercase">
+                          {coin.symbol}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="col-span-3 sm:col-span-3 text-right font-mono font-bold text-gray-900 text-sm">
+                      {formatPrice(coin.current_price)}
+                    </div>
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        data.marketStrength >= 70
-                          ? "bg-green-500"
-                          : data.marketStrength >= 40
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                      }`}
-                      style={{ width: `${data.marketStrength}%` }}
-                    />
-                  </div>
-                  <span
-                    className={`text-3xl font-bold font-mono ${
-                      data.marketStrength >= 70
-                        ? "text-green-500"
-                        : data.marketStrength >= 40
-                          ? "text-yellow-500"
-                          : "text-red-500"
-                    }`}
-                  >
-                    {data.marketStrength}/100
-                  </span>
-                </div>
-              </div>
-
-              {/* Main Metrics Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {/* RSI */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      RSI (14)
-                    </span>
-                  </div>
-                  <p
-                    className={`text-3xl font-bold font-mono ${data.rsi > 70 ? "text-red-500" : data.rsi < 30 ? "text-green-500" : "text-foreground"}`}
-                  >
-                    {data.rsi.toFixed(1)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {data.rsi > 70
-                      ? "Overbought"
-                      : data.rsi < 30
-                        ? "Oversold"
-                        : "Neutral"}
-                  </p>
-                  <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${data.rsi > 70 ? "bg-red-500" : data.rsi < 30 ? "bg-green-500" : "bg-primary"}`}
-                      style={{ width: `${data.rsi}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Volume Trend */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart2 className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      Volume Trend
-                    </span>
-                  </div>
-                  <p className={`text-3xl font-bold ${volTrendColor}`}>
-                    {data.volumeTrend}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    24h Vol: {formatNumber(data.volume24h)}
-                  </p>
-                </div>
-
-                {/* Risk Level */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      Risk Level
-                    </span>
-                  </div>
-                  <p className={`text-3xl font-bold ${riskColor}`}>
-                    {data.riskLevel}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Volatility: {data.volatilityScore.toFixed(1)}%
-                  </p>
-                </div>
-
-                {/* 7d Change */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      7-Day Change
-                    </span>
-                  </div>
-                  <p
-                    className={`text-3xl font-bold font-mono ${data.change7d >= 0 ? "text-green-500" : "text-red-500"}`}
-                  >
-                    {data.change7d >= 0 ? "+" : ""}
-                    {data.change7d.toFixed(2)}%
-                  </p>
-                </div>
-
-                {/* 30d Change */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      30-Day Change
-                    </span>
-                  </div>
-                  <p
-                    className={`text-3xl font-bold font-mono ${data.change30d >= 0 ? "text-green-500" : "text-red-500"}`}
-                  >
-                    {data.change30d >= 0 ? "+" : ""}
-                    {data.change30d.toFixed(2)}%
-                  </p>
-                </div>
-
-                {/* ATH */}
-                <div className="bg-white border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      All-Time High
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold font-mono text-foreground">
-                    {formatNumber(data.ath)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {data.price < data.ath
-                      ? `${(((data.ath - data.price) / data.ath) * 100).toFixed(1)}% below ATH`
-                      : "At ATH"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bollinger Bands */}
-              <div className="bg-white border border-gray-200 shadow-sm p-6 mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart2 className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-bold text-foreground">
-                    Bollinger Bands (20-period)
-                  </h3>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Upper Band
-                    </p>
-                    <p className="text-lg font-bold font-mono text-red-400">
-                      {formatNumber(data.bollingerUpper)}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Middle (SMA20)
-                    </p>
-                    <p className="text-lg font-bold font-mono text-primary">
-                      {formatNumber(data.bollingerMiddle)}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Lower Band
-                    </p>
-                    <p className="text-lg font-bold font-mono text-green-400">
-                      {formatNumber(data.bollingerLower)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 relative h-3 bg-muted rounded-full overflow-hidden">
-                  {data.bollingerUpper > data.bollingerLower && (
-                    <div
-                      className="absolute top-0 h-full w-2 bg-primary rounded-full"
-                      style={{
-                        left: `${Math.max(0, Math.min(100, ((data.price - data.bollingerLower) / (data.bollingerUpper - data.bollingerLower)) * 100))}%`,
-                        transform: "translateX(-50%)",
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Lower</span>
-                  <span>Price Position</span>
-                  <span>Upper</span>
-                </div>
-              </div>
-
-              {/* Supply Info */}
-              <div className="bg-white border border-gray-200 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Activity className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Supply Ratio (Circulating / Total)
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${data.supplyRatio}%` }}
-                    />
-                  </div>
-                  <span className="text-lg font-bold font-mono text-foreground">
-                    {data.supplyRatio.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-
-          {!searchSymbol && !isLoading && (
-            <div className="bg-white border border-gray-200 shadow-sm p-12 text-center">
-              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Enter a token symbol above to see advanced analytics
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Try: BTC, ETH, SOL, BNB, ADA, DOT, AVAX
-              </p>
+                      className={`col-span-3 sm:col-span-2 text-right font-semibold text-sm flex items-center justify-end gap-1 ${isUp ? "text-emerald-600" : "text-red-600"}`}
+                    >
+                      {isUp ? (
+                        <TrendingUp className="w-3 h-3" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3" />
+                      )}
+                      {isUp ? "+" : ""}
+                      {coin.price_change_percentage_24h.toFixed(2)}%
+                    </div>
+                    <div className="col-span-2 text-right text-xs text-gray-500 hidden sm:block">
+                      {formatBig(coin.market_cap)}
+                    </div>
+                    <div className="col-span-2 text-right text-xs text-gray-500 hidden md:block">
+                      {formatBig(coin.total_volume)}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
+
+          <p className="text-xs text-gray-400 text-center">
+            Data from CoinGecko API · Updates every 60 seconds · Not financial
+            advice
+          </p>
         </section>
       </SmokySectionTransition>
     </div>

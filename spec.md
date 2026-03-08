@@ -1,64 +1,48 @@
-# RBS Official — Crypto Token Website
+# RBS Official — Version 125
 
 ## Current State
 
-A full multi-page React/TypeScript + Motoko (ICP) crypto token website for the RBS token (100,000 fixed supply). The site has:
-- 34+ pages including: Home, About, Whitepaper, Tokenomics, Roadmap, Market Intelligence, Market Dashboard, Market Pulse, Trading Tools, Fear & Greed, Community Voting/Governance, Developer Blog, Staking, Alerts, Acquisition/Presale/Airdrop, and more
-- Persistent Motoko backend with: user profiles, polls/voting, blog posts, alerts, market intel access, global section locks (passcode BP2420075112009BP), presale/airdrop timers, Market Pulse voting, HTTP outcalls
-- Real-time frontend data fetching via CoinGecko and Binance APIs
-- White theme (bg-white + gray text + cyan accents), forcedTheme="light" in ThemeProvider
-- RBS logo used in hero: `/assets/generated/rbs-token-logo.dim_512x512.png`
-- Animations: Framer Motion scroll-triggered, ParticleField, SmokySectionTransition, AnimatedSection
-- Header with full nav dropdowns; Footer with social links
-- Global passcode system for Market Intel / Blog / Polls sections
+Multi-page RBS token website with persistent Motoko backend. Features include: Market Intel (G-Man Intelligence), Community Voting/Polls, Developer Blog, Presale/Airdrop Acquisition forms (timer-locked, WhatsApp redirect), Trading Tools, Fear & Greed Index, Crypto Heatmap, Funding Rates, Portfolio Tracker, Staking Calculator, Alerts Center, Market Dashboard, AI Sentiment, Live Price Ticker, and more. White theme is enforced. RBS logo is displayed throughout. All social links (Telegram, WhatsApp) and the contact form email are correctly configured.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **RBS Logo update**: Use newly uploaded RBS coin logo images (`/assets/uploads/IMG_20250821_154306_073-4-1.jpg`) as the primary logo throughout the site — in Header, Hero section, footer, and any page that displays the logo. The logo shows a green metallic coin "RETURN BE SUPERIOR".
-- **Color palette derived from RBS logo**: The logo is deep teal/emerald green (#1a7a5a, #2d9e6b) with gold/bronze rim accents (#c9a227, #d4af37). Apply these brand colors as accent colors throughout the site where cyan was used. Keep white backgrounds, use teal-green as the primary accent instead of cyan.
-- **Refresh button on real-time sections**: Every section displaying live prices or search results must have a visible "Refresh" button at the top. Clicking it instantly re-fetches live data.
-- **New Trading Tool Pages / Sections** (functional, not UI-only):
-  - **Crypto Converter** (on Trading Tools page): Convert between crypto amounts and USD using live prices
-  - **Position Size Calculator**: Input entry price, stop loss, account size — outputs position size, risk amount, R:R ratio
-  - **Pip/Move Calculator**: For forex/crypto, calculate move value based on lot size and price
-  - **Fibonacci Retracement Calculator**: Input high/low — outputs 23.6%, 38.2%, 50%, 61.8%, 78.6% levels
-  - **Compound Interest / DCA Calculator**: Input recurring investment amount + frequency + expected APY — outputs projected portfolio value over time
-  - **Volatility Meter**: Live ATR-based volatility score for BTC/ETH/BNB using Binance API
-  - **Crypto Screener** (on Market Dashboard page): Search/filter top 50 coins by price, volume, 24h change — with live data from CoinGecko
-  - **On-chain Metrics Widget**: Bitcoin dominance, total market cap, altcoin season index (from CoinGecko global endpoint)
-- **More homepage sections**:
-  - RBS token stats bar (already exists, enhance with live market cap estimate)
-  - "How to Get RBS" step-by-step section
-  - Community stats section (poll count, blog post count, community members)
-- **Live Forex/Metals in Market Intel**: Already partially implemented — ensure Gold (XAU) and Silver (XAG) use live metal price APIs, show correct prices with refresh
+- Use new RBS logo images (uploaded: IMG_20250821_154306_073-8-1.jpg, -9-2.jpg, -10-3.jpg) throughout the site — replace old logo path with the new ones
+- Poll deletion must now require a passcode (BP2420075112009BP) before deleting — add a passcode input step in the delete dialog flow
+- New backend method `deletePollWithPasscode(pollId, passcode)` that validates the passcode server-side before deleting
 
 ### Modify
-- **Logo replacement**: Replace all instances of `/assets/generated/rbs-token-logo.dim_512x512.png` with the actual uploaded logo `/assets/uploads/IMG_20250821_154306_073-4-1.jpg`
-- **Brand colors**: Update accent color from cyan (#0ea5e9) to RBS teal-green (#16a34a / emerald-600) throughout. Keep white backgrounds and gray text. Cards: white bg, teal-green borders and icons.
-- **HomePage Live Market Snapshot**: Add a "Refresh" button at the top of the section
-- **MarketDashboardPage**: Add Crypto Screener section with search + live CoinGecko top-50 data + Refresh button. Add On-chain Metrics widget.
-- **TradingToolsPage**: Expand with the new calculators listed above, all fully functional
-- **MarketIntelPage**: Add Refresh button to the live data display. Ensure Gold/Silver prices use live metal API data.
-- **LivePricePage**: Add Refresh button at the top
-- **MarketPulsePage**: Add Refresh button
-- **FearGreedPage**: Add Refresh button
-- **AdvancedAnalyticsPage**: Add Refresh button to price-fetching sections
-- **Header logo**: Display the actual RBS coin logo image in the header alongside the brand name
-- **Footer logo**: Use the actual RBS coin logo
+- **Remove InsightsPage (news/crypto news)** — delete the `/insights` route and remove it from navigation/footer; it requires real-time external API data that is unreliable
+- **Remove AdvancedAnalyticsPage** — same reason; was still partially UI-only
+- **Remove AISentimentPage** — UI-only sentiment scoring, no real backend
+- **Remove MarketPulsePage** (standalone) — merge Market Pulse voting widget into the existing MarketIntelPage instead
+- **Remove LivePricePage** — standalone live price page; live prices are already on HomePage and in the ticker
+- **Acquisition page** — Presale/Airdrop forms: already redirect to WhatsApp +92 3294238997 with pre-filled message; confirm this works correctly after unlock based on countdown timer
+- **Contact page** — already redirects to design.crafters.official@gmail.com via mailto; ensure it is clean and correct
+- **FAQ page** — remove the FAQ page entirely; remove `/faq` route from App.tsx and from navigation
+- **Footer** — remove FAQ link; ensure Telegram points to https://t.me/RBSuperior and WhatsApp points to https://whatsapp.com/channel/0029VbB6FHV59PwWv9wIE93P
+- **Header/Nav** — remove FAQ, InsightsPage, LivePrice, AISentiment, AdvancedAnalytics nav links
+- **Poll deletion** — change delete flow to require passcode (BP2420075112009BP) input before confirming deletion; any user can delete if they know the passcode (not just poll creator)
+- **Logo** — update all references to use new uploaded logo: `/assets/uploads/IMG_20250821_154306_073-8-1.jpg` as the primary logo image
 
 ### Remove
-- Nothing to remove — preserve all existing pages and features
+- InsightsPage.tsx route + nav entry
+- AdvancedAnalyticsPage.tsx route + nav entry  
+- AISentimentPage.tsx route + nav entry
+- LivePricePage.tsx route + nav entry
+- MarketPulsePage.tsx route + nav entry (standalone page; keep MarketPulse as embedded component in MarketIntel)
+- FAQPage.tsx route + nav entry
+- All news/crypto-news API calls that were hardcoded in any page
 
 ## Implementation Plan
 
-1. **Copy uploaded logo to a stable path** — use `/assets/uploads/IMG_20250821_154306_073-4-1.jpg` as the canonical logo path
-2. **Update Header** — show actual RBS coin logo image (48px) next to brand name "RBS"
-3. **Update Footer** — show RBS coin logo in footer branding section
-4. **Update HomePage hero** — replace generated logo with uploaded photo
-5. **Update brand colors globally** — swap cyan-500/600 → emerald-600/green-600 for icon accents and active borders. Keep white backgrounds.
-6. **Add Refresh buttons** — to: HomePage Live Market, MarketDashboardPage, LivePricePage, MarketIntelPage, MarketPulsePage, FearGreedPage, AdvancedAnalyticsPage
-7. **Expand TradingToolsPage** — add 6 new calculators: Crypto Converter, Position Size Calc, Fibonacci Calc, Pip/Move Calc, DCA/Compound Calc, Volatility Meter (all functional with live data where applicable)
-8. **Enhance MarketDashboardPage** — add Crypto Screener section (top-50 CoinGecko search/filter) + On-chain Metrics (dominance, total mcap, altcoin season)
-9. **Enhance HomePage** — add "How to Get RBS" steps section and community stats section
-10. **Backend** — backend is already fully implemented; no new backend APIs needed. All new tools are purely frontend with external API calls.
+1. Update backend: add `deletePollWithPasscode(pollId: bigint, passcode: string)` method that checks passcode before deleting poll
+2. Update `backend.d.ts` with new method signature
+3. Frontend: Remove routes for /insights, /analytics, /sentiment, /live-price, /market-pulse, /faq from App.tsx
+4. Frontend: Update CommunityVotingPage — change poll delete dialog to require passcode input, call new `deletePollWithPasscode`
+5. Frontend: Update Header component — remove nav links for removed pages
+6. Frontend: Update Footer — remove FAQ link, verify Telegram/WhatsApp links correct
+7. Frontend: Update logo references throughout (HomePage hero, Footer, Header) to use new uploaded image `/assets/uploads/IMG_20250821_154306_073-8-1.jpg`
+8. Frontend: Clean up AcquisitionPage — ensure WhatsApp redirect with pre-filled message works correctly post-unlock
+9. Frontend: Verify ContactPage — mailto link goes to design.crafters.official@gmail.com
+10. Frontend: Ensure all remaining real-time sections (Fear & Greed, Trading Tools, Market Dashboard, Live Ticker) are fully functional with their API calls intact

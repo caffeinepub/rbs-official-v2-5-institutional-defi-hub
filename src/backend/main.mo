@@ -1202,4 +1202,16 @@ actor {
       };
     };
   };
+
+  public shared ({ caller }) func deletePollWithPasscode(pollId : Nat, passcode : Text) : async { #ok : (); #err : Text } {
+    if (passcode != hiddenMarketIntelPassword) {
+      return #err("Invalid passcode");
+    };
+    switch (polls.get(pollId)) {
+      case (null) { return #err("Poll not found") };
+      case (?_) {};
+    };
+    polls.remove(pollId);
+    #ok(());
+  };
 };

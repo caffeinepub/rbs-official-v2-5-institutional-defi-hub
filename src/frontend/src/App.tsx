@@ -12,11 +12,9 @@ import { AuthInitializer } from "./components/AuthInitializer";
 import { Footer } from "./components/Footer";
 import Header from "./components/Header";
 import { ScrollToTop } from "./components/ScrollToTop";
-import AISentimentPage from "./pages/AISentimentPage";
 import AboutPage from "./pages/AboutPage";
 import AcquisitionPage from "./pages/AcquisitionPage";
 import AdultFormPage from "./pages/AdultFormPage";
-import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
 import AirdropPresaleHubPage from "./pages/AirdropPresaleHubPage";
 import AlertsCenterPage from "./pages/AlertsCenterPage";
 import CommunityGovernancePage from "./pages/CommunityGovernancePage";
@@ -24,18 +22,18 @@ import CommunityHighlightsPage from "./pages/CommunityHighlightsPage";
 import CommunityLeaderboardPage from "./pages/CommunityLeaderboardPage";
 import CommunityVotingPage from "./pages/CommunityVotingPage";
 import ContactPage from "./pages/ContactPage";
+import CryptoHeatmapPage from "./pages/CryptoHeatmapPage";
 import DeveloperBlogPage from "./pages/DeveloperBlogPage";
 import EcosystemGrowthPage from "./pages/EcosystemGrowthPage";
-import FAQPage from "./pages/FAQPage";
 import FearGreedPage from "./pages/FearGreedPage";
+import FundingRatesPage from "./pages/FundingRatesPage";
 import HomePage from "./pages/HomePage";
-import InsightsPage from "./pages/InsightsPage";
-import LivePricePage from "./pages/LivePricePage";
 import MarketDashboardPage from "./pages/MarketDashboardPage";
 import MarketIntelPage from "./pages/MarketIntelPage";
-import MarketPulsePage from "./pages/MarketPulsePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PartnersPage from "./pages/PartnersPage";
+import PortfolioTrackerPage from "./pages/PortfolioTrackerPage";
+import RbsPricePage from "./pages/RbsPricePage";
 import RoadmapPage from "./pages/RoadmapPage";
 import SecurityTransparencyPage from "./pages/SecurityTransparencyPage";
 import StakingSimulatorPage from "./pages/StakingSimulatorPage";
@@ -59,6 +57,8 @@ function Layout() {
       <Header />
       <ScrollToTop />
       <AuthInitializer />
+      {/* h-8 spacer for ticker bar (in addition to page-level pt-20/pt-24 offsets) */}
+      <div className="h-8 flex-shrink-0" aria-hidden="true" />
       <main className="flex-1">
         <Outlet />
       </main>
@@ -103,11 +103,6 @@ const contactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/contact",
   component: ContactPage,
-});
-const faqRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/faq",
-  component: FAQPage,
 });
 const acquisitionRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -159,35 +154,10 @@ const testimonialsRoute = createRoute({
   path: "/testimonials",
   component: TestimonialsPage,
 });
-const insightsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/insights",
-  component: InsightsPage,
-});
-const livePriceRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/live-price",
-  component: LivePricePage,
-});
-const aiSentimentRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/sentiment",
-  component: AISentimentPage,
-});
-const advancedAnalyticsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/analytics",
-  component: AdvancedAnalyticsPage,
-});
 const alertsCenterRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/alerts",
   component: AlertsCenterPage,
-});
-const marketPulseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/market-pulse",
-  component: MarketPulsePage,
 });
 const airdropPresaleHubRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -219,6 +189,26 @@ const fearGreedRoute = createRoute({
   path: "/fear-greed",
   component: FearGreedPage,
 });
+const cryptoHeatmapRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/crypto-heatmap",
+  component: CryptoHeatmapPage,
+});
+const fundingRatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/funding-rates",
+  component: FundingRatesPage,
+});
+const portfolioTrackerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/portfolio-tracker",
+  component: PortfolioTrackerPage,
+});
+const rbsPriceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/rbs-price",
+  component: RbsPricePage,
+});
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -233,7 +223,6 @@ const routeTree = rootRoute.addChildren([
   roadmapRoute,
   partnersRoute,
   contactRoute,
-  faqRoute,
   acquisitionRoute,
   marketIntelRoute,
   marketDashboardRoute,
@@ -244,18 +233,17 @@ const routeTree = rootRoute.addChildren([
   ecosystemGrowthRoute,
   securityRoute,
   testimonialsRoute,
-  insightsRoute,
-  livePriceRoute,
-  aiSentimentRoute,
-  advancedAnalyticsRoute,
   alertsCenterRoute,
-  marketPulseRoute,
   airdropPresaleHubRoute,
   stakingSimulatorRoute,
   communityLeaderboardRoute,
   adultFormRoute,
   tradingToolsRoute,
   fearGreedRoute,
+  cryptoHeatmapRoute,
+  fundingRatesRoute,
+  portfolioTrackerRoute,
+  rbsPriceRoute,
   notFoundRoute,
 ]);
 

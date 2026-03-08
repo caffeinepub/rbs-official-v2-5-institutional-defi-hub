@@ -76,11 +76,11 @@ export default function MarketPulsePage() {
 
   const total = tally ? Number(tally.total) : 0;
   const bullishPct =
-    total > 0 ? Math.round((Number(tally!.bullish) / total) * 100) : 33;
+    total > 0 ? Math.round((Number(tally!.bullish) / total) * 100) : 0;
   const bearishPct =
-    total > 0 ? Math.round((Number(tally!.bearish) / total) * 100) : 33;
+    total > 0 ? Math.round((Number(tally!.bearish) / total) * 100) : 0;
   const neutralPct =
-    total > 0 ? Math.round((Number(tally!.neutral) / total) * 100) : 34;
+    total > 0 ? Math.round((Number(tally!.neutral) / total) * 100) : 0;
 
   const statusColor =
     data?.status === "Bullish"

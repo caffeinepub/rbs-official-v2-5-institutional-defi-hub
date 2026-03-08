@@ -316,9 +316,9 @@ const TRADING_TOOLS = [
   },
   {
     icon: TrendingUp,
-    title: "Market Pulse",
-    desc: "Live Bitcoin market sentiment tracking with RSI and MACD analysis.",
-    path: "/market-pulse",
+    title: "Market Dashboard",
+    desc: "Live market overview with real-time prices, dominance, and analytics.",
+    path: "/dashboard",
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200 hover:border-blue-400",
@@ -492,6 +492,366 @@ function AnimatedCounter({
   );
 }
 
+// ── Top Movers Section ─────────────────────────────────────────────────────────
+
+interface MoverCoin {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image: string;
+}
+
+function TopMoversSection() {
+  const navigate = useNavigate();
+  const [gainers, setGainers] = useState<MoverCoin[]>([]);
+  const [losers, setLosers] = useState<MoverCoin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchMovers = useCallback(async () => {
+    try {
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h",
+      );
+      if (!res.ok) throw new Error("API error");
+      const data: MoverCoin[] = await res.json();
+      const sorted = [...data].sort(
+        (a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h,
+      );
+      setGainers(sorted.slice(0, 3));
+      setLosers(sorted.slice(-3).reverse());
+      setLastUpdated(new Date());
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMovers();
+    const interval = setInterval(fetchMovers, 60000);
+    return () => clearInterval(interval);
+  }, [fetchMovers]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchMovers();
+  };
+
+  return (
+    <SmokySectionTransition delay={80}>
+      <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-white border-y border-gray-100">
+        <div className="container mx-auto max-w-5xl">
+          <AnimatedSection direction="up" className="text-center mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
+              <TrendingUp className="w-4 h-4" /> Market Movers
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Top Movers Today
+            </h2>
+            <p className="text-gray-500 mt-1 text-sm">
+              Biggest gainers and losers in the last 24 hours
+            </p>
+            <div className="flex justify-center mt-3">
+              <div className="flex items-center gap-2">
+                {lastUpdated && (
+                  <span className="text-xs text-gray-400">
+                    {lastUpdated.toLocaleTimeString()}
+                  </span>
+                )}
+                <Button
+                  data-ocid="home.movers.refresh.button"
+                  onClick={handleRefresh}
+                  variant="outline"
+                  size="sm"
+                  disabled={refreshing || loading}
+                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 mr-1 ${refreshing ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+          </AnimatedSection>
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {[1, 2].map((k) => (
+                <div
+                  key={k}
+                  className="h-40 bg-gray-100 rounded-2xl animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Gainers */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  <span className="font-bold text-emerald-700">
+                    Top Gainers
+                  </span>
+                </div>
+                {gainers.map((coin, i) => (
+                  <motion.div
+                    key={coin.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 hover:shadow-sm transition-all"
+                    data-ocid={`home.movers.gainer.item.${i + 1}`}
+                  >
+                    <img
+                      src={coin.image}
+                      alt={coin.name}
+                      className="w-8 h-8 rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900 uppercase text-sm">
+                        {coin.symbol}
+                      </div>
+                      <div className="text-xs text-gray-500">{coin.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono font-bold text-gray-900 text-sm">
+                        $
+                        {coin.current_price.toLocaleString(undefined, {
+                          maximumFractionDigits: 4,
+                        })}
+                      </div>
+                      <div className="text-emerald-600 font-bold text-sm">
+                        +{coin.price_change_percentage_24h.toFixed(2)}%
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Losers */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="w-4 h-4 text-red-600" />
+                  <span className="font-bold text-red-600">Top Losers</span>
+                </div>
+                {losers.map((coin, i) => (
+                  <motion.div
+                    key={coin.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 hover:shadow-sm transition-all"
+                    data-ocid={`home.movers.loser.item.${i + 1}`}
+                  >
+                    <img
+                      src={coin.image}
+                      alt={coin.name}
+                      className="w-8 h-8 rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900 uppercase text-sm">
+                        {coin.symbol}
+                      </div>
+                      <div className="text-xs text-gray-500">{coin.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono font-bold text-gray-900 text-sm">
+                        $
+                        {coin.current_price.toLocaleString(undefined, {
+                          maximumFractionDigits: 4,
+                        })}
+                      </div>
+                      <div className="text-red-600 font-bold text-sm">
+                        {coin.price_change_percentage_24h.toFixed(2)}%
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="text-center mt-6">
+            <Button
+              data-ocid="home.movers.heatmap.button"
+              onClick={() => navigate({ to: "/crypto-heatmap" })}
+              variant="outline"
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            >
+              View Full Heatmap <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+    </SmokySectionTransition>
+  );
+}
+
+// ── BTC Dominance Section ──────────────────────────────────────────────────────
+
+interface GlobalData {
+  data: {
+    market_cap_percentage: { btc: number; eth: number };
+  };
+}
+
+function BTCDominanceSection() {
+  const [btcDom, setBtcDom] = useState<number | null>(null);
+  const [ethDom, setEthDom] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await window.fetch(
+          "https://api.coingecko.com/api/v3/global",
+        );
+        if (!res.ok) return;
+        const data: GlobalData = await res.json();
+        setBtcDom(data.data.market_cap_percentage.btc);
+        setEthDom(data.data.market_cap_percentage.eth);
+      } catch {
+        /* silent */
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+    const interval = setInterval(fetch, 120000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const others =
+    btcDom !== null && ethDom !== null
+      ? Math.max(0, 100 - btcDom - ethDom)
+      : null;
+
+  const dominanceStats = [
+    {
+      label: "BTC Dominance",
+      value: btcDom,
+      color: "text-orange-600",
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      barColor: "#f97316",
+      icon: "₿",
+    },
+    {
+      label: "ETH Dominance",
+      value: ethDom,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      barColor: "#3b82f6",
+      icon: "Ξ",
+    },
+    {
+      label: "Others",
+      value: others,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+      border: "border-purple-200",
+      barColor: "#8b5cf6",
+      icon: "✦",
+    },
+  ];
+
+  return (
+    <SmokySectionTransition delay={80}>
+      <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-gray-50 border-b border-gray-100">
+        <div className="container mx-auto max-w-4xl">
+          <AnimatedSection direction="up" className="text-center mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium mb-3 sm:mb-4">
+              <Globe className="w-4 h-4" /> Market Dominance
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              BTC Dominance
+            </h2>
+            <p className="text-gray-500 mt-2 max-w-lg mx-auto text-sm">
+              Market dominance shows what % of total crypto market cap each
+              asset holds.
+            </p>
+          </AnimatedSection>
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[1, 2, 3].map((k) => (
+                <div
+                  key={k}
+                  className="h-28 bg-white rounded-2xl border border-gray-200 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {dominanceStats.map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className={`p-5 rounded-2xl bg-white border ${stat.border} hover:shadow-md transition-all duration-300`}
+                  data-ocid={`home.dominance.item.${i + 1}`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-2xl font-bold ${stat.color}`}>
+                      {stat.icon}
+                    </span>
+                    <motion.span
+                      key={stat.value}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                      className={`text-2xl font-bold font-jetbrains ${stat.color}`}
+                    >
+                      {stat.value !== null ? `${stat.value.toFixed(1)}%` : "—"}
+                    </motion.span>
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700 mb-2">
+                    {stat.label}
+                  </div>
+                  {stat.value !== null && (
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${Math.min(stat.value, 100)}%` }}
+                        viewport={{ once: true }}
+                        transition={{
+                          duration: 1,
+                          ease: "easeOut",
+                          delay: i * 0.1 + 0.3,
+                        }}
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: stat.barColor }}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </SmokySectionTransition>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -627,20 +987,19 @@ export default function HomePage() {
           <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
           <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-40 pointer-events-none animate-glow-pulse" />
 
-          <div className="relative container mx-auto px-4 text-center z-10">
+          <div className="relative container mx-auto px-3 sm:px-4 md:px-6 text-center z-10">
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-              className="flex justify-center mb-8"
+              className="flex justify-center mb-6 sm:mb-8"
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-emerald-200 rounded-full blur-xl opacity-60 animate-neon-pulse" />
                 <img
-                  src="/assets/uploads/IMG_20250821_154306_073-4-1.jpg"
+                  src="/assets/uploads/IMG_20250821_154306_073-8-1.jpg"
                   alt="RBS Token Logo"
-                  className="w-28 h-28 rounded-full object-cover relative z-10 animate-float"
-                  style={{ width: "112px", height: "112px" }}
+                  className="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover relative z-10 animate-float"
                 />
               </div>
             </motion.div>
@@ -649,7 +1008,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="text-5xl md:text-7xl font-bold mb-6 shimmer-turquoise leading-tight"
+              className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 shimmer-turquoise leading-tight"
             >
               Return Be Superior
             </motion.h1>
@@ -658,7 +1017,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: [0.4, 0, 0.2, 1] }}
-              className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+              className="text-base sm:text-xl md:text-2xl text-gray-600 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-2"
             >
               Advanced blockchain solutions powered by the RBS token ecosystem.
               Superior trading intelligence, real-time market analytics, and
@@ -669,7 +1028,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
             >
               <Button
                 data-ocid="home.primary_button"
@@ -714,9 +1073,9 @@ export default function HomePage() {
 
         {/* ── 2. Stats Ticker ─────────────────────────────────────────────── */}
         <SmokySectionTransition>
-          <section className="py-10 px-4 border-y border-gray-100 bg-white">
+          <section className="py-8 sm:py-10 px-3 sm:px-4 md:px-6 border-y border-gray-100 bg-white">
             <div className="container mx-auto">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 {STATS.map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -742,13 +1101,16 @@ export default function HomePage() {
 
         {/* ── NEW: Fear & Greed Index Widget ─────────────────────────────── */}
         <SmokySectionTransition delay={80}>
-          <section className="py-14 px-4 bg-gray-50 border-b border-gray-100">
+          <section className="py-10 sm:py-14 px-3 sm:px-4 md:px-6 bg-gray-50 border-b border-gray-100">
             <div className="container mx-auto max-w-4xl">
-              <AnimatedSection direction="up" className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-700 text-sm font-medium mb-4">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-6 sm:mb-8"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-700 text-sm font-medium mb-3 sm:mb-4">
                   <Activity className="w-4 h-4" /> Market Sentiment
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Fear &amp; Greed Index
                 </h2>
                 <p className="text-gray-500 mt-2">
@@ -872,17 +1234,20 @@ export default function HomePage() {
 
         {/* ── 3. Live Market Snapshot ─────────────────────────────────────── */}
         <SmokySectionTransition delay={80}>
-          <section className="py-20 px-4 bg-white">
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white">
             <div className="container mx-auto">
-              <AnimatedSection direction="up" className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-6">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-8 sm:mb-12"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 sm:mb-6">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   LIVE MARKET DATA
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-gray-900">
                   Live Market Snapshot
                 </h2>
-                <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
                   Real-time crypto prices from CoinGecko — refreshes every 30
                   seconds
                 </p>
@@ -1002,15 +1367,148 @@ export default function HomePage() {
           </section>
         </SmokySectionTransition>
 
+        {/* ── RBS Token Status Section ────────────────────────────────────── */}
+        <SmokySectionTransition delay={60}>
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white border-b border-gray-100">
+            <div className="container mx-auto max-w-5xl">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-8 sm:mb-12"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 text-sm font-medium mb-4">
+                  <Coins className="w-4 h-4" /> RBS TOKEN
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-3">
+                  RBS Token — Pre-Launch Status
+                </h2>
+                <p className="text-gray-500 max-w-2xl mx-auto">
+                  The RBS token has a fixed supply of 100,000 tokens and is
+                  currently in pre-launch phase. Acquisition opens according to
+                  the project roadmap.
+                </p>
+              </AnimatedSection>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                {[
+                  {
+                    label: "Total Supply",
+                    value: "100,000",
+                    unit: "RBS",
+                    icon: Coins,
+                    color: "text-cyan-600",
+                    bg: "bg-cyan-50 border-cyan-200",
+                  },
+                  {
+                    label: "Token Price",
+                    value: "TBA",
+                    unit: "at Launch",
+                    icon: TrendingUp,
+                    color: "text-emerald-600",
+                    bg: "bg-emerald-50 border-emerald-200",
+                  },
+                  {
+                    label: "Launch Phase",
+                    value: "Q1 2027",
+                    unit: "Presale Opens",
+                    icon: Calendar,
+                    color: "text-violet-600",
+                    bg: "bg-violet-50 border-violet-200",
+                  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className={`rounded-2xl border p-6 text-center ${item.bg}`}
+                  >
+                    <item.icon
+                      className={`w-8 h-8 mx-auto mb-3 ${item.color}`}
+                    />
+                    <div
+                      className={`text-3xl font-bold font-jetbrains ${item.color} mb-1`}
+                    >
+                      {item.value}
+                    </div>
+                    <div className="text-sm font-medium text-gray-600">
+                      {item.label}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {item.unit}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Token Utility */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6"
+              >
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-cyan-600" /> Token Utility
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    "Access to exclusive Market Intelligence signals",
+                    "Community governance and voting rights",
+                    "Priority access to RBS platform features",
+                    "Staking rewards and yield generation",
+                    "Developer blog creation privileges",
+                    "Early access to future RBS ecosystem tools",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                      <span className="text-sm text-gray-600">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* CTA Buttons */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-3"
+              >
+                <Button
+                  data-ocid="home.rbs.presale.button"
+                  onClick={() => navigate({ to: "/acquisition" })}
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-8"
+                >
+                  Register for Presale <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+                <Button
+                  data-ocid="home.rbs.intel.button"
+                  onClick={() => navigate({ to: "/market-intel" })}
+                  variant="outline"
+                  className="border-cyan-300 text-cyan-700 hover:bg-cyan-50 px-8"
+                >
+                  View Market Intelligence
+                </Button>
+              </motion.div>
+            </div>
+          </section>
+        </SmokySectionTransition>
+
         {/* ── NEW: Quick Signals Strip ────────────────────────────────────── */}
         <SmokySectionTransition delay={80}>
-          <section className="py-16 px-4 bg-gray-50 border-y border-gray-100">
+          <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-gray-50 border-y border-gray-100">
             <div className="container mx-auto max-w-5xl">
-              <AnimatedSection direction="up" className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-6 sm:mb-8"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
                   <Zap className="w-4 h-4" /> G-MAN Intelligence
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Live Trading Signals
                 </h2>
                 <p className="text-gray-500 mt-1 text-sm">
@@ -1113,23 +1611,32 @@ export default function HomePage() {
           </section>
         </SmokySectionTransition>
 
+        {/* ── NEW: Top Movers Today ───────────────────────────────────── */}
+        <TopMoversSection />
+
+        {/* ── NEW: BTC Dominance ──────────────────────────────────────── */}
+        <BTCDominanceSection />
+
         {/* ── NEW: How to Get RBS Steps ────────────────────────────────── */}
         <SmokySectionTransition delay={80}>
-          <section className="py-20 px-4 bg-white border-b border-gray-100">
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white border-b border-gray-100">
             <div className="container mx-auto max-w-5xl">
-              <AnimatedSection direction="up" className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-8 sm:mb-12"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
                   <Coins className="w-4 h-4" /> Get Started
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">
                   How to Get <span className="shimmer-turquoise">RBS</span>
                 </h2>
-                <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
                   Four simple steps to join the RBS ecosystem
                 </p>
               </AnimatedSection>
 
-              <div className="flex flex-col md:flex-row gap-4 relative">
+              <div className="flex flex-col md:flex-row gap-3 sm:gap-4 relative">
                 <div className="hidden md:block absolute top-12 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-emerald-200 via-emerald-300 to-emerald-200" />
                 {[
                   {
@@ -1196,18 +1703,21 @@ export default function HomePage() {
 
         {/* ── NEW: Community Stats Section ─────────────────────────────── */}
         <SmokySectionTransition delay={80}>
-          <section className="py-20 px-4 bg-gray-50 border-b border-gray-100">
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-gray-50 border-b border-gray-100">
             <div className="container mx-auto max-w-5xl">
-              <AnimatedSection direction="up" className="text-center mb-12">
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-8 sm:mb-12"
+              >
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">
                   Growing <span className="shimmer-turquoise">Community</span>
                 </h2>
-                <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
                   The numbers behind the RBS ecosystem
                 </p>
               </AnimatedSection>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
                 {[
                   {
                     value: "1",
@@ -1279,22 +1789,25 @@ export default function HomePage() {
 
         {/* ── 4. Features Grid ────────────────────────────────────────────── */}
         <SmokySectionTransition delay={100}>
-          <section className="py-20 px-4 bg-white">
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white">
             <div className="container mx-auto">
-              <AnimatedSection direction="up" className="text-center mb-16">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-6">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-10 sm:mb-16"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 sm:mb-6">
                   <Zap className="w-4 h-4" /> Platform Features
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-gray-900">
                   Everything You Need
                 </h2>
-                <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
                   Comprehensive tools and services for the modern blockchain
                   ecosystem
                 </p>
               </AnimatedSection>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-7xl mx-auto">
                 {FEATURES.map((feature, i) => (
                   <motion.div
                     key={feature.title}
@@ -1332,16 +1845,19 @@ export default function HomePage() {
 
         {/* ── 5. Why RBS? ─────────────────────────────────────────────────── */}
         <SmokySectionTransition delay={120}>
-          <section className="py-20 px-4 bg-gray-50">
+          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-gray-50">
             <div className="container mx-auto max-w-5xl">
-              <AnimatedSection direction="up" className="text-center mb-16">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-6">
+              <AnimatedSection
+                direction="up"
+                className="text-center mb-10 sm:mb-16"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 sm:mb-6">
                   <CheckCircle className="w-4 h-4" /> Why Choose RBS
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-gray-900">
                   Why <span className="shimmer-turquoise">RBS?</span>
                 </h2>
-                <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
                   What makes Return Be Superior different from every other token
                 </p>
               </AnimatedSection>

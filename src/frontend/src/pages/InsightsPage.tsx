@@ -1,303 +1,357 @@
 import {
-  Activity,
   AlertCircle,
   Clock,
+  ExternalLink,
   Globe,
+  Newspaper,
   RefreshCw,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { PageHead } from "../components/PageHead";
 import { SmokySectionTransition } from "../components/SmokySectionTransition";
-import { Skeleton } from "../components/ui/skeleton";
-import {
-  formatLargeNumber,
-  useRealWorldAnalytics,
-} from "../hooks/useRealWorldAnalytics";
+import { Button } from "../components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 
-function useCountUp(target: number, duration = 1500, trigger = true) {
-  const [value, setValue] = useState(0);
-  const prefersReduced = useRef(
-    typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-  useEffect(() => {
-    if (!trigger) return;
-    if (prefersReduced.current) {
-      setValue(target);
-      return;
-    }
-    let start = 0;
-    const step = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) {
-        setValue(target);
-        clearInterval(timer);
-      } else setValue(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [target, duration, trigger]);
-  return value;
+interface NewsItem {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  categories: string[];
+}
+
+type FilterTab = "all" | "bitcoin" | "ethereum" | "defi";
+
+const FILTER_KEYWORDS: Record<FilterTab, string[]> = {
+  all: [],
+  bitcoin: ["bitcoin", "btc"],
+  ethereum: ["ethereum", "eth"],
+  defi: [
+    "defi",
+    "dex",
+    "decentralized",
+    "uniswap",
+    "aave",
+    "compound",
+    "yield",
+  ],
+};
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 export default function InsightsPage() {
-  const { data, isLoading, error, refetch, dataUpdatedAt } =
-    useRealWorldAnalytics();
-  const [countdown, setCountdown] = useState(60);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [filter, setFilter] = useState<FilterTab>("all");
+
+  const fetchNews = useCallback(async () => {
+    setError(false);
+    try {
+      // Try CryptoPanic first
+      let items: NewsItem[] = [];
+      try {
+        const res = await fetch(
+          "https://cryptopanic.com/api/v1/posts/?auth_token=free&public=true&kind=news",
+        );
+        if (!res.ok) throw new Error("CryptoPanic error");
+        const data = await res.json();
+        items = (data.results ?? []).slice(0, 30).map(
+          (item: {
+            id: number;
+            title: string;
+            url: string;
+            source: { title: string };
+            published_at: string;
+            currencies?: { code: string }[];
+          }) => ({
+            id: String(item.id),
+            title: item.title,
+            url: item.url,
+            source: item.source?.title ?? "CryptoPanic",
+            publishedAt: item.published_at,
+            categories: (item.currencies ?? []).map((c: { code: string }) =>
+              c.code.toLowerCase(),
+            ),
+          }),
+        );
+      } catch {
+        // Fallback: CoinGecko news
+        const res2 = await fetch("https://api.coingecko.com/api/v3/news");
+        if (!res2.ok) throw new Error("CoinGecko news error");
+        const data2 = await res2.json();
+        items = (data2.data ?? []).slice(0, 30).map(
+          (item: {
+            id: string;
+            title: string;
+            url: string;
+            author: { name?: string };
+            updated_at: number;
+          }) => ({
+            id: item.id,
+            title: item.title,
+            url: item.url,
+            source: item.author?.name ?? "CoinGecko",
+            publishedAt: new Date(item.updated_at * 1000).toISOString(),
+            categories: [],
+          }),
+        );
+      }
+
+      setNews(items);
+      setLastUpdated(new Date());
+    } catch {
+      setError(true);
+    }
+  }, []);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    await fetchNews();
+    setIsLoading(false);
+  }, [fetchNews]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchNews();
+    setIsRefreshing(false);
+  };
 
   useEffect(() => {
-    setCountdown(60);
-    setLastUpdated(dataUpdatedAt ? new Date(dataUpdatedAt) : null);
-    const interval = setInterval(() => {
-      setCountdown((c) => (c <= 1 ? 60 : c - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [dataUpdatedAt]);
+    load();
+    const id = setInterval(fetchNews, 120000); // 2 min
+    return () => clearInterval(id);
+  }, [load, fetchNews]);
 
-  const totalMarketCap =
-    (data as { totalMarketCap?: number } | undefined)?.totalMarketCap ?? 0;
-  const volume24h =
-    (data as { totalVolume24h?: number } | undefined)?.totalVolume24h ?? 0;
-  const btcDominance =
-    (data as { btcDominance?: number } | undefined)?.btcDominance ?? 0;
-  const ethDominance =
-    (data as { ethDominance?: number } | undefined)?.ethDominance ?? 0;
-  const activeCryptos =
-    (data as { activeCryptocurrencies?: number } | undefined)
-      ?.activeCryptocurrencies ?? 0;
-  const marketCapChange =
-    (data as { marketCapChange24h?: number } | undefined)?.marketCapChange24h ??
-    0;
-
-  const hasData = !isLoading && !!data;
-  const mcapCount = useCountUp(Math.round(totalMarketCap / 1e9), 1800, hasData);
-  const volCount = useCountUp(Math.round(volume24h / 1e9), 1600, hasData);
-  const btcDomCount = useCountUp(Math.round(btcDominance * 10), 1400, hasData);
-  const ethDomCount = useCountUp(Math.round(ethDominance * 10), 1400, hasData);
-  const cryptoCount = useCountUp(activeCryptos, 1500, hasData);
+  const filteredNews =
+    filter === "all"
+      ? news
+      : news.filter((item) => {
+          const kw = FILTER_KEYWORDS[filter];
+          const titleLower = item.title.toLowerCase();
+          return (
+            item.categories.some((c) => kw.some((k) => c.includes(k))) ||
+            kw.some((k) => titleLower.includes(k))
+          );
+        });
 
   return (
     <>
       <PageHead
-        title="Market Insights | RBS Superior"
-        description="Real-time global crypto market insights — market cap, volume, BTC dominance, and more."
+        title="Crypto News | RBS"
+        description="Live cryptocurrency news feed with Bitcoin, Ethereum, and DeFi filters."
       />
-      <div className="min-h-screen bg-background text-foreground">
-        {/* Hero */}
-        <section className="relative py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-gold/10 pointer-events-none" />
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage:
-                "url(/assets/generated/analytics-dashboard-chart-bg.dim_1000x600.png)",
-              backgroundSize: "cover",
-            }}
-          />
-          <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-            <SmokySectionTransition>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/40 bg-gold/10 text-gold text-sm font-medium mb-6">
-                <Globe className="w-4 h-4" />
-                Real-Time Market Insights
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div
+          className="border-b pt-20 pb-8 px-4"
+          style={{
+            background:
+              "linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 50%, #f8faff 100%)",
+            borderColor: "rgba(14, 165, 233, 0.15)",
+          }}
+        >
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                  Crypto News
+                </h1>
+                <p className="text-gray-500 mt-1">
+                  Live news feed — auto-refreshes every 2 minutes
+                </p>
               </div>
-              <h1 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent">
-                Market Insights
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Live global cryptocurrency market data refreshing every 60
-                seconds.
-              </p>
-            </SmokySectionTransition>
-          </div>
-        </section>
-
-        {/* Refresh Status Bar */}
-        <SmokySectionTransition>
-          <div className="max-w-5xl mx-auto px-6 mb-6">
-            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 border border-gold/10 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4 text-gold" />
-                {lastUpdated ? (
-                  <span>
-                    Last updated:{" "}
-                    <span className="text-foreground">
-                      {lastUpdated.toLocaleTimeString()}
-                    </span>
+              <div className="flex items-center gap-3 flex-wrap">
+                {lastUpdated && (
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {lastUpdated.toLocaleTimeString()}
                   </span>
-                ) : (
-                  <span>Fetching data...</span>
                 )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  Next refresh in{" "}
-                  <span className="text-gold font-bold tabular-nums">
-                    {countdown}s
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-emerald-700 font-medium">
+                    Live
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  disabled={isLoading}
-                  className="flex items-center gap-1 text-sm text-gold hover:text-gold-light transition-colors disabled:opacity-50"
+                <Button
+                  data-ocid="insights.refresh.button"
+                  onClick={handleRefresh}
+                  variant="outline"
+                  size="sm"
+                  disabled={isRefreshing || isLoading}
+                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                 >
                   <RefreshCw
-                    className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                    className={`w-4 h-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`}
                   />
-                  Refresh
-                </button>
+                  {isRefreshing ? "Refreshing..." : "Refresh"}
+                </Button>
               </div>
             </div>
           </div>
-        </SmokySectionTransition>
+        </div>
 
-        {/* Error State */}
-        {error && (
-          <SmokySectionTransition>
-            <div className="max-w-5xl mx-auto px-6 mb-6">
-              <div className="flex items-center gap-3 text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">Failed to load market data.</span>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="ml-auto text-sm underline hover:no-underline"
-                >
-                  Retry
-                </button>
-              </div>
-            </div>
-          </SmokySectionTransition>
-        )}
-
-        {/* Main Metrics */}
         <SmokySectionTransition>
-          <section className="py-8 px-6 max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold text-gold mb-6">
-              Global Market Overview
-            </h2>
+          <section className="py-8 px-4 max-w-5xl mx-auto">
+            {/* Filter Tabs */}
+            <div className="mb-6">
+              <Tabs
+                value={filter}
+                onValueChange={(v) => setFilter(v as FilterTab)}
+              >
+                <TabsList className="bg-gray-100 border border-gray-200">
+                  <TabsTrigger
+                    value="all"
+                    data-ocid="insights.all.tab"
+                    className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:font-bold text-sm"
+                  >
+                    All News
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="bitcoin"
+                    data-ocid="insights.bitcoin.tab"
+                    className="data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:font-bold text-sm"
+                  >
+                    Bitcoin
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ethereum"
+                    data-ocid="insights.ethereum.tab"
+                    className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:font-bold text-sm"
+                  >
+                    Ethereum
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="defi"
+                    data-ocid="insights.defi.tab"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:font-bold text-sm"
+                  >
+                    DeFi
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Error state */}
+            {error && (
+              <div
+                data-ocid="insights.error_state"
+                className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center mb-6"
+              >
+                <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                <p className="text-red-600 font-semibold">
+                  News feed temporarily unavailable
+                </p>
+                <p className="text-red-400 text-sm mt-1">
+                  CryptoPanic and CoinGecko APIs may be temporarily unavailable.
+                </p>
+                <Button
+                  data-ocid="insights.retry.button"
+                  onClick={load}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {/* Loading state */}
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-32 rounded-2xl" />
+              <div data-ocid="insights.loading_state" className="space-y-4">
+                {Array.from({ length: 8 }, (_, i) => i).map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse"
+                  >
+                    <div className="h-5 bg-gray-100 rounded mb-3 w-3/4" />
+                    <div className="h-4 bg-gray-100 rounded w-1/2" />
+                  </div>
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Total Market Cap */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <Globe className="w-8 h-8 text-gold mb-3" />
+              <>
+                {/* Count */}
+                {!error && (
+                  <p className="text-xs text-gray-400 mb-4">
+                    Showing {filteredNews.length} articles
+                  </p>
+                )}
+
+                {/* Empty filtered state */}
+                {filteredNews.length === 0 && !error && !isLoading && (
                   <div
-                    className={`text-2xl font-black ${marketCapChange >= 0 ? "text-green-500" : "text-red-500"}`}
+                    data-ocid="insights.empty_state"
+                    className="text-center py-12 text-gray-400"
                   >
-                    ${mcapCount.toLocaleString()}B
+                    <Newspaper className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">
+                      No news matching this filter right now.
+                    </p>
                   </div>
-                  {marketCapChange !== 0 && (
-                    <div
-                      className={`flex items-center gap-1 text-sm mt-1 ${marketCapChange >= 0 ? "text-green-500" : "text-red-500"}`}
+                )}
+
+                {/* News grid */}
+                <div className="space-y-3">
+                  {filteredNews.map((item, idx) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-ocid={`insights.item.${idx + 1}`}
+                      className="block bg-white border border-gray-200 rounded-xl p-4 sm:p-5 hover:border-emerald-300 hover:shadow-sm transition-all group"
                     >
-                      {marketCapChange >= 0 ? (
-                        <TrendingUp className="w-4 h-4" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4" />
-                      )}
-                      {marketCapChange >= 0 ? "+" : ""}
-                      {marketCapChange.toFixed(2)}% (24h)
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Total Market Cap
-                  </div>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 font-semibold text-sm sm:text-base leading-snug group-hover:text-emerald-700 transition-colors line-clamp-2">
+                            {item.title}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <Globe className="w-3 h-3" />
+                              {item.source}
+                            </span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {timeAgo(item.publishedAt)}
+                            </span>
+                            {item.categories.slice(0, 3).map((c) => (
+                              <span
+                                key={c}
+                                className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100"
+                              >
+                                {c.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-emerald-500 flex-shrink-0 mt-1 transition-colors" />
+                      </div>
+                    </a>
+                  ))}
                 </div>
-
-                {/* 24h Volume */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <Activity className="w-8 h-8 text-blue-500 mb-3" />
-                  <div className="text-2xl font-black text-blue-500">
-                    ${volCount.toLocaleString()}B
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    24h Trading Volume
-                  </div>
-                </div>
-
-                {/* BTC Dominance */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <TrendingUp className="w-8 h-8 text-gold mb-3" />
-                  <div className="text-2xl font-black text-gold">
-                    {(btcDomCount / 10).toFixed(1)}%
-                  </div>
-                  <div className="w-full bg-muted/30 rounded-full h-2 mt-2">
-                    <div
-                      className="h-2 rounded-full bg-gold transition-all duration-700"
-                      style={{ width: `${btcDominance}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    BTC Dominance
-                  </div>
-                </div>
-
-                {/* ETH Dominance */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <TrendingUp className="w-8 h-8 text-purple-500 mb-3" />
-                  <div className="text-2xl font-black text-purple-500">
-                    {(ethDomCount / 10).toFixed(1)}%
-                  </div>
-                  <div className="w-full bg-muted/30 rounded-full h-2 mt-2">
-                    <div
-                      className="h-2 rounded-full bg-purple-500 transition-all duration-700"
-                      style={{ width: `${ethDominance}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    ETH Dominance
-                  </div>
-                </div>
-
-                {/* Active Cryptocurrencies */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  <Globe className="w-8 h-8 text-emerald-600 mb-3" />
-                  <div className="text-2xl font-black text-emerald-600">
-                    {cryptoCount.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Active Cryptocurrencies
-                  </div>
-                </div>
-
-                {/* Market Trend */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 border border-gold/10 hover:border-gold/40 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                  {marketCapChange >= 0 ? (
-                    <TrendingUp className="w-8 h-8 text-green-500 mb-3" />
-                  ) : (
-                    <TrendingDown className="w-8 h-8 text-red-500 mb-3" />
-                  )}
-                  <div
-                    className={`text-2xl font-black ${marketCapChange >= 0 ? "text-green-500" : "text-red-500"}`}
-                  >
-                    {marketCapChange >= 0 ? "Bullish" : "Bearish"}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Market Trend (24h)
-                  </div>
-                </div>
-              </div>
+              </>
             )}
-          </section>
-        </SmokySectionTransition>
 
-        <SmokySectionTransition>
-          <div className="max-w-5xl mx-auto px-6 pb-12">
-            <p className="text-xs text-muted-foreground text-center">
-              Data sourced from CoinGecko /global endpoint. Updates every 60
-              seconds. Not financial advice.
+            <p className="text-xs text-gray-400 text-center mt-8">
+              News sourced from CryptoPanic &amp; CoinGecko public APIs. Not
+              financial advice.
             </p>
-          </div>
+          </section>
         </SmokySectionTransition>
       </div>
     </>

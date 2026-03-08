@@ -24,6 +24,8 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
+  CheckCircle,
+  ExternalLink,
   Eye,
   EyeOff,
   Globe,
@@ -31,6 +33,7 @@ import {
   PenLine,
   Plus,
   RefreshCw,
+  Share2,
   Tag,
   Trash2,
   Unlock,
@@ -48,6 +51,11 @@ import {
   useDeleteBlogPost,
   usePublishedPosts,
 } from "../hooks/useQueries";
+import {
+  BINANCE_SQUARE_HANDLE,
+  getMaskedApiKey,
+  sharePostToBinanceSquare,
+} from "../lib/binanceSquare";
 
 export default function DeveloperBlogPage() {
   const { identity } = useInternetIdentity();
@@ -80,8 +88,15 @@ export default function DeveloperBlogPage() {
   const [tags, setTags] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Post view state
+  // Post view & share state
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [lastPublishedPost, setLastPublishedPost] = useState<BlogPost | null>(
+    null,
+  );
+  const [showShareBanner, setShowShareBanner] = useState(false);
+  const [binancePostStatus, setBinancePostStatus] = useState<
+    "idle" | "posting" | "success" | "manual"
+  >("idle");
 
   const sortedPosts = [...posts].sort(
     (a, b) => Number(b.createdAt) - Number(a.createdAt),
@@ -93,6 +108,7 @@ export default function DeveloperBlogPage() {
       return;
     }
     setAuthorPasscodeError("");
+    setIsVerifying(true);
     try {
       // Globally unlock the developer blog section for all users
       await setSectionLock(authorPasscode.trim(), true);
@@ -176,7 +192,40 @@ export default function DeveloperBlogPage() {
 
     try {
       await createPost.mutateAsync({ post, passcode: verifiedPasscode });
-      toast.success("Post published successfully!");
+      toast.success("Post published! Visible to all users globally.");
+      const publishedPost = { ...post, createdAt: BigInt(Date.now()) };
+      setLastPublishedPost(publishedPost);
+      setShowShareBanner(true);
+      setBinancePostStatus("posting");
+
+      // Attempt direct Binance Square API post
+      try {
+        const response = await fetch(
+          "https://www.binance.com/bapi/growth/v1/friendly/growth/square-social-network/article/create",
+          {
+            method: "POST",
+            headers: {
+              "X-Api-Key": "cb3bc3de8e894ccc9625f1fe0ff6bfc2",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: post.title,
+              content: post.body,
+              tags: post.tags,
+            }),
+          },
+        );
+        if (response.ok) {
+          setBinancePostStatus("success");
+          toast.success("Auto-posted to Binance Square!");
+        } else {
+          setBinancePostStatus("manual");
+        }
+      } catch {
+        // CORS or network error — fallback to manual share
+        setBinancePostStatus("manual");
+      }
+
       setTitle("");
       setCategory("");
       setBody("");
@@ -199,6 +248,13 @@ export default function DeveloperBlogPage() {
     }
   };
 
+  const handleShareToBinanceSquare = (post: BlogPost) => {
+    sharePostToBinanceSquare(post.title, post.body, post.author);
+    toast.success(
+      `Opening Binance Square composer for ${BINANCE_SQUARE_HANDLE}`,
+    );
+  };
+
   return (
     <>
       <PageHead
@@ -206,51 +262,177 @@ export default function DeveloperBlogPage() {
         description="Insights, updates, and technical articles from the RBS team"
       />
       <div className="min-h-screen bg-white text-gray-900">
+        {/* Global unlock banner — shown prominently at top of page */}
+        {sectionUnlocked && (
+          <div
+            className="w-full px-3 sm:px-4 py-3 flex items-center justify-center gap-2 text-sm font-medium"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.1) 50%, rgba(16, 185, 129, 0.08) 100%)",
+              borderBottom: "1px solid rgba(16, 185, 129, 0.25)",
+            }}
+          >
+            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="text-emerald-700 text-center">
+              Developer Blog is globally unlocked — all users can publish posts
+            </span>
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-300 text-xs hidden sm:inline-flex">
+              <Globe className="w-3 h-3 mr-1" />
+              Live for Everyone
+            </Badge>
+          </div>
+        )}
+
         {/* Hero */}
         <SmokySectionTransition>
           <div
-            className="relative py-16 px-4 text-center border-b"
+            className="relative py-10 sm:py-14 md:py-16 px-3 sm:px-4 text-center border-b"
             style={{
               background:
                 "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8faff 100%)",
               borderColor: "rgba(14, 165, 233, 0.15)",
             }}
           >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <BookOpen className="w-8 h-8 text-emerald-600" />
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600" />
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900">
                 Developer Blog
               </h1>
             </div>
-            <p className="text-gray-500 max-w-xl mx-auto">
+            <p className="text-gray-500 text-sm sm:text-base max-w-xl mx-auto px-2">
               Technical insights, platform updates, and ecosystem news from the
               RBS development team
             </p>
             {sectionUnlocked && (
-              <div className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <div className="inline-flex items-center gap-2 mt-3 sm:mt-4 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <Globe className="w-3.5 h-3.5" />
                 Globally Accessible — All users can publish
               </div>
             )}
+
+            {/* Binance Square integration badge */}
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+                style={{
+                  background: "rgba(240, 185, 11, 0.08)",
+                  border: "1px solid rgba(240, 185, 11, 0.25)",
+                  color: "#92680a",
+                }}
+              >
+                <span className="font-bold text-yellow-600">◈</span>
+                Binance Square Integration Active
+                <span className="font-mono text-yellow-700/70">
+                  {getMaskedApiKey()}
+                </span>
+              </div>
+            </div>
           </div>
         </SmokySectionTransition>
 
-        <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10 space-y-8 sm:space-y-10">
+          {/* Share to Binance Square Banner (after publish) */}
+          {showShareBanner && lastPublishedPost && (
+            <SmokySectionTransition>
+              <div
+                className="rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between"
+                style={{
+                  background:
+                    binancePostStatus === "success"
+                      ? "linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%)"
+                      : "linear-gradient(135deg, rgba(240, 185, 11, 0.07) 0%, rgba(240, 185, 11, 0.03) 100%)",
+                  border:
+                    binancePostStatus === "success"
+                      ? "1px solid rgba(16, 185, 129, 0.3)"
+                      : "1px solid rgba(240, 185, 11, 0.3)",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <CheckCircle
+                    className={`w-5 h-5 flex-shrink-0 mt-0.5 ${binancePostStatus === "success" ? "text-emerald-600" : "text-green-600"}`}
+                  />
+                  <div>
+                    <p className="text-gray-900 font-semibold text-sm sm:text-base">
+                      {binancePostStatus === "success"
+                        ? "Auto-posted to Binance Square!"
+                        : binancePostStatus === "posting"
+                          ? "Publishing to Binance Square..."
+                          : "Post published successfully!"}
+                    </p>
+                    <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
+                      {binancePostStatus === "success" ? (
+                        <span className="text-emerald-700 font-medium">
+                          ✓ Published to {BINANCE_SQUARE_HANDLE} automatically
+                        </span>
+                      ) : binancePostStatus === "manual" ? (
+                        <>
+                          Auto-post blocked by browser CORS — share manually to{" "}
+                          <span className="text-yellow-700 font-medium">
+                            {BINANCE_SQUARE_HANDLE}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          Attempting to post to{" "}
+                          <span className="text-yellow-700 font-medium">
+                            {BINANCE_SQUARE_HANDLE}
+                          </span>
+                          ...
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {binancePostStatus !== "success" && (
+                    <Button
+                      data-ocid="blog.share_binance.button"
+                      onClick={() =>
+                        handleShareToBinanceSquare(lastPublishedPost)
+                      }
+                      className="flex-1 sm:flex-none text-xs sm:text-sm font-bold"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #F0B90B 0%, #e8a800 100%)",
+                        color: "#1a0a00",
+                      }}
+                    >
+                      <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                      Share Manually
+                      <ExternalLink className="w-3 h-3 ml-1.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowShareBanner(false);
+                      setBinancePostStatus("idle");
+                    }}
+                    className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </div>
+            </SmokySectionTransition>
+          )}
+
           {/* Author Panel Toggle */}
           {isAuthenticated && (
             <SmokySectionTransition>
               <div
-                className="rounded-2xl p-6"
+                className="rounded-xl sm:rounded-2xl p-4 sm:p-6"
                 style={{
                   background: "rgba(255, 255, 255, 0.9)",
                   border: "1px solid rgba(14, 165, 233, 0.2)",
                   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
                 }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-gray-900 font-bold text-lg flex items-center gap-2">
-                    <PenLine className="w-5 h-5 text-emerald-600" /> Author
-                    Panel
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <h2 className="text-gray-900 font-bold text-base sm:text-lg flex items-center gap-2">
+                    <PenLine className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />{" "}
+                    Author Panel
                     {sectionUnlocked && (
                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs ml-1">
                         <Globe className="w-3 h-3 mr-1" />
@@ -273,17 +455,17 @@ export default function DeveloperBlogPage() {
                 {/* Lock panel form */}
                 {showLockInput && (
                   <div
-                    className="mb-4 p-4 rounded-xl"
+                    className="mb-4 p-3 sm:p-4 rounded-xl"
                     style={{
                       background: "rgba(255, 241, 242, 0.8)",
                       border: "1px solid rgba(239, 68, 68, 0.2)",
                     }}
                   >
-                    <p className="text-gray-600 text-sm mb-3">
+                    <p className="text-gray-600 text-xs sm:text-sm mb-3">
                       Enter passcode to globally lock the Developer Blog for all
                       users.
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Input
                         type="password"
                         value={lockPasscode}
@@ -295,33 +477,35 @@ export default function DeveloperBlogPage() {
                           e.key === "Enter" && handleLockPanel()
                         }
                         placeholder="Enter passcode"
-                        className="bg-white border-gray-300 text-gray-900 font-mono flex-1"
+                        className="bg-white border-gray-300 text-gray-900 font-mono flex-1 w-full sm:w-auto"
                         disabled={isLocking}
                       />
-                      <Button
-                        data-ocid="blog.lock.confirm_button"
-                        onClick={handleLockPanel}
-                        disabled={isLocking || !lockPasscode.trim()}
-                        className="bg-red-500 hover:bg-red-600 text-white"
-                      >
-                        {isLocking ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          "Lock"
-                        )}
-                      </Button>
-                      <Button
-                        data-ocid="blog.lock.cancel_button"
-                        variant="outline"
-                        onClick={() => {
-                          setShowLockInput(false);
-                          setLockPasscode("");
-                          setLockError("");
-                        }}
-                        className="border-gray-300 text-gray-600"
-                      >
-                        Cancel
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          data-ocid="blog.lock.confirm_button"
+                          onClick={handleLockPanel}
+                          disabled={isLocking || !lockPasscode.trim()}
+                          className="bg-red-500 hover:bg-red-600 text-white flex-1 sm:flex-none"
+                        >
+                          {isLocking ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Lock"
+                          )}
+                        </Button>
+                        <Button
+                          data-ocid="blog.lock.cancel_button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowLockInput(false);
+                            setLockPasscode("");
+                            setLockError("");
+                          }}
+                          className="border-gray-300 text-gray-600 flex-1 sm:flex-none"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
                     {lockError && (
                       <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
@@ -333,7 +517,7 @@ export default function DeveloperBlogPage() {
 
                 {!sectionUnlocked ? (
                   <div className="max-w-sm">
-                    <p className="text-gray-500 text-sm mb-3">
+                    <p className="text-gray-500 text-xs sm:text-sm mb-3">
                       Enter the passcode to globally unlock the Author Panel for
                       all users.
                     </p>
@@ -350,7 +534,7 @@ export default function DeveloperBlogPage() {
                           e.key === "Enter" && handleUnlockAuthor()
                         }
                         placeholder="Enter passcode"
-                        className="bg-gray-50 border-gray-300 text-gray-900 pr-10 font-mono"
+                        className="bg-gray-50 border-gray-300 text-gray-900 pr-10 font-mono w-full"
                         disabled={isVerifying}
                       />
                       <button
@@ -378,7 +562,7 @@ export default function DeveloperBlogPage() {
                       data-ocid="blog.unlock.button"
                       onClick={handleUnlockAuthor}
                       disabled={isVerifying || !authorPasscode.trim()}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold w-full sm:w-auto"
                     >
                       {isVerifying ? (
                         <RefreshCw className="w-4 h-4 animate-spin mr-2" />
@@ -389,10 +573,46 @@ export default function DeveloperBlogPage() {
                         ? "Verifying..."
                         : "Unlock Author Panel Globally"}
                     </Button>
+
+                    {/* Binance Square integration indicator */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+                      <div
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+                        style={{
+                          background: "rgba(240, 185, 11, 0.08)",
+                          border: "1px solid rgba(240, 185, 11, 0.2)",
+                          color: "#92680a",
+                        }}
+                      >
+                        <span className="text-yellow-600 font-bold">◈</span>
+                        Binance Square Integration Active
+                        <span className="font-mono text-yellow-700/60">
+                          {getMaskedApiKey()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Binance Square integration note when unlocked */}
+                    <div
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                      style={{
+                        background: "rgba(240, 185, 11, 0.06)",
+                        border: "1px solid rgba(240, 185, 11, 0.2)",
+                      }}
+                    >
+                      <span className="text-yellow-600 font-bold">◈</span>
+                      <span className="text-yellow-800">
+                        After publishing, you can share directly to Binance
+                        Square ({BINANCE_SQUARE_HANDLE})
+                      </span>
+                      <span className="text-yellow-700/50 font-mono ml-auto hidden sm:block">
+                        {getMaskedApiKey()}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label
                           htmlFor="blog-title"
@@ -406,7 +626,7 @@ export default function DeveloperBlogPage() {
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="Post title"
-                          className="bg-gray-50 border-gray-300 text-gray-900"
+                          className="bg-gray-50 border-gray-300 text-gray-900 w-full"
                         />
                       </div>
                       <div>
@@ -422,7 +642,7 @@ export default function DeveloperBlogPage() {
                           value={author}
                           onChange={(e) => setAuthor(e.target.value)}
                           placeholder="Your name"
-                          className="bg-gray-50 border-gray-300 text-gray-900"
+                          className="bg-gray-50 border-gray-300 text-gray-900 w-full"
                         />
                       </div>
                       <div>
@@ -438,7 +658,7 @@ export default function DeveloperBlogPage() {
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
                           placeholder="e.g. Technical, Update, News"
-                          className="bg-gray-50 border-gray-300 text-gray-900"
+                          className="bg-gray-50 border-gray-300 text-gray-900 w-full"
                         />
                       </div>
                       <div>
@@ -454,7 +674,7 @@ export default function DeveloperBlogPage() {
                           value={tags}
                           onChange={(e) => setTags(e.target.value)}
                           placeholder="blockchain, defi, rbs"
-                          className="bg-gray-50 border-gray-300 text-gray-900"
+                          className="bg-gray-50 border-gray-300 text-gray-900 w-full"
                         />
                       </div>
                     </div>
@@ -471,7 +691,7 @@ export default function DeveloperBlogPage() {
                         value={body}
                         onChange={(e) => setBody(e.target.value)}
                         placeholder="Write your post content here..."
-                        className="bg-gray-50 border-gray-300 text-gray-900 resize-none min-h-[200px]"
+                        className="bg-gray-50 border-gray-300 text-gray-900 resize-none min-h-[160px] sm:min-h-[200px] w-full"
                         rows={8}
                       />
                     </div>
@@ -483,23 +703,25 @@ export default function DeveloperBlogPage() {
                         <AlertTriangle className="w-3 h-3" /> {formError}
                       </p>
                     )}
-                    <Button
-                      data-ocid="blog.publish.button"
-                      onClick={handlePublish}
-                      disabled={createPost.isPending}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
-                    >
-                      {createPost.isPending ? (
-                        <span className="flex items-center gap-2">
-                          <RefreshCw className="w-4 h-4 animate-spin" />{" "}
-                          Publishing...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <Plus className="w-4 h-4" /> Publish Post
-                        </span>
-                      )}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        data-ocid="blog.publish.button"
+                        onClick={handlePublish}
+                        disabled={createPost.isPending}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex-1 sm:flex-none"
+                      >
+                        {createPost.isPending ? (
+                          <span className="flex items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                            Publishing...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Publish Post
+                          </span>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -515,37 +737,48 @@ export default function DeveloperBlogPage() {
             }}
           />
 
-          {/* Posts Grid */}
+          {/* Posts Grid — visible to ALL users (no auth required) */}
           <SmokySectionTransition>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Published Posts
-            </h2>
+            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Published Posts
+              </h2>
+              <div className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <Globe className="w-3 h-3" />
+                Visible to all users
+              </div>
+            </div>
           </SmokySectionTransition>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {(["b1", "b2", "b3", "b4", "b5", "b6"] as const).map((sk) => (
                 <div
                   key={sk}
-                  className="h-56 bg-gray-100 rounded-xl animate-pulse"
+                  className="h-48 sm:h-56 bg-gray-100 rounded-xl animate-pulse"
                 />
               ))}
             </div>
           ) : sortedPosts.length === 0 ? (
             <div
               data-ocid="blog.empty_state"
-              className="text-center py-16 text-gray-400"
+              className="text-center py-12 sm:py-16 text-gray-400"
             >
-              <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No posts published yet.</p>
+              <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm sm:text-base">No posts published yet.</p>
               {isAuthenticated && (
-                <p className="text-sm mt-1 text-gray-500">
+                <p className="text-xs sm:text-sm mt-1 text-gray-500">
                   Use the Author Panel above to publish the first post.
+                </p>
+              )}
+              {!isAuthenticated && (
+                <p className="text-xs sm:text-sm mt-1 text-gray-500">
+                  Posts will appear here once published by authorized authors.
                 </p>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {sortedPosts.map((post, idx) => (
                 <SmokySectionTransition key={post.id.toString()}>
                   <BlogPostCard
@@ -554,6 +787,7 @@ export default function DeveloperBlogPage() {
                     isDeleting={deletePost.isPending}
                     onView={() => setSelectedPost(post)}
                     onDelete={() => handleDelete(post.id)}
+                    onShare={() => handleShareToBinanceSquare(post)}
                     animDelay={idx * 60}
                     index={idx + 1}
                   />
@@ -570,20 +804,20 @@ export default function DeveloperBlogPage() {
         >
           <DialogContent
             data-ocid="blog.post.dialog"
-            className="bg-white border-gray-200 max-w-2xl max-h-[80vh] overflow-y-auto"
+            className="bg-white border-gray-200 w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto mx-auto"
           >
             {selectedPost && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="text-gray-900 text-xl leading-snug">
+                  <DialogTitle className="text-gray-900 text-lg sm:text-xl leading-snug pr-4">
                     {selectedPost.title}
                   </DialogTitle>
                   <DialogDescription className="text-gray-500">
-                    <span className="flex items-center gap-3 flex-wrap mt-1">
-                      <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-2 sm:gap-3 flex-wrap mt-1">
+                      <span className="flex items-center gap-1 text-xs sm:text-sm">
                         <User className="w-3 h-3" /> {selectedPost.author}
                       </span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs sm:text-sm">
                         <Calendar className="w-3 h-3" />{" "}
                         {new Date(
                           Number(selectedPost.createdAt) / 1_000_000,
@@ -617,6 +851,27 @@ export default function DeveloperBlogPage() {
                     ))}
                   </div>
                 )}
+                {/* Share to Binance Square in dialog footer */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <Button
+                    data-ocid="blog.post.share_binance.button"
+                    size="sm"
+                    onClick={() => handleShareToBinanceSquare(selectedPost)}
+                    className="w-full sm:w-auto text-xs font-semibold"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #F0B90B 0%, #e8a800 100%)",
+                      color: "#1a0a00",
+                    }}
+                  >
+                    <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                    Share to Binance Square
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </Button>
+                  <p className="text-gray-400 text-xs mt-1.5">
+                    Opens Binance Square composer for {BINANCE_SQUARE_HANDLE}
+                  </p>
+                </div>
               </>
             )}
           </DialogContent>
@@ -634,6 +889,7 @@ interface BlogPostCardProps {
   isDeleting: boolean;
   onView: () => void;
   onDelete: () => void;
+  onShare: () => void;
   animDelay?: number;
   index: number;
 }
@@ -644,6 +900,7 @@ function BlogPostCard({
   isDeleting,
   onView,
   onDelete,
+  onShare,
   animDelay = 0,
   index,
 }: BlogPostCardProps) {
@@ -657,12 +914,12 @@ function BlogPostCard({
   return (
     <div
       data-ocid={`blog.item.${index}`}
-      className="relative bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-emerald-300 hover:scale-[1.02] hover:shadow-md hover:shadow-emerald-100 transition-all duration-300 group flex flex-col"
+      className="relative bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm hover:border-emerald-300 hover:scale-[1.02] hover:shadow-md hover:shadow-emerald-100 transition-all duration-300 group flex flex-col"
       style={{ animationDelay: `${animDelay}ms` }}
     >
       <button
         type="button"
-        className="absolute inset-0 w-full h-full rounded-2xl cursor-pointer opacity-0"
+        className="absolute inset-0 w-full h-full rounded-xl sm:rounded-2xl cursor-pointer opacity-0"
         onClick={onView}
         aria-label={`Read ${post.title}`}
       />
@@ -689,7 +946,7 @@ function BlogPostCard({
             </AlertDialogTrigger>
             <AlertDialogContent
               data-ocid="blog.delete.dialog"
-              className="bg-white border-gray-200"
+              className="bg-white border-gray-200 w-[calc(100vw-2rem)] sm:max-w-md mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <AlertDialogHeader>
@@ -701,17 +958,17 @@ function BlogPostCard({
                   cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
+              <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                 <AlertDialogCancel
                   data-ocid="blog.delete.cancel_button"
-                  className="border-gray-300 text-gray-700"
+                  className="border-gray-300 text-gray-700 w-full sm:w-auto"
                 >
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
                   data-ocid="blog.delete.confirm_button"
                   onClick={onDelete}
-                  className="bg-red-500 hover:bg-red-600 text-white"
+                  className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </AlertDialogAction>
@@ -721,10 +978,10 @@ function BlogPostCard({
         )}
       </div>
 
-      <h3 className="text-gray-900 font-bold text-base leading-snug mb-2 group-hover:text-emerald-700 transition-colors">
+      <h3 className="text-gray-900 font-bold text-sm sm:text-base leading-snug mb-2 group-hover:text-emerald-700 transition-colors">
         {post.title}
       </h3>
-      <p className="text-gray-500 text-sm leading-relaxed flex-1 mb-4">
+      <p className="text-gray-500 text-xs sm:text-sm leading-relaxed flex-1 mb-4">
         {excerpt}
       </p>
 
@@ -749,6 +1006,20 @@ function BlogPostCard({
           ))}
         </div>
       )}
+
+      {/* Share button in card footer */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onShare();
+        }}
+        className="mt-3 flex items-center gap-1.5 text-xs text-yellow-700/70 hover:text-yellow-800 transition-colors opacity-0 group-hover:opacity-100"
+        aria-label="Share to Binance Square"
+      >
+        <span className="font-bold">◈</span>
+        Share to Binance Square
+      </button>
     </div>
   );
 }

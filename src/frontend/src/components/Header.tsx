@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useReliableAuth } from "../hooks/useReliableAuth";
+import LivePriceTicker from "./LivePriceTicker";
 
 type NavLeaf = { label: string; path: string };
 type NavGroup = { label: string; children: NavLeaf[] };
@@ -30,13 +31,12 @@ const navItems: NavItem[] = [
   {
     label: "Market",
     children: [
+      { label: "RBS Price", path: "/rbs-price" },
       { label: "Market Dashboard", path: "/dashboard" },
       { label: "Market Intelligence", path: "/market-intel" },
       { label: "Fear & Greed", path: "/fear-greed" },
-      { label: "Live Prices", path: "/live-price" },
-      { label: "Market Pulse", path: "/market-pulse" },
-      { label: "AI Sentiment", path: "/sentiment" },
-      { label: "Advanced Analytics", path: "/analytics" },
+      { label: "Crypto Heatmap", path: "/crypto-heatmap" },
+      { label: "Funding Rates", path: "/funding-rates" },
     ],
   },
   {
@@ -61,11 +61,10 @@ const navItems: NavItem[] = [
     children: [
       { label: "Developer Blog", path: "/blog" },
       { label: "Staking Calculator", path: "/staking" },
+      { label: "Portfolio Tracker", path: "/portfolio-tracker" },
       { label: "Partners", path: "/partners" },
       { label: "Ecosystem", path: "/ecosystem" },
       { label: "Security", path: "/security" },
-      { label: "Insights", path: "/insights" },
-      { label: "FAQ", path: "/faq" },
       { label: "Contact", path: "/contact" },
     ],
   },
@@ -109,6 +108,7 @@ export default function Header() {
         boxShadow: "0 1px 12px rgba(0, 0, 0, 0.08)",
       }}
     >
+      <LivePriceTicker />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -119,7 +119,7 @@ export default function Header() {
             className="flex items-center gap-2 group"
           >
             <img
-              src="/assets/uploads/IMG_20250821_154306_073-4-1.jpg"
+              src="/assets/uploads/IMG_20250821_154306_073-8-1.jpg"
               alt="RBS Token Logo"
               className="h-10 w-10 rounded-full object-cover"
             />

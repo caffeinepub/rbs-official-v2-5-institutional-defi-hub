@@ -102,7 +102,7 @@ export function useGetAllPolls() {
       return actor.getAllPolls();
     },
     enabled: !!actor && !actorFetching,
-    refetchInterval: 15000,
+    refetchInterval: 10000,
     retry: false,
   });
 }

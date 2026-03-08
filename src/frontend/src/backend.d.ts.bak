@@ -180,14 +180,6 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
-    deletePollWithPasscode(pollId: bigint, passcode: string): Promise<{
-        __kind__: "ok";
-        ok: null;
-    } | {
-        __kind__: "err";
-        err: string;
-    }>;
-
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
     getAirdropTimerEnd(): Promise<bigint>;

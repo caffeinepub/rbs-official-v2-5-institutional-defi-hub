@@ -462,7 +462,7 @@ export default function MarketIntelPage() {
             style={{ background: "rgba(14, 165, 233, 0.05)" }}
           />
 
-          <div className="relative z-10 w-full max-w-md mx-auto px-4">
+          <div className="relative z-10 w-full max-w-md mx-auto px-3 sm:px-4">
             <div
               className="rounded-2xl p-8 shadow-xl"
               style={{
@@ -706,26 +706,26 @@ export default function MarketIntelPage() {
             boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
           }}
         >
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <img
                 src="/assets/generated/gman-intelligence-logo.dim_256x256.png"
                 alt="G-MAN"
-                className="w-8 h-8"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <div>
-                <h1 className="text-gray-900 font-bold text-lg leading-none">
+              <div className="min-w-0">
+                <h1 className="text-gray-900 font-bold text-base sm:text-lg leading-none">
                   G-MAN Intel
                 </h1>
-                <p className="text-gray-400 text-xs">
+                <p className="text-gray-400 text-xs hidden sm:block">
                   Advanced Market Intelligence
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
               <Badge
                 variant="outline"
                 className="border-green-400 text-green-600 text-xs bg-green-50"
@@ -734,17 +734,17 @@ export default function MarketIntelPage() {
                 Live
               </Badge>
               {lastUpdated && (
-                <span className="text-gray-400 text-xs hidden sm:block">
+                <span className="text-gray-400 text-xs hidden md:block">
                   Updated {lastUpdated.toLocaleTimeString()}
                 </span>
               )}
-              {/* Global unlock indicator */}
+              {/* Global unlock indicator — prominent */}
               <Badge
                 variant="outline"
                 className="border-emerald-400 text-emerald-600 text-xs bg-emerald-50"
               >
                 <Globe className="w-3 h-3 mr-1" />
-                Globally Unlocked
+                <span className="hidden sm:inline">Globally </span>Unlocked
               </Badge>
               <Button
                 variant="outline"
@@ -758,7 +758,7 @@ export default function MarketIntelPage() {
                 <RefreshCw
                   className={`w-3 h-3 mr-1 ${liveLoading ? "animate-spin" : ""}`}
                 />
-                Refresh
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button
                 variant="outline"
@@ -766,13 +766,34 @@ export default function MarketIntelPage() {
                 onClick={handleLockRequest}
                 className="border-gray-300 text-gray-500 hover:bg-gray-50 text-xs"
               >
-                <Lock className="w-3 h-3 mr-1" /> Lock
+                <Lock className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Lock</span>
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-10">
+        {/* Global unlock banner */}
+        <div
+          className="w-full px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-medium"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(16,185,129,0.07) 0%, rgba(6,182,212,0.09) 50%, rgba(16,185,129,0.07) 100%)",
+            borderBottom: "1px solid rgba(16, 185, 129, 0.2)",
+          }}
+        >
+          <Globe className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          <span className="text-emerald-700 text-center">
+            Market Intel is globally unlocked — all users can access without
+            individual passcode
+          </span>
+          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs hidden sm:inline-flex">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
+            Globally Active
+          </Badge>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 space-y-8 sm:space-y-10">
           {/* Live Signals Grid */}
           <section>
             <div className="flex items-center justify-between mb-6">
@@ -830,8 +851,8 @@ export default function MarketIntelPage() {
                 kline data
               </p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="rounded-2xl p-6 bg-white border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-white border border-gray-200 shadow-sm">
                 <SignalGeneratorWizard
                   onGenerateSignal={handleGenerateSignal}
                   isLoading={generateSignalMutation.isPending}

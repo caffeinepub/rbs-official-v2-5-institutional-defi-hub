@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageHead } from "../components/PageHead";
 import { SmokySectionTransition } from "../components/SmokySectionTransition";
+import { useActor } from "../hooks/useActor";
 
 // Roadmap dates: Presale unlocks March 31, 2027 | Airdrop unlocks March 31, 2029
 const PRESALE_UNLOCK_DATE = new Date("2027-03-31T23:59:59Z");
@@ -86,6 +87,7 @@ function CountdownDisplay({
 function PresaleForm() {
   const { isUnlocked, days, hours, minutes, seconds } =
     useCountdown(PRESALE_UNLOCK_DATE);
+  const { actor } = useActor();
   const [form, setForm] = useState({
     name: "",
     country: "",
@@ -113,11 +115,23 @@ function PresaleForm() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setSubmitting(true);
+    try {
+      if (actor) {
+        await actor.submitPresaleForm(
+          form.name,
+          form.country,
+          form.wallet,
+          Number(form.amount),
+        );
+      }
+    } catch {
+      // Backend submission failed — still proceed with WhatsApp
+    }
     const text = encodeURIComponent(
       `*RBS Presale Registration*\n\nName: ${form.name}\nCountry: ${form.country}\nWallet: ${form.wallet}\nRBS Amount: ${form.amount}\n\n_Sent via RBS Acquisition Portal_`,
     );
-    window.location.assign(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`);
     toast.success("Redirecting to WhatsApp...");
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, "_blank");
     setSubmitting(false);
   };
 
@@ -227,6 +241,7 @@ function PresaleForm() {
 function AirdropForm() {
   const { isUnlocked, days, hours, minutes, seconds } =
     useCountdown(AIRDROP_UNLOCK_DATE);
+  const { actor } = useActor();
   const [form, setForm] = useState({
     name: "",
     country: "",
@@ -254,11 +269,23 @@ function AirdropForm() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setSubmitting(true);
+    try {
+      if (actor) {
+        await actor.submitAirdropForm(
+          form.name,
+          form.country,
+          form.wallet,
+          Number(form.amount),
+        );
+      }
+    } catch {
+      // Backend submission failed — still proceed with WhatsApp
+    }
     const text = encodeURIComponent(
       `*RBS Airdrop Registration*\n\nName: ${form.name}\nCountry: ${form.country}\nWallet: ${form.wallet}\nRBS Amount: ${form.amount}\n\n_Sent via RBS Acquisition Portal_`,
     );
-    window.location.assign(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`);
     toast.success("Redirecting to WhatsApp...");
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, "_blank");
     setSubmitting(false);
   };
 
