@@ -122,6 +122,10 @@ export interface UserProfile {
     name: string;
     email?: string;
 }
+export interface UserProfileEntry {
+    principal: Principal;
+    profile: UserProfile;
+}
 export enum IndicatorType {
     fvg = "fvg",
     rsi = "rsi",
@@ -231,6 +235,7 @@ export interface backendInterface {
     }>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    getAllUserProfiles(): Promise<UserProfileEntry[]>;
     setGlobalSectionLock(section: string, passcode: string, unlock: boolean): Promise<void>;
     setMarketIntelPasscode(newPasscode: string): Promise<void>;
     setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;

@@ -27,36 +27,25 @@ import {
 import { motion, useInView } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+// ── Count-up animation hook ──────────────────────────────────────────────────
 
-interface CryptoPrice {
-  usd: number;
-  usd_24h_change?: number;
-}
-
-interface PricesMap {
-  bitcoin?: CryptoPrice;
-  ethereum?: CryptoPrice;
-  binancecoin?: CryptoPrice;
-  ripple?: CryptoPrice;
-  solana?: CryptoPrice;
-}
-
-interface FearGreedData {
-  value: string;
-  value_classification: string;
-  timestamp: string;
-}
-
-interface QuickSignal {
-  asset: string;
-  symbol: string;
-  signal: string;
-  confidence: number;
-  rsi: number;
-  color: string;
-  borderColor: string;
-  bgColor: string;
+function useCountUp(target: number, inView: boolean, duration = 1500) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!inView) {
+      setCount(0);
+      return;
+    }
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress >= 1) clearInterval(timer);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, inView, duration]);
+  return count;
 }
 
 // ── Static data ───────────────────────────────────────────────────────────────
@@ -67,6 +56,8 @@ const STATS = [
     value: "100,000 RBS",
     icon: Coins,
     color: "text-emerald-600",
+    numericTarget: 100000,
+    numericSuffix: " RBS",
   },
   {
     label: "Presale Opens",
@@ -79,12 +70,16 @@ const STATS = [
     value: "40%",
     icon: TrendingUp,
     color: "text-blue-600",
+    numericTarget: 40,
+    numericSuffix: "%",
   },
   {
     label: "Community Pool",
     value: "8,000 RBS",
     icon: Users,
     color: "text-purple-600",
+    numericTarget: 8000,
+    numericSuffix: " RBS",
   },
   {
     label: "Airdrop Opens",
@@ -92,7 +87,14 @@ const STATS = [
     icon: Globe,
     color: "text-pink-600",
   },
-  { label: "Token Burns", value: "15%", icon: Zap, color: "text-red-600" },
+  {
+    label: "Token Burns",
+    value: "15%",
+    icon: Zap,
+    color: "text-red-600",
+    numericTarget: 15,
+    numericSuffix: "%",
+  },
 ];
 
 const FEATURES = [
@@ -151,45 +153,6 @@ const FEATURES = [
     cardBorder: "border-emerald-100 hover:border-emerald-300",
   },
 ];
-
-const CRYPTO_IDS = [
-  "bitcoin",
-  "ethereum",
-  "binancecoin",
-  "ripple",
-  "solana",
-] as const;
-
-const CRYPTO_META: Record<
-  string,
-  { symbol: string; name: string; logo: string }
-> = {
-  bitcoin: {
-    symbol: "BTC",
-    name: "Bitcoin",
-    logo: "https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png",
-  },
-  ethereum: {
-    symbol: "ETH",
-    name: "Ethereum",
-    logo: "https://assets.coingecko.com/coins/images/279/thumb/ethereum.png",
-  },
-  binancecoin: {
-    symbol: "BNB",
-    name: "BNB",
-    logo: "https://assets.coingecko.com/coins/images/825/thumb/bnb-icon2_2x.png",
-  },
-  ripple: {
-    symbol: "XRP",
-    name: "XRP",
-    logo: "https://assets.coingecko.com/coins/images/44/thumb/xrp-symbol-white-128.png",
-  },
-  solana: {
-    symbol: "SOL",
-    name: "Solana",
-    logo: "https://assets.coingecko.com/coins/images/4128/thumb/solana.png",
-  },
-};
 
 const WHY_RBS = [
   {
@@ -332,131 +295,9 @@ const TRADING_TOOLS = [
     bg: "bg-purple-50",
     border: "border-purple-200 hover:border-purple-400",
   },
-  {
-    icon: AlertTriangle,
-    title: "Fear & Greed",
-    desc: "Daily Fear & Greed Index — the contrarian trader's edge.",
-    path: "/fear-greed",
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-    border: "border-orange-200 hover:border-orange-400",
-  },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getFearGreedColor(value: number): string {
-  if (value <= 25) return "text-red-600";
-  if (value <= 46) return "text-orange-600";
-  if (value <= 54) return "text-yellow-600";
-  if (value <= 75) return "text-green-600";
-  return "text-emerald-600";
-}
-
-function getFearGreedBg(value: number): string {
-  if (value <= 25) return "bg-red-50 border-red-200";
-  if (value <= 46) return "bg-orange-50 border-orange-200";
-  if (value <= 54) return "bg-yellow-50 border-yellow-200";
-  if (value <= 75) return "bg-green-50 border-green-200";
-  return "bg-emerald-50 border-emerald-200";
-}
-
-async function fetchKlines(symbol: string, interval: string, limit = 100) {
-  const res = await fetch(
-    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`,
-  );
-  if (!res.ok) throw new Error("Binance error");
-  const data: [string, string, string, string, string, string][] =
-    await res.json();
-  return data.map((k) => ({ close: Number.parseFloat(k[4]) }));
-}
-
-function calcRSI(closes: number[], period = 14): number {
-  if (closes.length < period + 1) return 50;
-  const gains: number[] = [];
-  const losses: number[] = [];
-  for (let i = 1; i < closes.length; i++) {
-    const d = closes[i] - closes[i - 1];
-    gains.push(d > 0 ? d : 0);
-    losses.push(d < 0 ? Math.abs(d) : 0);
-  }
-  const avgG = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
-  const avgL = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
-  if (avgL === 0) return 100;
-  return 100 - 100 / (1 + avgG / avgL);
-}
-
-function calcEMA(data: number[], period: number): number {
-  if (!data.length) return 0;
-  const k = 2 / (period + 1);
-  let ema = data[0];
-  for (let i = 1; i < data.length; i++) ema = data[i] * k + ema * (1 - k);
-  return ema;
-}
-
-function calcSignal(
-  rsi: number,
-  macd: number,
-  closes: number[],
-): {
-  signal: string;
-  confidence: number;
-  color: string;
-  borderColor: string;
-  bgColor: string;
-} {
-  let score = 0;
-  if (rsi < 30) score += 2;
-  else if (rsi < 45) score += 1;
-  else if (rsi > 70) score -= 2;
-  else if (rsi > 55) score -= 1;
-  if (macd > 0) score += 1;
-  else score -= 1;
-  if (closes.length >= 20) {
-    const sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-    if (closes[closes.length - 1] > sma20) score += 1;
-    else score -= 1;
-  }
-  if (score >= 3)
-    return {
-      signal: "Strong Buy",
-      confidence: Math.min(95, 70 + score * 5),
-      color: "#16a34a",
-      borderColor: "border-green-300",
-      bgColor: "bg-green-50",
-    };
-  if (score >= 1)
-    return {
-      signal: "Buy",
-      confidence: Math.min(80, 60 + score * 5),
-      color: "#22c55e",
-      borderColor: "border-green-200",
-      bgColor: "bg-green-50",
-    };
-  if (score === 0)
-    return {
-      signal: "Neutral",
-      confidence: 50,
-      color: "#f59e0b",
-      borderColor: "border-yellow-200",
-      bgColor: "bg-yellow-50",
-    };
-  if (score >= -2)
-    return {
-      signal: "Sell",
-      confidence: Math.min(80, 60 + Math.abs(score) * 5),
-      color: "#ef4444",
-      borderColor: "border-red-200",
-      bgColor: "bg-red-50",
-    };
-  return {
-    signal: "Strong Sell",
-    confidence: Math.min(95, 70 + Math.abs(score) * 5),
-    color: "#dc2626",
-    borderColor: "border-red-300",
-    bgColor: "bg-red-50",
-  };
-}
 
 // ── Animated Counter component ────────────────────────────────────────────────
 
@@ -494,361 +335,52 @@ function AnimatedCounter({
 
 // ── Top Movers Section ─────────────────────────────────────────────────────────
 
-interface MoverCoin {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  image: string;
+// ── StatCard with optional count-up ──────────────────────────────────────────
+
+interface StatItem {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  numericTarget?: number;
+  numericSuffix?: string;
 }
 
-function TopMoversSection() {
-  const navigate = useNavigate();
-  const [gainers, setGainers] = useState<MoverCoin[]>([]);
-  const [losers, setLosers] = useState<MoverCoin[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const fetchMovers = useCallback(async () => {
-    try {
-      const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h",
-      );
-      if (!res.ok) throw new Error("API error");
-      const data: MoverCoin[] = await res.json();
-      const sorted = [...data].sort(
-        (a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h,
-      );
-      setGainers(sorted.slice(0, 3));
-      setLosers(sorted.slice(-3).reverse());
-      setLastUpdated(new Date());
-    } catch {
-      /* silent */
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMovers();
-    const interval = setInterval(fetchMovers, 60000);
-    return () => clearInterval(interval);
-  }, [fetchMovers]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchMovers();
-  };
-
-  return (
-    <SmokySectionTransition delay={80}>
-      <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-white border-y border-gray-100">
-        <div className="container mx-auto max-w-5xl">
-          <AnimatedSection direction="up" className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
-              <TrendingUp className="w-4 h-4" /> Market Movers
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Top Movers Today
-            </h2>
-            <p className="text-gray-500 mt-1 text-sm">
-              Biggest gainers and losers in the last 24 hours
-            </p>
-            <div className="flex justify-center mt-3">
-              <div className="flex items-center gap-2">
-                {lastUpdated && (
-                  <span className="text-xs text-gray-400">
-                    {lastUpdated.toLocaleTimeString()}
-                  </span>
-                )}
-                <Button
-                  data-ocid="home.movers.refresh.button"
-                  onClick={handleRefresh}
-                  variant="outline"
-                  size="sm"
-                  disabled={refreshing || loading}
-                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 mr-1 ${refreshing ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </Button>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[1, 2].map((k) => (
-                <div
-                  key={k}
-                  className="h-40 bg-gray-100 rounded-2xl animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Gainers */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  <span className="font-bold text-emerald-700">
-                    Top Gainers
-                  </span>
-                </div>
-                {gainers.map((coin, i) => (
-                  <motion.div
-                    key={coin.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 hover:shadow-sm transition-all"
-                    data-ocid={`home.movers.gainer.item.${i + 1}`}
-                  >
-                    <img
-                      src={coin.image}
-                      alt={coin.name}
-                      className="w-8 h-8 rounded-full"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-bold text-gray-900 uppercase text-sm">
-                        {coin.symbol}
-                      </div>
-                      <div className="text-xs text-gray-500">{coin.name}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-bold text-gray-900 text-sm">
-                        $
-                        {coin.current_price.toLocaleString(undefined, {
-                          maximumFractionDigits: 4,
-                        })}
-                      </div>
-                      <div className="text-emerald-600 font-bold text-sm">
-                        +{coin.price_change_percentage_24h.toFixed(2)}%
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Losers */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Eye className="w-4 h-4 text-red-600" />
-                  <span className="font-bold text-red-600">Top Losers</span>
-                </div>
-                {losers.map((coin, i) => (
-                  <motion.div
-                    key={coin.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 hover:shadow-sm transition-all"
-                    data-ocid={`home.movers.loser.item.${i + 1}`}
-                  >
-                    <img
-                      src={coin.image}
-                      alt={coin.name}
-                      className="w-8 h-8 rounded-full"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-bold text-gray-900 uppercase text-sm">
-                        {coin.symbol}
-                      </div>
-                      <div className="text-xs text-gray-500">{coin.name}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-bold text-gray-900 text-sm">
-                        $
-                        {coin.current_price.toLocaleString(undefined, {
-                          maximumFractionDigits: 4,
-                        })}
-                      </div>
-                      <div className="text-red-600 font-bold text-sm">
-                        {coin.price_change_percentage_24h.toFixed(2)}%
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="text-center mt-6">
-            <Button
-              data-ocid="home.movers.heatmap.button"
-              onClick={() => navigate({ to: "/crypto-heatmap" })}
-              variant="outline"
-              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-            >
-              View Full Heatmap <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </section>
-    </SmokySectionTransition>
+function StatCard({ stat, index }: { stat: StatItem; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+  const count = useCountUp(
+    stat.numericTarget ?? 0,
+    inView && !!stat.numericTarget,
   );
-}
 
-// ── BTC Dominance Section ──────────────────────────────────────────────────────
-
-interface GlobalData {
-  data: {
-    market_cap_percentage: { btc: number; eth: number };
-  };
-}
-
-function BTCDominanceSection() {
-  const [btcDom, setBtcDom] = useState<number | null>(null);
-  const [ethDom, setEthDom] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await window.fetch(
-          "https://api.coingecko.com/api/v3/global",
-        );
-        if (!res.ok) return;
-        const data: GlobalData = await res.json();
-        setBtcDom(data.data.market_cap_percentage.btc);
-        setEthDom(data.data.market_cap_percentage.eth);
-      } catch {
-        /* silent */
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-    const interval = setInterval(fetch, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const others =
-    btcDom !== null && ethDom !== null
-      ? Math.max(0, 100 - btcDom - ethDom)
-      : null;
-
-  const dominanceStats = [
-    {
-      label: "BTC Dominance",
-      value: btcDom,
-      color: "text-orange-600",
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      barColor: "#f97316",
-      icon: "₿",
-    },
-    {
-      label: "ETH Dominance",
-      value: ethDom,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      barColor: "#3b82f6",
-      icon: "Ξ",
-    },
-    {
-      label: "Others",
-      value: others,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      barColor: "#8b5cf6",
-      icon: "✦",
-    },
-  ];
+  const displayValue = stat.numericTarget
+    ? count.toLocaleString() + (stat.numericSuffix ?? "")
+    : stat.value;
 
   return (
-    <SmokySectionTransition delay={80}>
-      <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-gray-50 border-b border-gray-100">
-        <div className="container mx-auto max-w-4xl">
-          <AnimatedSection direction="up" className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium mb-3 sm:mb-4">
-              <Globe className="w-4 h-4" /> Market Dominance
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              BTC Dominance
-            </h2>
-            <p className="text-gray-500 mt-2 max-w-lg mx-auto text-sm">
-              Market dominance shows what % of total crypto market cap each
-              asset holds.
-            </p>
-          </AnimatedSection>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[1, 2, 3].map((k) => (
-                <div
-                  key={k}
-                  className="h-28 bg-white rounded-2xl border border-gray-200 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {dominanceStats.map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className={`p-5 rounded-2xl bg-white border ${stat.border} hover:shadow-md transition-all duration-300`}
-                  data-ocid={`home.dominance.item.${i + 1}`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-2xl font-bold ${stat.color}`}>
-                      {stat.icon}
-                    </span>
-                    <motion.span
-                      key={stat.value}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4 }}
-                      className={`text-2xl font-bold font-jetbrains ${stat.color}`}
-                    >
-                      {stat.value !== null ? `${stat.value.toFixed(1)}%` : "—"}
-                    </motion.span>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-700 mb-2">
-                    {stat.label}
-                  </div>
-                  {stat.value !== null && (
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${Math.min(stat.value, 100)}%` }}
-                        viewport={{ once: true }}
-                        transition={{
-                          duration: 1,
-                          ease: "easeOut",
-                          delay: i * 0.1 + 0.3,
-                        }}
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: stat.barColor }}
-                      />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-    </SmokySectionTransition>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      className="text-center p-3 rounded-xl bg-white border border-gray-200 hover:border-emerald-300 hover:shadow-sm transition-all duration-300 group"
+    >
+      <stat.icon
+        className={`w-5 h-5 mx-auto mb-2 ${stat.color} group-hover:scale-110 transition-transform`}
+      />
+      <motion.div
+        key={inView ? "active" : "idle"}
+        initial={stat.numericTarget ? { opacity: 0, scale: 0.85 } : {}}
+        animate={stat.numericTarget ? { opacity: 1, scale: 1 } : {}}
+        transition={{ duration: 0.4 }}
+        className={`text-lg font-bold ${stat.color}`}
+      >
+        {displayValue}
+      </motion.div>
+      <div className="text-xs text-gray-500">{stat.label}</div>
+    </motion.div>
   );
 }
 
@@ -856,114 +388,6 @@ function BTCDominanceSection() {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [prices, setPrices] = useState<PricesMap>({});
-  const [pricesLoading, setPricesLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [isPricesRefreshing, setIsPricesRefreshing] = useState(false);
-
-  // Fear & Greed
-  const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
-
-  // Quick Signals
-  const [quickSignals, setQuickSignals] = useState<QuickSignal[]>([]);
-  const [signalsLoading, setSignalsLoading] = useState(false);
-  const [isSignalsRefreshing, setIsSignalsRefreshing] = useState(false);
-
-  const fetchPrices = useCallback(async () => {
-    try {
-      const ids = CRYPTO_IDS.join(",");
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-      );
-      if (!res.ok) throw new Error("API error");
-      const data: PricesMap = await res.json();
-      setPrices(data);
-      setLastUpdated(new Date());
-    } catch {
-      /* keep previous */
-    } finally {
-      setPricesLoading(false);
-    }
-  }, []);
-
-  const fetchQuickSignals = useCallback(async () => {
-    setSignalsLoading(true);
-    try {
-      const assets = [
-        { symbol: "BTCUSDT", label: "BTC", name: "Bitcoin" },
-        { symbol: "ETHUSDT", label: "ETH", name: "Ethereum" },
-        { symbol: "SOLUSDT", label: "SOL", name: "Solana" },
-      ];
-      const results = await Promise.all(
-        assets.map(async (a) => {
-          const klines = await fetchKlines(a.symbol, "1h", 100);
-          const closes = klines.map((k) => k.close);
-          const rsi = calcRSI(closes);
-          const ema12 = calcEMA(closes, 12);
-          const ema26 = calcEMA(closes, 26);
-          const macd = ema12 - ema26;
-          const sig = calcSignal(rsi, macd, closes);
-          return {
-            asset: a.name,
-            symbol: a.label,
-            rsi,
-            signal: sig.signal,
-            confidence: sig.confidence,
-            color: sig.color,
-            borderColor: sig.borderColor,
-            bgColor: sig.bgColor,
-          };
-        }),
-      );
-      setQuickSignals(results);
-    } catch {
-      /* keep previous */
-    } finally {
-      setSignalsLoading(false);
-    }
-  }, []);
-
-  const handlePricesRefresh = async () => {
-    setIsPricesRefreshing(true);
-    await fetchPrices();
-    setIsPricesRefreshing(false);
-  };
-
-  const handleSignalsRefresh = async () => {
-    setIsSignalsRefreshing(true);
-    await fetchQuickSignals();
-    setIsSignalsRefreshing(false);
-  };
-
-  useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 30000);
-    return () => clearInterval(interval);
-  }, [fetchPrices]);
-
-  useEffect(() => {
-    const fetchFearGreed = async () => {
-      try {
-        const res = await fetch("https://api.alternative.me/fng/?limit=1");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.data?.[0]) setFearGreed(data.data[0]);
-      } catch {
-        /* silently fail */
-      }
-    };
-    fetchFearGreed();
-    const interval = setInterval(fetchFearGreed, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    fetchQuickSignals();
-    const interval = setInterval(fetchQuickSignals, 30000);
-    return () => clearInterval(interval);
-  }, [fetchQuickSignals]);
-
-  const fearGreedValue = fearGreed ? Number.parseInt(fearGreed.value) : null;
 
   return (
     <>
@@ -987,6 +411,32 @@ export default function HomePage() {
           <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
           <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-40 pointer-events-none animate-glow-pulse" />
 
+          {/* Floating decorative circles */}
+          {[0, 1, 2].map((idx) => (
+            <motion.div
+              key={idx}
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: [140, 90, 60][idx],
+                height: [140, 90, 60][idx],
+                background: [
+                  "rgba(14,165,233,0.08)",
+                  "rgba(6,182,212,0.10)",
+                  "rgba(16,185,129,0.09)",
+                ][idx],
+                top: ["15%", "65%", "35%"][idx],
+                left: ["8%", "80%", "88%"][idx],
+                filter: "blur(2px)",
+              }}
+              animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+              transition={{
+                repeat: Number.POSITIVE_INFINITY,
+                duration: 5 + idx * 2,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+
           <div className="relative container mx-auto px-3 sm:px-4 md:px-6 text-center z-10">
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
@@ -997,7 +447,7 @@ export default function HomePage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-emerald-200 rounded-full blur-xl opacity-60 animate-neon-pulse" />
                 <img
-                  src="/assets/uploads/IMG_20250821_154306_073-8-1.jpg"
+                  src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
                   alt="RBS Token Logo"
                   className="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover relative z-10 animate-float"
                 />
@@ -1077,545 +527,12 @@ export default function HomePage() {
             <div className="container mx-auto">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 {STATS.map((stat, i) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: i * 0.08 }}
-                    className="text-center p-3 rounded-xl bg-white border border-gray-200 hover:border-emerald-300 hover:shadow-sm transition-all duration-300 group"
-                  >
-                    <stat.icon
-                      className={`w-5 h-5 mx-auto mb-2 ${stat.color} group-hover:scale-110 transition-transform`}
-                    />
-                    <div className={`text-lg font-bold ${stat.color}`}>
-                      {stat.value}
-                    </div>
-                    <div className="text-xs text-gray-500">{stat.label}</div>
-                  </motion.div>
+                  <StatCard key={stat.label} stat={stat} index={i} />
                 ))}
               </div>
             </div>
           </section>
         </SmokySectionTransition>
-
-        {/* ── NEW: Fear & Greed Index Widget ─────────────────────────────── */}
-        <SmokySectionTransition delay={80}>
-          <section className="py-10 sm:py-14 px-3 sm:px-4 md:px-6 bg-gray-50 border-b border-gray-100">
-            <div className="container mx-auto max-w-4xl">
-              <AnimatedSection
-                direction="up"
-                className="text-center mb-6 sm:mb-8"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-700 text-sm font-medium mb-3 sm:mb-4">
-                  <Activity className="w-4 h-4" /> Market Sentiment
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Fear &amp; Greed Index
-                </h2>
-                <p className="text-gray-500 mt-2">
-                  The market's emotional state — updated daily
-                </p>
-              </AnimatedSection>
-
-              <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
-                {fearGreed && fearGreedValue !== null ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    className={`rounded-2xl border p-8 text-center min-w-[220px] ${getFearGreedBg(fearGreedValue)}`}
-                  >
-                    <div
-                      className={`text-7xl font-bold font-jetbrains mb-2 ${getFearGreedColor(fearGreedValue)}`}
-                    >
-                      {fearGreedValue}
-                    </div>
-                    <div
-                      className={`text-xl font-bold mb-1 ${getFearGreedColor(fearGreedValue)}`}
-                    >
-                      {fearGreed.value_classification}
-                    </div>
-                    <div className="text-gray-500 text-sm">Current Index</div>
-                    <div className="mt-4 h-3 bg-white rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${fearGreedValue}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full rounded-full"
-                        style={{
-                          background:
-                            fearGreedValue <= 25
-                              ? "#dc2626"
-                              : fearGreedValue <= 46
-                                ? "#ea580c"
-                                : fearGreedValue <= 54
-                                  ? "#ca8a04"
-                                  : fearGreedValue <= 75
-                                    ? "#16a34a"
-                                    : "#059669",
-                        }}
-                      />
-                    </div>
-                    <Button
-                      data-ocid="home.fear-greed.button"
-                      onClick={() => navigate({ to: "/fear-greed" })}
-                      size="sm"
-                      variant="outline"
-                      className="mt-4 border-gray-300 text-gray-600 hover:bg-white text-xs"
-                    >
-                      Full History <ArrowRight className="ml-1 w-3 h-3" />
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <div className="rounded-2xl border border-gray-200 p-8 text-center min-w-[220px] animate-pulse bg-white">
-                    <div className="h-16 bg-gray-100 rounded mb-2" />
-                    <div className="h-6 bg-gray-100 rounded w-24 mx-auto" />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3 flex-1">
-                  {[
-                    {
-                      range: "0–25",
-                      label: "Extreme Fear",
-                      color: "text-red-600",
-                      bg: "bg-red-50 border-red-200",
-                      tip: "Potential buy opportunity",
-                    },
-                    {
-                      range: "26–46",
-                      label: "Fear",
-                      color: "text-orange-600",
-                      bg: "bg-orange-50 border-orange-200",
-                      tip: "Market pessimism",
-                    },
-                    {
-                      range: "47–54",
-                      label: "Neutral",
-                      color: "text-yellow-600",
-                      bg: "bg-yellow-50 border-yellow-200",
-                      tip: "Balanced sentiment",
-                    },
-                    {
-                      range: "55–75",
-                      label: "Greed",
-                      color: "text-green-600",
-                      bg: "bg-green-50 border-green-200",
-                      tip: "Exercise caution",
-                    },
-                    {
-                      range: "76–100",
-                      label: "Extreme Greed",
-                      color: "text-emerald-600",
-                      bg: "bg-emerald-50 border-emerald-200",
-                      tip: "Potential sell signal",
-                    },
-                  ].map((zone) => (
-                    <div
-                      key={zone.label}
-                      className={`rounded-xl border p-3 ${zone.bg} ${fearGreed && fearGreed.value_classification === zone.label ? "ring-2 ring-offset-1 ring-emerald-400" : ""}`}
-                    >
-                      <div className={`text-xs font-bold ${zone.color}`}>
-                        {zone.label}
-                      </div>
-                      <div className="text-xs text-gray-500">{zone.range}</div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {zone.tip}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-        </SmokySectionTransition>
-
-        {/* ── 3. Live Market Snapshot ─────────────────────────────────────── */}
-        <SmokySectionTransition delay={80}>
-          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white">
-            <div className="container mx-auto">
-              <AnimatedSection
-                direction="up"
-                className="text-center mb-8 sm:mb-12"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 sm:mb-6">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  LIVE MARKET DATA
-                </div>
-                <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-gray-900">
-                  Live Market Snapshot
-                </h2>
-                <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
-                  Real-time crypto prices from CoinGecko — refreshes every 30
-                  seconds
-                </p>
-                <div className="flex items-center justify-center gap-3 mt-3">
-                  {lastUpdated && (
-                    <p className="text-xs text-gray-400">
-                      Last updated: {lastUpdated.toLocaleTimeString()}
-                    </p>
-                  )}
-                  <Button
-                    data-ocid="home.prices.refresh.button"
-                    onClick={handlePricesRefresh}
-                    variant="outline"
-                    size="sm"
-                    disabled={isPricesRefreshing || pricesLoading}
-                    className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 mr-1 ${isPricesRefreshing ? "animate-spin" : ""}`}
-                    />
-                    {isPricesRefreshing ? "Refreshing..." : "Refresh"}
-                  </Button>
-                </div>
-              </AnimatedSection>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
-                {CRYPTO_IDS.map((id, i) => {
-                  const meta = CRYPTO_META[id];
-                  const data = prices[id];
-                  const change = data?.usd_24h_change ?? 0;
-                  const isPositive = change >= 0;
-
-                  return (
-                    <motion.div
-                      key={id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-30px" }}
-                      transition={{ duration: 0.6, delay: i * 0.1 }}
-                      whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                      className="relative p-5 rounded-2xl border border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden"
-                    >
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute w-full h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent animate-scan" />
-                      </div>
-
-                      <div className="flex items-center gap-3 mb-3">
-                        <img
-                          src={meta.logo}
-                          alt={meta.name}
-                          className="w-8 h-8 rounded-full"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                        <div>
-                          <div className="text-gray-900 font-bold text-sm">
-                            {meta.symbol}
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            {meta.name}
-                          </div>
-                        </div>
-                        <div className="ml-auto">
-                          <span className="flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                            LIVE
-                          </span>
-                        </div>
-                      </div>
-
-                      {pricesLoading || !data ? (
-                        <div className="space-y-2">
-                          <div className="h-5 bg-gray-100 rounded animate-pulse" />
-                          <div className="h-4 bg-gray-100 rounded w-16 animate-pulse" />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="text-gray-900 font-bold text-lg font-jetbrains">
-                            $
-                            {data.usd.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </div>
-                          <div
-                            className={`text-sm font-medium mt-1 ${isPositive ? "text-green-600" : "text-red-600"}`}
-                          >
-                            {isPositive ? "▲" : "▼"}{" "}
-                            {Math.abs(change).toFixed(2)}%
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.6 }}
-                className="text-center mt-8"
-              >
-                <Button
-                  data-ocid="home.dashboard.button"
-                  onClick={() => navigate({ to: "/dashboard" })}
-                  variant="outline"
-                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                >
-                  Full Market Dashboard <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </motion.div>
-            </div>
-          </section>
-        </SmokySectionTransition>
-
-        {/* ── RBS Token Status Section ────────────────────────────────────── */}
-        <SmokySectionTransition delay={60}>
-          <section className="py-12 sm:py-20 px-3 sm:px-4 md:px-6 bg-white border-b border-gray-100">
-            <div className="container mx-auto max-w-5xl">
-              <AnimatedSection
-                direction="up"
-                className="text-center mb-8 sm:mb-12"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 text-sm font-medium mb-4">
-                  <Coins className="w-4 h-4" /> RBS TOKEN
-                </div>
-                <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-3">
-                  RBS Token — Pre-Launch Status
-                </h2>
-                <p className="text-gray-500 max-w-2xl mx-auto">
-                  The RBS token has a fixed supply of 100,000 tokens and is
-                  currently in pre-launch phase. Acquisition opens according to
-                  the project roadmap.
-                </p>
-              </AnimatedSection>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                {[
-                  {
-                    label: "Total Supply",
-                    value: "100,000",
-                    unit: "RBS",
-                    icon: Coins,
-                    color: "text-cyan-600",
-                    bg: "bg-cyan-50 border-cyan-200",
-                  },
-                  {
-                    label: "Token Price",
-                    value: "TBA",
-                    unit: "at Launch",
-                    icon: TrendingUp,
-                    color: "text-emerald-600",
-                    bg: "bg-emerald-50 border-emerald-200",
-                  },
-                  {
-                    label: "Launch Phase",
-                    value: "Q1 2027",
-                    unit: "Presale Opens",
-                    icon: Calendar,
-                    color: "text-violet-600",
-                    bg: "bg-violet-50 border-violet-200",
-                  },
-                ].map((item, i) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, y: 24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className={`rounded-2xl border p-6 text-center ${item.bg}`}
-                  >
-                    <item.icon
-                      className={`w-8 h-8 mx-auto mb-3 ${item.color}`}
-                    />
-                    <div
-                      className={`text-3xl font-bold font-jetbrains ${item.color} mb-1`}
-                    >
-                      {item.value}
-                    </div>
-                    <div className="text-sm font-medium text-gray-600">
-                      {item.label}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {item.unit}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Token Utility */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6"
-              >
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-cyan-600" /> Token Utility
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    "Access to exclusive Market Intelligence signals",
-                    "Community governance and voting rights",
-                    "Priority access to RBS platform features",
-                    "Staking rewards and yield generation",
-                    "Developer blog creation privileges",
-                    "Early access to future RBS ecosystem tools",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                      <span className="text-sm text-gray-600">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* CTA Buttons */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
-                className="flex flex-col sm:flex-row items-center justify-center gap-3"
-              >
-                <Button
-                  data-ocid="home.rbs.presale.button"
-                  onClick={() => navigate({ to: "/acquisition" })}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-8"
-                >
-                  Register for Presale <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-                <Button
-                  data-ocid="home.rbs.intel.button"
-                  onClick={() => navigate({ to: "/market-intel" })}
-                  variant="outline"
-                  className="border-cyan-300 text-cyan-700 hover:bg-cyan-50 px-8"
-                >
-                  View Market Intelligence
-                </Button>
-              </motion.div>
-            </div>
-          </section>
-        </SmokySectionTransition>
-
-        {/* ── NEW: Quick Signals Strip ────────────────────────────────────── */}
-        <SmokySectionTransition delay={80}>
-          <section className="py-10 sm:py-16 px-3 sm:px-4 md:px-6 bg-gray-50 border-y border-gray-100">
-            <div className="container mx-auto max-w-5xl">
-              <AnimatedSection
-                direction="up"
-                className="text-center mb-6 sm:mb-8"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium mb-3 sm:mb-4">
-                  <Zap className="w-4 h-4" /> G-MAN Intelligence
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Live Trading Signals
-                </h2>
-                <p className="text-gray-500 mt-1 text-sm">
-                  Powered by G-MAN Intelligence — real Binance kline data,
-                  auto-refreshes every 30s
-                </p>
-                <div className="flex justify-center mt-3">
-                  <Button
-                    data-ocid="home.signals.refresh.button"
-                    onClick={handleSignalsRefresh}
-                    variant="outline"
-                    size="sm"
-                    disabled={isSignalsRefreshing || signalsLoading}
-                    className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 mr-1 ${isSignalsRefreshing ? "animate-spin" : ""}`}
-                    />
-                    {isSignalsRefreshing ? "Refreshing..." : "Refresh Signals"}
-                  </Button>
-                </div>
-              </AnimatedSection>
-
-              {signalsLoading && quickSignals.length === 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {["s1", "s2", "s3"].map((k) => (
-                    <div
-                      key={k}
-                      className="h-36 rounded-2xl bg-white border border-gray-200 animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : quickSignals.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {quickSignals.map((sig, i) => (
-                    <motion.div
-                      key={sig.symbol}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.1 }}
-                      className={`rounded-2xl border p-5 bg-white ${sig.borderColor} hover:shadow-md transition-all duration-300`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="text-gray-900 font-bold">
-                            {sig.asset}
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            {sig.symbol}/USDT
-                          </div>
-                        </div>
-                        <span
-                          className="text-xs font-bold px-3 py-1 rounded-full text-white"
-                          style={{ backgroundColor: sig.color }}
-                        >
-                          {sig.signal}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Confidence</span>
-                          <span className="font-bold text-gray-700">
-                            {sig.confidence}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                              width: `${sig.confidence}%`,
-                              backgroundColor: sig.color,
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">RSI (14)</span>
-                          <span
-                            className={`font-mono font-bold ${sig.rsi > 70 ? "text-red-600" : sig.rsi < 30 ? "text-green-600" : "text-gray-700"}`}
-                          >
-                            {sig.rsi.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="text-center mt-6">
-                <Button
-                  data-ocid="home.market-intel.button"
-                  onClick={() => navigate({ to: "/market-intel" })}
-                  className="bg-emerald-500 hover:bg-emerald-500 text-white font-bold"
-                >
-                  View Full Market Intel <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </section>
-        </SmokySectionTransition>
-
-        {/* ── NEW: Top Movers Today ───────────────────────────────────── */}
-        <TopMoversSection />
-
-        {/* ── NEW: BTC Dominance ──────────────────────────────────────── */}
-        <BTCDominanceSection />
 
         {/* ── NEW: How to Get RBS Steps ────────────────────────────────── */}
         <SmokySectionTransition delay={80}>
@@ -1819,7 +736,11 @@ export default function HomePage() {
                       delay: i * 0.1,
                       ease: [0.4, 0, 0.2, 1],
                     }}
-                    whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                    whileHover={{
+                      y: -6,
+                      boxShadow: "0 20px 40px rgba(14,165,233,0.12)",
+                      transition: { duration: 0.2 },
+                    }}
                     className={`relative p-6 rounded-2xl border bg-white ${feature.cardBorder} shadow-sm hover:shadow-md cursor-default group overflow-hidden transition-all duration-300`}
                   >
                     <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">

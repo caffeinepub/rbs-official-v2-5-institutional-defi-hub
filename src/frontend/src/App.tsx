@@ -8,31 +8,31 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
+import { AuthGate } from "./components/AuthGate";
 import { AuthInitializer } from "./components/AuthInitializer";
 import { Footer } from "./components/Footer";
 import Header from "./components/Header";
+import { ProfileSetupModal } from "./components/ProfileSetupModal";
 import { ScrollToTop } from "./components/ScrollToTop";
 import AboutPage from "./pages/AboutPage";
 import AcquisitionPage from "./pages/AcquisitionPage";
 import AdultFormPage from "./pages/AdultFormPage";
 import AirdropPresaleHubPage from "./pages/AirdropPresaleHubPage";
-import AlertsCenterPage from "./pages/AlertsCenterPage";
 import CommunityGovernancePage from "./pages/CommunityGovernancePage";
 import CommunityHighlightsPage from "./pages/CommunityHighlightsPage";
 import CommunityLeaderboardPage from "./pages/CommunityLeaderboardPage";
 import CommunityVotingPage from "./pages/CommunityVotingPage";
 import ContactPage from "./pages/ContactPage";
-import CryptoHeatmapPage from "./pages/CryptoHeatmapPage";
 import DeveloperBlogPage from "./pages/DeveloperBlogPage";
 import EcosystemGrowthPage from "./pages/EcosystemGrowthPage";
-import FearGreedPage from "./pages/FearGreedPage";
 import FundingRatesPage from "./pages/FundingRatesPage";
 import HomePage from "./pages/HomePage";
-import MarketDashboardPage from "./pages/MarketDashboardPage";
+import LoginPage from "./pages/LoginPage";
 import MarketIntelPage from "./pages/MarketIntelPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PartnersPage from "./pages/PartnersPage";
 import PortfolioTrackerPage from "./pages/PortfolioTrackerPage";
+import ProfilePage from "./pages/ProfilePage";
 import RbsPricePage from "./pages/RbsPricePage";
 import RoadmapPage from "./pages/RoadmapPage";
 import SecurityTransparencyPage from "./pages/SecurityTransparencyPage";
@@ -57,6 +57,8 @@ function Layout() {
       <Header />
       <ScrollToTop />
       <AuthInitializer />
+      <AuthGate />
+      <ProfileSetupModal />
       {/* h-8 spacer for ticker bar (in addition to page-level pt-20/pt-24 offsets) */}
       <div className="h-8 flex-shrink-0" aria-hidden="true" />
       <main className="flex-1">
@@ -69,6 +71,11 @@ function Layout() {
 
 const rootRoute = createRootRoute({ component: Layout });
 
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: LoginPage,
+});
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -114,11 +121,6 @@ const marketIntelRoute = createRoute({
   path: "/market-intel",
   component: MarketIntelPage,
 });
-const marketDashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/dashboard",
-  component: MarketDashboardPage,
-});
 const communityVotingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/voting",
@@ -154,11 +156,6 @@ const testimonialsRoute = createRoute({
   path: "/testimonials",
   component: TestimonialsPage,
 });
-const alertsCenterRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/alerts",
-  component: AlertsCenterPage,
-});
 const airdropPresaleHubRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/airdrop-presale",
@@ -184,16 +181,6 @@ const tradingToolsRoute = createRoute({
   path: "/trading-tools",
   component: TradingToolsPage,
 });
-const fearGreedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/fear-greed",
-  component: FearGreedPage,
-});
-const cryptoHeatmapRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/crypto-heatmap",
-  component: CryptoHeatmapPage,
-});
 const fundingRatesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/funding-rates",
@@ -204,6 +191,12 @@ const portfolioTrackerRoute = createRoute({
   path: "/portfolio-tracker",
   component: PortfolioTrackerPage,
 });
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/profile",
+  component: ProfilePage,
+});
+
 const rbsPriceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/rbs-price",
@@ -216,6 +209,7 @@ const notFoundRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
+  loginRoute,
   indexRoute,
   aboutRoute,
   whitepaperRoute,
@@ -225,7 +219,6 @@ const routeTree = rootRoute.addChildren([
   contactRoute,
   acquisitionRoute,
   marketIntelRoute,
-  marketDashboardRoute,
   communityVotingRoute,
   communityGovernanceRoute,
   communityHighlightsRoute,
@@ -233,16 +226,14 @@ const routeTree = rootRoute.addChildren([
   ecosystemGrowthRoute,
   securityRoute,
   testimonialsRoute,
-  alertsCenterRoute,
   airdropPresaleHubRoute,
   stakingSimulatorRoute,
   communityLeaderboardRoute,
   adultFormRoute,
   tradingToolsRoute,
-  fearGreedRoute,
-  cryptoHeatmapRoute,
   fundingRatesRoute,
   portfolioTrackerRoute,
+  profileRoute,
   rbsPriceRoute,
   notFoundRoute,
 ]);

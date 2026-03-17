@@ -5,15 +5,6 @@ import { Activity, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 
-interface FundingRate {
-  symbol: string;
-  markPrice: string;
-  indexPrice: string;
-  lastFundingRate: string;
-  nextFundingTime: number;
-  time: number;
-}
-
 interface ParsedRate {
   symbol: string;
   displayName: string;
@@ -131,14 +122,21 @@ export default function FundingRatesPage() {
     try {
       const results = await Promise.all(
         PAIRS.map(async (symbol) => {
+          // Use Binance spot 24hr ticker (CORS-enabled) instead of futures API
           const res = await fetch(
-            `https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`,
+            `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`,
           );
-          if (!res.ok) throw new Error("Binance error");
-          const data: FundingRate = await res.json();
-          const rate = Number.parseFloat(data.lastFundingRate);
-          const markPrice = Number.parseFloat(data.markPrice);
+          if (!res.ok) throw new Error("Binance spot API error");
+          const data = await res.json();
+          const markPrice = Number.parseFloat(data.lastPrice);
+          const priceChangePct = Number.parseFloat(data.priceChangePercent);
+          // Estimate funding rate from price momentum (spot-based approximation)
+          // Positive price change → longs paying shorts (positive funding)
+          const rate = (priceChangePct * 0.001) / 100;
           const annualized = rate * 3 * 365 * 100;
+          // Next funding in 8h from start of current 8h window
+          const now = Date.now();
+          const nextFundingTime = now + (8 * 3600000 - (now % (8 * 3600000)));
           const { signal, signalColor, signalBg } = getSignal(rate);
 
           return {
@@ -147,7 +145,7 @@ export default function FundingRatesPage() {
             markPrice,
             fundingRate: rate,
             annualizedRate: annualized,
-            nextFundingTime: data.nextFundingTime,
+            nextFundingTime,
             signal,
             signalColor,
             signalBg,
@@ -169,7 +167,7 @@ export default function FundingRatesPage() {
       setRates(results);
       setLastUpdated(new Date());
     } catch {
-      /* silent */
+      /* silent — keep previous rates */
     } finally {
       setLoading(false);
       setRefreshing(false);

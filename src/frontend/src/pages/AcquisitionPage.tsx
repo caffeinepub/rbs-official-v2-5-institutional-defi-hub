@@ -52,13 +52,13 @@ function CountdownDisplay({
 }) {
   return (
     <div className="text-center py-8">
-      <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
-        <Lock className="h-4 w-4 text-amber-400" />
-        <span className="text-amber-400 text-sm font-medium">
+      <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-200 rounded-full px-4 py-2 mb-6">
+        <Lock className="h-4 w-4 text-sky-500" />
+        <span className="text-sky-500 text-sm font-medium">
           {label} — Locked
         </span>
       </div>
-      <p className="text-muted-foreground text-sm mb-6">
+      <p className="text-gray-500 text-sm mb-6">
         This form will unlock when the roadmap milestone is reached
       </p>
       <div className="flex items-center justify-center gap-3">
@@ -69,14 +69,12 @@ function CountdownDisplay({
           { value: seconds, label: "Sec" },
         ].map(({ value, label: unitLabel }) => (
           <div key={unitLabel} className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-card border border-border rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-foreground tabular-nums">
+            <div className="w-16 h-16 bg-white border border-sky-200 rounded-xl shadow-sm flex items-center justify-center">
+              <span className="text-2xl font-bold text-gray-900 tabular-nums font-black">
                 {String(value).padStart(2, "0")}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground mt-1">
-              {unitLabel}
-            </span>
+            <span className="text-xs text-gray-500 mt-1">{unitLabel}</span>
           </div>
         ))}
       </div>
@@ -149,9 +147,9 @@ function PresaleForm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 w-fit">
-        <CheckCircle className="h-4 w-4 text-green-400" />
-        <span className="text-green-400 text-sm font-medium">
+      <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 w-fit">
+        <CheckCircle className="h-4 w-4 text-emerald-600" />
+        <span className="text-emerald-600 text-sm font-medium">
           Presale Registration Open!
         </span>
       </div>
@@ -303,9 +301,9 @@ function AirdropForm() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 w-fit">
-        <CheckCircle className="h-4 w-4 text-green-400" />
-        <span className="text-green-400 text-sm font-medium">
+      <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 w-fit">
+        <CheckCircle className="h-4 w-4 text-emerald-600" />
+        <span className="text-emerald-600 text-sm font-medium">
           Airdrop Registration Open!
         </span>
       </div>
@@ -419,7 +417,7 @@ export default function AcquisitionPage() {
 
             {/* Roadmap Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="bg-white border border-sky-200 rounded-xl shadow-sm p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-foreground text-sm">
@@ -433,7 +431,7 @@ export default function AcquisitionPage() {
                   Phase 2 of the RBS roadmap
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-xl p-4">
+              <div className="bg-white border border-sky-200 rounded-xl shadow-sm p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-foreground text-sm">

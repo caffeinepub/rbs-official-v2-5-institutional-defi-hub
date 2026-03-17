@@ -2,6 +2,7 @@ import type { PollView } from "../backend";
 import {
   useCreatePoll,
   useDeletePoll,
+  useDeletePollWithPasscode,
   useGetAllPolls,
   useVoteOnPoll,
 } from "./useQueries";
@@ -66,9 +67,14 @@ export function useCommunityVoting() {
   const createPollMutation = useCreatePoll();
   const voteOnPollMutation = useVoteOnPoll();
   const deletePollMutation = useDeletePoll();
+  const deletePollWithPasscodeMutation = useDeletePollWithPasscode();
 
   const voteOnPoll = async (pollId: bigint, optionIndex: bigint) => {
     return voteOnPollMutation.mutateAsync({ pollId, optionIndex });
+  };
+
+  const deletePollSecure = async (pollId: bigint, passcode: string) => {
+    return deletePollWithPasscodeMutation.mutateAsync({ pollId, passcode });
   };
 
   return {
@@ -81,7 +87,10 @@ export function useCommunityVoting() {
     voteOnPoll,
     isVoting: voteOnPollMutation.isPending,
     deletePoll: deletePollMutation.mutateAsync,
-    isDeleting: deletePollMutation.isPending,
-    deleteError: deletePollMutation.error,
+    deletePollSecure,
+    isDeleting:
+      deletePollMutation.isPending || deletePollWithPasscodeMutation.isPending,
+    deleteError:
+      deletePollMutation.error || deletePollWithPasscodeMutation.error,
   };
 }

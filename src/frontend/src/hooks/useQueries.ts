@@ -161,6 +161,27 @@ export function useDeletePoll() {
   });
 }
 
+export function useDeletePollWithPasscode() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      pollId,
+      passcode,
+    }: { pollId: bigint; passcode: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      const result = await actor.deletePollWithPasscode(pollId, passcode);
+      if (result.__kind__ === "err") {
+        throw new Error(result.err);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["polls"] });
+    },
+  });
+}
+
 // ─── Alerts ───────────────────────────────────────────────────────────────────
 
 export function useGetAlerts() {

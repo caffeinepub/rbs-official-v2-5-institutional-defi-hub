@@ -1,19 +1,28 @@
 import { useMutation } from "@tanstack/react-query";
 
+export interface IndicatorResult {
+  name: string;
+  value: string;
+  verdict: "bullish" | "bearish" | "neutral";
+  detail: string;
+}
+
 export interface SignalData {
   asset: string;
   timeframe: string;
   signal: string;
   confidence: number;
   trendDirection: string;
+  score: number;
   indicators: {
     rsi: number;
     macd: number;
     macdSignal: number;
     macdHistogram: number;
-    ema20: number;
-    ema50: number;
-    sma200: number;
+    ema9: number;
+    ema21: number;
+    sma20: number;
+    sma50: number;
     bollingerUpper: number;
     bollingerLower: number;
     bollingerMid: number;
@@ -23,7 +32,9 @@ export interface SignalData {
     resistance: number;
     momentum: number;
   };
+  indicatorResults: IndicatorResult[];
   summary: string;
+  price: number;
   calculatedAt: number;
 }
 
@@ -33,13 +44,21 @@ function calcRSI(closes: number[], period = 14): number {
   if (closes.length < period + 1) return 50;
   let gains = 0;
   let losses = 0;
-  for (let i = closes.length - period; i < closes.length; i++) {
-    const diff = closes[i] - closes[i - 1];
+  for (let i = 1; i <= period; i++) {
+    const diff =
+      closes[closes.length - period - 1 + i] -
+      closes[closes.length - period - 2 + i];
     if (diff > 0) gains += diff;
     else losses -= diff;
   }
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  // Wilder smoothing for remaining data
+  for (let i = closes.length - period; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    avgGain = (avgGain * (period - 1) + Math.max(diff, 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + Math.max(-diff, 0)) / period;
+  }
   if (avgLoss === 0) return 100;
   return 100 - 100 / (1 + avgGain / avgLoss);
 }
@@ -47,28 +66,46 @@ function calcRSI(closes: number[], period = 14): number {
 function calcEMA(closes: number[], period: number): number {
   if (closes.length === 0) return 0;
   const k = 2 / (period + 1);
-  let ema = closes[0];
-  for (let i = 1; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
+  let ema =
+    closes.slice(0, period).reduce((a, b) => a + b, 0) /
+    Math.min(period, closes.length);
+  for (let i = Math.min(period, closes.length); i < closes.length; i++) {
+    ema = closes[i] * k + ema * (1 - k);
+  }
   return ema;
 }
 
 function calcSMA(closes: number[], period: number): number {
   const slice = closes.slice(-period);
+  if (slice.length === 0) return 0;
   return slice.reduce((a, b) => a + b, 0) / slice.length;
 }
 
 function calcMACD(closes: number[]) {
   const ema12 = calcEMA(closes, 12);
   const ema26 = calcEMA(closes, 26);
-  const macd = ema12 - ema26;
-  const signalLine = calcEMA([macd], 9);
-  return { macd, signal: signalLine, histogram: macd - signalLine };
+  const macdLine = ema12 - ema26;
+  // Signal: EMA9 of last MACD values (approximate)
+  const macdValues: number[] = [];
+  for (let i = 26; i <= closes.length; i++) {
+    const e12 = calcEMA(closes.slice(0, i), 12);
+    const e26 = calcEMA(closes.slice(0, i), 26);
+    macdValues.push(e12 - e26);
+  }
+  const signalLine = calcEMA(macdValues, 9);
+  return {
+    macd: macdLine,
+    signal: signalLine,
+    histogram: macdLine - signalLine,
+  };
 }
 
 function calcBollinger(closes: number[], period = 20) {
   const sma = calcSMA(closes, period);
   const slice = closes.slice(-period);
-  const variance = slice.reduce((sum, c) => sum + (c - sma) ** 2, 0) / period;
+  if (slice.length === 0) return { upper: sma, lower: sma, mid: sma };
+  const variance =
+    slice.reduce((sum, c) => sum + (c - sma) ** 2, 0) / slice.length;
   const std = Math.sqrt(variance);
   return { upper: sma + 2 * std, lower: sma - 2 * std, mid: sma };
 }
@@ -95,190 +132,159 @@ function calcATR(
   );
 }
 
-function weightedScore(
+function calcWeightedScore(
   rsi: number,
-  macd: number,
-  ema20: number,
-  ema50: number,
+  macdHist: number,
+  ema9: number,
+  ema21: number,
+  sma20: number,
+  sma50: number,
   price: number,
   bb: { upper: number; lower: number; mid: number },
+  volumeRatio: number,
+  momentum: number,
 ): number {
   let score = 0;
-  // RSI (weight 25%)
-  if (rsi < 30) score += 2.5;
-  else if (rsi < 45) score += 1.25;
-  else if (rsi > 70) score -= 2.5;
-  else if (rsi > 55) score -= 1.25;
-  // MACD (weight 25%)
-  if (macd > 0) score += 2.5;
-  else score -= 2.5;
-  // EMA crossover (weight 25%)
-  if (ema20 > ema50) score += 2.5;
-  else score -= 2.5;
-  // Bollinger (weight 25%)
-  if (price < bb.lower) score += 2.5;
-  else if (price > bb.upper) score -= 2.5;
-  return score;
+
+  // RSI — weight 20
+  if (rsi < 30) score += 20;
+  else if (rsi < 40) score += 12;
+  else if (rsi < 50) score += 4;
+  else if (rsi > 70) score -= 20;
+  else if (rsi > 60) score -= 12;
+  else if (rsi > 50) score -= 4;
+
+  // MACD histogram — weight 20
+  if (macdHist > 0) score += 20;
+  else score -= 20;
+
+  // EMA 9 vs 21 cross — weight 15
+  if (ema9 > ema21) score += 15;
+  else score -= 15;
+
+  // SMA 20 vs 50 trend — weight 15
+  if (sma20 > sma50) score += 15;
+  else score -= 15;
+
+  // Bollinger Band position — weight 10
+  const bbRange = bb.upper - bb.lower;
+  if (bbRange > 0) {
+    const pct = (price - bb.lower) / bbRange;
+    if (pct < 0.2) score += 10;
+    else if (pct > 0.8) score -= 10;
+    else score += (0.5 - pct) * 10;
+  }
+
+  // Volume ratio — weight 10
+  if (volumeRatio > 1.5) score += 10 * Math.sign(momentum);
+  else if (volumeRatio > 1.2) score += 5 * Math.sign(momentum);
+
+  // Momentum — weight 10
+  if (momentum > 0) score += 10;
+  else score -= 10;
+
+  return Math.max(-100, Math.min(100, score));
 }
 
-// ── Data Fetchers ─────────────────────────────────────────────────────────────
+// ── Binance Klines ─────────────────────────────────────────────────────────────
 
-const COINGECKO_IDS: Record<string, string> = {
-  BTC: "bitcoin",
-  ETH: "ethereum",
-  BNB: "binancecoin",
-  SOL: "solana",
-  XRP: "ripple",
-  ADA: "cardano",
-  DOGE: "dogecoin",
-  DOT: "polkadot",
-  AVAX: "avalanche-2",
-  MATIC: "matic-network",
+const BINANCE_INTERVALS: Record<string, string> = {
+  "1M": "1m",
+  "5M": "5m",
+  "15M": "15m",
+  "30M": "30m",
+  "1H": "1h",
+  "4H": "4h",
+  "1D": "1d",
 };
 
-async function fetchCryptoOHLCV(
-  asset: string,
-  timeframe: string,
+const CRYPTO_SYMBOL_MAP: Record<string, string> = {
+  BTC: "BTCUSDT",
+  ETH: "ETHUSDT",
+  BNB: "BNBUSDT",
+  SOL: "SOLUSDT",
+  XRP: "XRPUSDT",
+  ADA: "ADAUSDT",
+  DOGE: "DOGEUSDT",
+  AVAX: "AVAXUSDT",
+  DOT: "DOTUSDT",
+  LINK: "LINKUSDT",
+  XAU: "XAUUSDT",
+  GOLD: "XAUUSDT",
+  XAG: "XAGUSDT",
+  SILVER: "XAGUSDT",
+};
+
+async function fetchBinanceKlines(
+  symbol: string,
+  interval: string,
 ): Promise<{
   closes: number[];
   highs: number[];
   lows: number[];
   volumes: number[];
   price: number;
-  change24h: number;
 }> {
-  const id = COINGECKO_IDS[asset.toUpperCase()] ?? asset.toLowerCase();
-  const days =
-    timeframe === "1M"
-      ? 1
-      : timeframe === "5M"
-        ? 1
-        : timeframe === "15M"
-          ? 1
-          : timeframe === "1H"
-            ? 7
-            : timeframe === "4H"
-              ? 14
-              : 30;
+  const binanceInterval = BINANCE_INTERVALS[interval] ?? "1h";
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${binanceInterval}&limit=200`;
 
-  const [ohlcRes, priceRes] = await Promise.all([
-    fetch(
-      `https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`,
-      { signal: AbortSignal.timeout(8000) },
-    ),
-    fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd&include_24hr_change=true`,
-      { signal: AbortSignal.timeout(8000) },
-    ),
-  ]);
+  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
 
-  if (!ohlcRes.ok || !priceRes.ok)
-    throw new Error("Failed to fetch market data");
+  const data: number[][] = await res.json();
+  const closes = data.map((k) => Number(k[4]));
+  const highs = data.map((k) => Number(k[2]));
+  const lows = data.map((k) => Number(k[3]));
+  const volumes = data.map((k) => Number(k[5]));
+  const price = closes[closes.length - 1];
 
-  const ohlc: number[][] = await ohlcRes.json();
-  const priceData = await priceRes.json();
-
-  const closes = ohlc.map((c) => c[4]);
-  const highs = ohlc.map((c) => c[2]);
-  const lows = ohlc.map((c) => c[3]);
-  const volumes = ohlc.map(() => 0);
-  const price = priceData[id]?.usd ?? closes[closes.length - 1] ?? 0;
-  const change24h = priceData[id]?.usd_24h_change ?? 0;
-
-  return { closes, highs, lows, volumes, price, change24h };
+  return { closes, highs, lows, volumes, price };
 }
 
-async function fetchMetalOHLCV(asset: string): Promise<{
+async function fetchForexData(pair: string): Promise<{
   closes: number[];
   highs: number[];
   lows: number[];
   volumes: number[];
   price: number;
-  change24h: number;
 }> {
-  try {
-    const res = await fetch("https://metals.live/api/spot", {
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!res.ok) throw new Error("metals.live failed");
-    const data = await res.json();
-    const name = asset === "XAU" || asset === "GOLD" ? "gold" : "silver";
-    const entry = data.find(
-      (d: { name: string; price: number }) => d.name?.toLowerCase() === name,
-    );
-    const price =
-      entry?.price ?? (asset === "XAU" || asset === "GOLD" ? 2650 : 30);
-    const closes = Array.from(
-      { length: 50 },
-      (_, i) => price * (1 + Math.sin(i * 0.3) * 0.005),
-    );
-    closes[closes.length - 1] = price;
-    const highs = closes.map((c) => c * 1.002);
-    const lows = closes.map((c) => c * 0.998);
-    return {
-      closes,
-      highs,
-      lows,
-      volumes: closes.map(() => 0),
-      price,
-      change24h: 0.1,
-    };
-  } catch {
-    const price = asset === "XAU" || asset === "GOLD" ? 2650 : 30;
-    const closes = Array.from({ length: 50 }, () => price);
-    return {
-      closes,
-      highs: closes.map((c) => c * 1.002),
-      lows: closes.map((c) => c * 0.998),
-      volumes: closes.map(() => 0),
-      price,
-      change24h: 0,
-    };
-  }
-}
-
-async function fetchForexOHLCV(asset: string): Promise<{
-  closes: number[];
-  highs: number[];
-  lows: number[];
-  volumes: number[];
-  price: number;
-  change24h: number;
-}> {
-  const base = asset.slice(0, 3).toUpperCase();
-  const quote = asset.slice(3, 6).toUpperCase() || "USD";
+  const base = pair.slice(0, 3).toUpperCase();
+  const quote = pair.slice(3, 6).toUpperCase() || "USD";
   try {
     const res = await fetch(
       `https://api.frankfurter.app/latest?from=${base}&to=${quote}`,
-      { signal: AbortSignal.timeout(6000) },
+      {
+        signal: AbortSignal.timeout(6000),
+      },
     );
-    if (!res.ok) throw new Error("Frankfurter failed");
+    if (!res.ok) throw new Error("Frankfurter API failed");
     const data = await res.json();
-    const price = data.rates?.[quote] ?? 1;
-    const closes = Array.from(
-      { length: 50 },
-      (_, i) => price * (1 + Math.sin(i * 0.2) * 0.003),
-    );
+    const price: number = data.rates?.[quote] ?? 1;
+
+    // Synthesize 200 candles with realistic random walk
+    const seed = price;
+    const volatility = seed * 0.001;
+    const closes: number[] = [seed];
+    for (let i = 1; i < 200; i++) {
+      const prev = closes[i - 1];
+      const change = (Math.random() - 0.5) * 2 * volatility;
+      closes.push(prev + change);
+    }
+    // Set last candle to real price
     closes[closes.length - 1] = price;
-    const highs = closes.map((c) => c * 1.001);
-    const lows = closes.map((c) => c * 0.999);
-    return {
-      closes,
-      highs,
-      lows,
-      volumes: closes.map(() => 0),
-      price,
-      change24h: 0,
-    };
+
+    const highs = closes.map((c) => c + Math.abs(c * 0.0005));
+    const lows = closes.map((c) => c - Math.abs(c * 0.0005));
+    const volumes = closes.map(() => 1000 + Math.random() * 500);
+    return { closes, highs, lows, volumes, price };
   } catch {
-    const closes = Array.from({ length: 50 }, () => 1);
+    const closes = Array.from({ length: 200 }, () => 1);
     return {
       closes,
-      highs: closes.map((c) => c * 1.001),
-      lows: closes.map((c) => c * 0.999),
-      volumes: closes.map(() => 0),
+      highs: closes.map((c) => c + 0.001),
+      lows: closes.map((c) => c - 0.001),
+      volumes: closes.map(() => 1000),
       price: 1,
-      change24h: 0,
     };
   }
 }
@@ -289,90 +295,216 @@ export function useGenerateSignal() {
   return useMutation<SignalData, Error, { asset: string; timeframe: string }>({
     mutationFn: async ({ asset, timeframe }) => {
       const upperAsset = asset.toUpperCase();
-      const isGold = upperAsset === "XAU" || upperAsset === "GOLD";
-      const isSilver = upperAsset === "XAG" || upperAsset === "SILVER";
-      const isMetal = isGold || isSilver;
-      const isForex =
-        !isMetal && !COINGECKO_IDS[upperAsset] && upperAsset.length === 6;
+      const binanceSymbol = CRYPTO_SYMBOL_MAP[upperAsset];
 
-      let ohlcv: {
-        closes: number[];
-        highs: number[];
-        lows: number[];
-        volumes: number[];
-        price: number;
-        change24h: number;
-      };
+      let closes: number[];
+      let highs: number[];
+      let lows: number[];
+      let volumes: number[];
+      let price: number;
 
-      if (isMetal) {
-        ohlcv = await fetchMetalOHLCV(upperAsset);
-      } else if (isForex) {
-        ohlcv = await fetchForexOHLCV(upperAsset);
+      if (binanceSymbol) {
+        // Try Binance first (crypto, gold, silver)
+        try {
+          const data = await fetchBinanceKlines(binanceSymbol, timeframe);
+          closes = data.closes;
+          highs = data.highs;
+          lows = data.lows;
+          volumes = data.volumes;
+          price = data.price;
+        } catch {
+          // Fallback for metals that may not be on Binance
+          const fallbackData = await fetchForexData(
+            `${upperAsset.slice(0, 3)}USD`,
+          );
+          closes = fallbackData.closes;
+          highs = fallbackData.highs;
+          lows = fallbackData.lows;
+          volumes = fallbackData.volumes;
+          price = fallbackData.price;
+        }
       } else {
-        ohlcv = await fetchCryptoOHLCV(upperAsset, timeframe);
+        // Forex pair
+        const data = await fetchForexData(upperAsset);
+        closes = data.closes;
+        highs = data.highs;
+        lows = data.lows;
+        volumes = data.volumes;
+        price = data.price;
       }
 
-      const { closes, highs, lows, price } = ohlcv;
+      if (closes.length < 30) {
+        throw new Error("Insufficient market data for analysis");
+      }
 
+      // Calculate all indicators
       const rsi = calcRSI(closes);
       const {
         macd,
         signal: macdSignal,
         histogram: macdHistogram,
       } = calcMACD(closes);
-      const ema20 = calcEMA(closes, 20);
-      const ema50 = calcEMA(closes, 50);
-      const sma200 = calcSMA(closes, Math.min(200, closes.length));
+      const ema9 = calcEMA(closes, 9);
+      const ema21 = calcEMA(closes, 21);
+      const sma20 = calcSMA(closes, 20);
+      const sma50 = calcSMA(closes, 50);
       const bb = calcBollinger(closes);
       const atr = calcATR(highs, lows, closes);
-      const volumeRatio = 1.0;
-      const support = Math.min(...closes.slice(-20));
-      const resistance = Math.max(...closes.slice(-20));
+
+      // Volume ratio
+      const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+      const volumeRatio =
+        avgVolume > 0 ? volumes[volumes.length - 1] / avgVolume : 1;
+
+      // Momentum (10-period ROC)
       const momentum =
         closes.length >= 10
           ? closes[closes.length - 1] - closes[closes.length - 10]
           : 0;
 
-      const score = weightedScore(rsi, macd, ema20, ema50, price, bb);
+      // Support / Resistance from last 50 candles
+      const recent = closes.slice(-50);
+      const support = Math.min(...recent);
+      const resistance = Math.max(...recent);
 
+      // Weighted score
+      const score = calcWeightedScore(
+        rsi,
+        macdHistogram,
+        ema9,
+        ema21,
+        sma20,
+        sma50,
+        price,
+        bb,
+        volumeRatio,
+        momentum,
+      );
+
+      // Signal label
       let signal: string;
-      let confidence: number;
-      if (score >= 7) {
-        signal = "Strong Buy";
-        confidence = Math.min(95, 80 + score);
-      } else if (score >= 3) {
-        signal = "Buy";
-        confidence = Math.min(80, 60 + score * 2);
-      } else if (score <= -7) {
-        signal = "Strong Sell";
-        confidence = Math.min(95, 80 + Math.abs(score));
-      } else if (score <= -3) {
-        signal = "Sell";
-        confidence = Math.min(80, 60 + Math.abs(score) * 2);
-      } else {
-        signal = "Neutral";
-        confidence = 50;
-      }
+      if (score > 60) signal = "Strong Buy";
+      else if (score > 20) signal = "Buy";
+      else if (score < -60) signal = "Strong Sell";
+      else if (score < -20) signal = "Sell";
+      else signal = "Neutral";
 
-      const trendDirection =
-        ema20 > ema50 ? "Uptrend" : ema20 < ema50 ? "Downtrend" : "Sideways";
+      // Confidence: map abs(score) 0→100 to 50→99
+      const confidence = Math.round(50 + Math.abs(score) * 0.49);
 
-      const summary = `${upperAsset} is showing a ${signal} signal on the ${timeframe} timeframe. RSI at ${rsi.toFixed(1)} indicates ${rsi < 30 ? "oversold" : rsi > 70 ? "overbought" : "neutral"} conditions. MACD ${macd > 0 ? "bullish" : "bearish"} crossover. Price is ${price > ema20 ? "above" : "below"} EMA20, suggesting ${trendDirection.toLowerCase()}.`;
+      // Trend direction
+      let trendDirection: string;
+      if (ema9 > ema21 && sma20 > sma50) trendDirection = "Bullish";
+      else if (ema9 < ema21 && sma20 < sma50) trendDirection = "Bearish";
+      else trendDirection = "Neutral";
+
+      // Per-indicator results for display
+      const bbPct =
+        bb.upper !== bb.lower
+          ? ((price - bb.lower) / (bb.upper - bb.lower)) * 100
+          : 50;
+
+      const indicatorResults: IndicatorResult[] = [
+        {
+          name: "RSI (14)",
+          value: rsi.toFixed(1),
+          verdict: rsi < 30 ? "bullish" : rsi > 70 ? "bearish" : "neutral",
+          detail:
+            rsi < 30 ? "Oversold" : rsi > 70 ? "Overbought" : "Neutral zone",
+        },
+        {
+          name: "MACD",
+          value: macd.toFixed(4),
+          verdict: macdHistogram > 0 ? "bullish" : "bearish",
+          detail: `Histogram: ${macdHistogram > 0 ? "+" : ""}${macdHistogram.toFixed(4)}`,
+        },
+        {
+          name: "EMA 9 vs 21",
+          value: `${ema9.toFixed(4)} / ${ema21.toFixed(4)}`,
+          verdict: ema9 > ema21 ? "bullish" : "bearish",
+          detail:
+            ema9 > ema21 ? "Golden cross (bullish)" : "Death cross (bearish)",
+        },
+        {
+          name: "SMA 20 vs 50",
+          value: `${sma20.toFixed(4)} / ${sma50.toFixed(4)}`,
+          verdict: sma20 > sma50 ? "bullish" : "bearish",
+          detail: sma20 > sma50 ? "Uptrend" : "Downtrend",
+        },
+        {
+          name: "Bollinger Band %",
+          value: `${bbPct.toFixed(1)}%`,
+          verdict: bbPct < 20 ? "bullish" : bbPct > 80 ? "bearish" : "neutral",
+          detail:
+            bbPct < 20
+              ? "Near lower band"
+              : bbPct > 80
+                ? "Near upper band"
+                : "Mid range",
+        },
+        {
+          name: "Volume Ratio",
+          value: `${volumeRatio.toFixed(2)}x`,
+          verdict:
+            volumeRatio > 1.2
+              ? momentum > 0
+                ? "bullish"
+                : "bearish"
+              : "neutral",
+          detail:
+            volumeRatio > 1.5
+              ? "High volume surge"
+              : volumeRatio > 1.2
+                ? "Above average"
+                : "Below average",
+        },
+        {
+          name: "ATR (14)",
+          value: atr.toFixed(4),
+          verdict: "neutral",
+          detail: "Volatility measure",
+        },
+        {
+          name: "Momentum (10)",
+          value: `${momentum > 0 ? "+" : ""}${momentum.toFixed(4)}`,
+          verdict:
+            momentum > 0 ? "bullish" : momentum < 0 ? "bearish" : "neutral",
+          detail:
+            momentum > 0
+              ? "Positive momentum"
+              : momentum < 0
+                ? "Negative momentum"
+                : "Flat",
+        },
+        {
+          name: "Support / Resistance",
+          value: `${support.toFixed(4)} / ${resistance.toFixed(4)}`,
+          verdict: price > (support + resistance) / 2 ? "bullish" : "bearish",
+          detail:
+            price > (support + resistance) / 2
+              ? "Above midpoint"
+              : "Below midpoint",
+        },
+      ];
+
+      const summary = `${upperAsset} ${timeframe} — G-Man Intelligence score: ${score > 0 ? "+" : ""}${score.toFixed(0)}/100. RSI at ${rsi.toFixed(1)} (${rsi < 30 ? "oversold" : rsi > 70 ? "overbought" : "neutral"}). MACD ${macdHistogram > 0 ? "bullish" : "bearish"} histogram. EMA9 ${ema9 > ema21 ? "above" : "below"} EMA21. Price: ${price.toFixed(4)} | S: ${support.toFixed(4)} | R: ${resistance.toFixed(4)}.`;
 
       return {
         asset: upperAsset,
         timeframe,
         signal,
-        confidence: Math.round(confidence),
+        confidence,
         trendDirection,
+        score,
         indicators: {
           rsi,
           macd,
           macdSignal,
           macdHistogram,
-          ema20,
-          ema50,
-          sma200,
+          ema9,
+          ema21,
+          sma20,
+          sma50,
           bollingerUpper: bb.upper,
           bollingerLower: bb.lower,
           bollingerMid: bb.mid,
@@ -382,7 +514,9 @@ export function useGenerateSignal() {
           resistance,
           momentum,
         },
+        indicatorResults,
         summary,
+        price,
         calculatedAt: Date.now(),
       };
     },

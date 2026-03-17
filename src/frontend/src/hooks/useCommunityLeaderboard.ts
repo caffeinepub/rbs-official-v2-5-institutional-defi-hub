@@ -1,16 +1,34 @@
 import { useMemo } from "react";
 import { useCommunityVoting } from "./useCommunityVoting";
+import { useInternetIdentity } from "./useInternetIdentity";
 
 export interface LeaderboardEntry {
   rank: number;
   principal: string;
+  username: string;
+  displayName: string;
+  email?: string;
   totalVotes: number;
   pollsParticipated: number;
   badge: string;
+  score: number;
+}
+
+function getUsernameFromStorage(principal: string): string {
+  try {
+    const raw = localStorage.getItem(`rbsLocalProfile_${principal}`);
+    if (!raw) return "";
+    const parsed = JSON.parse(raw);
+    return parsed?.username ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function useCommunityLeaderboard() {
   const { polls, isLoading } = useCommunityVoting();
+  const { identity } = useInternetIdentity();
+  const currentPrincipal = identity?.getPrincipal().toString() ?? "";
 
   const leaderboard = useMemo((): LeaderboardEntry[] => {
     if (!polls || polls.length === 0) return [];
@@ -37,25 +55,38 @@ export function useCommunityLeaderboard() {
     }
 
     const entries: LeaderboardEntry[] = Array.from(creatorMap.entries())
-      .map(([principal, data]) => ({
-        rank: 0,
-        principal,
-        totalVotes: data.totalVotes,
-        pollsParticipated: data.pollsCreated,
-        badge:
-          data.totalVotes >= 100
-            ? "🏆"
-            : data.totalVotes >= 50
-              ? "🥇"
-              : data.totalVotes >= 20
-                ? "🥈"
-                : "🥉",
-      }))
-      .sort((a, b) => b.totalVotes - a.totalVotes)
+      .map(([principal, data]) => {
+        const score = data.totalVotes + data.pollsCreated * 5;
+        const username = getUsernameFromStorage(principal);
+        return {
+          rank: 0,
+          principal,
+          username,
+          displayName: username
+            ? `@${username}`
+            : `${principal.slice(0, 8)}...${principal.slice(-4)}`,
+          totalVotes: data.totalVotes,
+          pollsParticipated: data.pollsCreated,
+          score,
+          badge:
+            score >= 100
+              ? "🏆"
+              : score >= 50
+                ? "🥇"
+                : score >= 20
+                  ? "🥈"
+                  : "🥉",
+        };
+      })
+      .sort((a, b) => b.score - a.score)
       .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
 
     return entries;
   }, [polls]);
 
-  return { leaderboard, isLoading };
+  const currentUserEntry = leaderboard.find(
+    (e) => e.principal === currentPrincipal,
+  );
+
+  return { leaderboard, isLoading, currentPrincipal, currentUserEntry };
 }

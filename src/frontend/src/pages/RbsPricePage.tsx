@@ -379,7 +379,7 @@ export default function RbsPricePage() {
                 className="flex items-center justify-center gap-3 mb-4"
               >
                 <img
-                  src="/assets/uploads/IMG_20250821_154306_073-8-1.jpg"
+                  src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
                   alt="RBS Token"
                   className="h-14 w-14 rounded-full object-cover ring-2 ring-emerald-200"
                 />

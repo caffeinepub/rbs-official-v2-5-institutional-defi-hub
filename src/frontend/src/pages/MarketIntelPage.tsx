@@ -147,7 +147,7 @@ function determineSignal(
 }
 
 // Map asset names to Binance symbols
-const BINANCE_SYMBOL_MAP: Record<string, string> = {
+const _BINANCE_SYMBOL_MAP: Record<string, string> = {
   "BTC/USDT": "BTCUSDT",
   "ETH/USDT": "ETHUSDT",
   "BNB/USDT": "BNBUSDT",
@@ -164,7 +164,7 @@ const BINANCE_SYMBOL_MAP: Record<string, string> = {
 };
 
 // Interval map from user-facing to Binance intervals
-const INTERVAL_MAP: Record<string, string> = {
+const _INTERVAL_MAP: Record<string, string> = {
   "1M": "1m",
   "5M": "5m",
   "15M": "15m",
@@ -263,6 +263,13 @@ export default function MarketIntelPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Timeout fallback for lock loading state
+  const [lockCheckTimeout, setLockCheckTimeout] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setLockCheckTimeout(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
   const generateSignalMutation = useGenerateSignal();
 
   const fetchLiveSignals = useCallback(async () => {
@@ -356,71 +363,22 @@ export default function MarketIntelPage() {
     _category: string,
   ) => {
     setSignalError(null);
-    const binanceSymbol = BINANCE_SYMBOL_MAP[asset] ?? asset;
-    const interval = INTERVAL_MAP[timeframe] ?? "1h";
     try {
-      const klines = await fetchKlines(binanceSymbol, interval, 100);
-      const closes = klines.map((k) => k.close);
-      const rsi = calculateRSI(closes);
-      const macd = calculateMACD(closes);
-      const ema = calculateEMA(closes, 20);
-      const { signal, confidence } = determineSignal(rsi, macd, closes);
-      const sma200 =
-        closes.slice(-Math.min(200, closes.length)).reduce((a, b) => a + b, 0) /
-        Math.min(200, closes.length);
-      const bollingerSlice = closes.slice(-20);
-      const bbMid = bollingerSlice.reduce((a, b) => a + b, 0) / 20;
-      const bbStd = Math.sqrt(
-        bollingerSlice.reduce((sum, c) => sum + (c - bbMid) ** 2, 0) / 20,
-      );
-      const syntheticResult: SignalData = {
+      const result = await generateSignalMutation.mutateAsync({
         asset,
         timeframe,
-        signal,
-        confidence,
-        trendDirection: macd > 0 ? "Bullish" : "Bearish",
-        indicators: {
-          rsi,
-          macd,
-          macdSignal: 0,
-          macdHistogram: 0,
-          ema20: ema,
-          ema50: calculateEMA(closes, 50),
-          sma200,
-          bollingerUpper: bbMid + 2 * bbStd,
-          bollingerLower: bbMid - 2 * bbStd,
-          bollingerMid: bbMid,
-          atr: 0,
-          volumeRatio: 1,
-          support: Math.min(...closes.slice(-20)),
-          resistance: Math.max(...closes.slice(-20)),
-          momentum:
-            closes.length >= 10
-              ? closes[closes.length - 1] - closes[closes.length - 10]
-              : 0,
-        },
-        summary: `${asset} showing ${signal} on ${timeframe}. RSI: ${rsi.toFixed(1)}, MACD: ${macd > 0 ? "bullish" : "bearish"}, EMA20: ${ema.toFixed(2)}.`,
-        calculatedAt: Date.now(),
-      };
-      setGeneratedSignal(syntheticResult);
-    } catch {
-      try {
-        const result = await generateSignalMutation.mutateAsync({
-          asset,
-          timeframe,
-        });
-        setGeneratedSignal(result);
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "Signal generation failed";
-        setSignalError(msg);
-        toast.error("Signal generation failed. Please try again.");
-      }
+      });
+      setGeneratedSignal(result);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Signal generation failed";
+      setSignalError(msg);
+      toast.error("Signal generation failed. Please try again.");
     }
   };
 
   // ── Loading state ─────────────────────────────────────────────────────────
-  if (lockLoading) {
+  if (lockLoading && !lockCheckTimeout) {
     return (
       <>
         <PageHead
@@ -841,7 +799,12 @@ export default function MarketIntelPage() {
           />
 
           {/* Signal Generator */}
-          <section>
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 Signal Generator
@@ -866,31 +829,7 @@ export default function MarketIntelPage() {
                 />
               </div>
             </div>
-          </section>
-
-          {/* Gradient Divider */}
-          <div
-            className="h-px"
-            style={{
-              background:
-                "linear-gradient(to right, transparent, rgba(14,165,233,0.3), transparent)",
-            }}
-          />
-
-          {/* Top 10 Cryptocurrencies */}
-          <TopCryptoSection />
-
-          {/* Gradient Divider */}
-          <div
-            className="h-px"
-            style={{
-              background:
-                "linear-gradient(to right, transparent, rgba(14,165,233,0.3), transparent)",
-            }}
-          />
-
-          {/* Forex & Metals Snapshot */}
-          <ForexMetalsSection />
+          </motion.section>
         </div>
       </div>
     </>
@@ -923,8 +862,12 @@ function LiveSignalCard({ signal }: { signal: LiveSignalItem }) {
       : "rgba(240, 249, 255, 0.8)";
 
   return (
-    <div
-      className="rounded-xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-md"
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4 }}
+      whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+      className="rounded-xl p-4 cursor-pointer"
       style={{
         background: bgColor,
         border: `1px solid ${borderColor}`,
@@ -979,9 +922,12 @@ function LiveSignalCard({ signal }: { signal: LiveSignalItem }) {
           <span className="font-bold text-gray-700">{signal.confidence}%</span>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${signal.confidence}%`, background: barBg }}
+          <motion.div
+            className="h-full rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${signal.confidence}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            style={{ background: barBg }}
           />
         </div>
       </div>
@@ -1012,302 +958,6 @@ function LiveSignalCard({ signal }: { signal: LiveSignalItem }) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// ── Top 10 Cryptocurrencies Section ──────────────────────────────────────────
-
-interface CoinData {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  market_cap: number;
-  total_volume: number;
-  market_cap_rank: number;
-}
-
-function TopCryptoSection() {
-  const [coins, setCoins] = useState<CoinData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const fetchCoins = useCallback(async () => {
-    try {
-      const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false",
-      );
-      if (!res.ok) throw new Error("API error");
-      const data: CoinData[] = await res.json();
-      setCoins(data);
-      setLastUpdated(new Date());
-    } catch {
-      // keep previous
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCoins();
-    const interval = setInterval(fetchCoins, 30000);
-    return () => clearInterval(interval);
-  }, [fetchCoins]);
-
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Top 10 Cryptocurrencies
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Live market cap data from CoinGecko — auto-refreshes every 30s
-            {lastUpdated && ` · Updated ${lastUpdated.toLocaleTimeString()}`}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchCoins}
-          disabled={loading}
-          className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-xs"
-        >
-          <RefreshCw
-            className={`w-3 h-3 mr-1 ${loading ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
-      </div>
-
-      {loading && coins.length === 0 ? (
-        <div className="space-y-3" data-ocid="market-intel.top10.loading_state">
-          {Array.from({ length: 5 }, (_, i) => i).map((i) => (
-            <div
-              key={i}
-              className="h-14 rounded-xl bg-gray-100 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table
-              className="w-full text-sm"
-              data-ocid="market-intel.top10.table"
-            >
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-xs">
-                    #
-                  </th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-xs">
-                    Asset
-                  </th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">
-                    Price
-                  </th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">
-                    24h %
-                  </th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs hidden md:table-cell">
-                    Market Cap
-                  </th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs hidden lg:table-cell">
-                    Volume
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {coins.map((coin, i) => {
-                  const isPos = coin.price_change_percentage_24h >= 0;
-                  return (
-                    <motion.tr
-                      key={coin.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                      data-ocid={`market-intel.top10.row.${i + 1}`}
-                    >
-                      <td className="py-3 px-4 text-gray-400 font-mono text-xs">
-                        {coin.market_cap_rank}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={coin.image}
-                            alt={coin.name}
-                            className="w-6 h-6 rounded-full"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
-                          />
-                          <div>
-                            <div className="font-bold text-gray-900 text-sm">
-                              {coin.symbol.toUpperCase()}
-                            </div>
-                            <div className="text-gray-400 text-xs hidden sm:block">
-                              {coin.name}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-gray-900">
-                        $
-                        {coin.current_price.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: coin.current_price < 1 ? 6 : 2,
-                        })}
-                      </td>
-                      <td
-                        className={`py-3 px-4 text-right font-bold text-sm ${isPos ? "text-green-600" : "text-red-600"}`}
-                      >
-                        <span className="flex items-center justify-end gap-0.5">
-                          {isPos ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
-                          )}
-                          {isPos ? "+" : ""}
-                          {coin.price_change_percentage_24h.toFixed(2)}%
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right text-gray-500 text-xs hidden md:table-cell font-mono">
-                        ${(coin.market_cap / 1e9).toFixed(1)}B
-                      </td>
-                      <td className="py-3 px-4 text-right text-gray-500 text-xs hidden lg:table-cell font-mono">
-                        ${(coin.total_volume / 1e9).toFixed(1)}B
-                      </td>
-                    </motion.tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ── Forex & Metals Snapshot Section ──────────────────────────────────────────
-
-interface ForexMetalItem {
-  label: string;
-  symbol: string;
-  price: number | null;
-  flag: string;
-  change?: number;
-}
-
-function ForexMetalsSection() {
-  const [items, setItems] = useState<ForexMetalItem[]>([
-    { label: "Gold", symbol: "XAU/USD", price: null, flag: "🥇" },
-    { label: "Silver", symbol: "XAG/USD", price: null, flag: "🥈" },
-    { label: "EUR/USD", symbol: "EUR", price: null, flag: "🇪🇺" },
-    { label: "GBP/USD", symbol: "GBP", price: null, flag: "🇬🇧" },
-    { label: "JPY/USD", symbol: "JPY", price: null, flag: "🇯🇵" },
-  ]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [goldRes, silverRes, forexRes] = await Promise.all([
-        fetch("https://api.coinbase.com/v2/prices/XAU-USD/spot"),
-        fetch("https://api.coinbase.com/v2/prices/XAG-USD/spot"),
-        fetch(
-          "https://api.exchangerate.host/latest?base=USD&symbols=EUR,GBP,JPY",
-        ),
-      ]);
-
-      const updates: Partial<Record<string, number>> = {};
-
-      if (goldRes.ok) {
-        const d = await goldRes.json();
-        if (d?.data?.amount)
-          updates["XAU/USD"] = Number.parseFloat(d.data.amount);
-      }
-      if (silverRes.ok) {
-        const d = await silverRes.json();
-        if (d?.data?.amount)
-          updates["XAG/USD"] = Number.parseFloat(d.data.amount);
-      }
-      if (forexRes.ok) {
-        const d = await forexRes.json();
-        if (d?.rates) {
-          if (d.rates.EUR) updates.EUR = 1 / d.rates.EUR;
-          if (d.rates.GBP) updates.GBP = 1 / d.rates.GBP;
-          if (d.rates.JPY) updates.JPY = 1 / d.rates.JPY;
-        }
-      }
-
-      setItems((prev) =>
-        prev.map((item) => ({
-          ...item,
-          price: updates[item.symbol] ?? item.price,
-        })),
-      );
-    } catch {
-      // keep previous
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  const formatPrice = (price: number | null, symbol: string): string => {
-    if (price === null) return "Loading...";
-    if (symbol === "XAU/USD")
-      return `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (symbol === "XAG/USD") return `$${price.toFixed(2)}`;
-    if (symbol === "JPY") return price.toFixed(6);
-    return price.toFixed(4);
-  };
-
-  return (
-    <section>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Forex &amp; Metals Snapshot
-        </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Live gold, silver, and major forex pairs — auto-refreshes every 60s
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {items.map((item, i) => (
-          <motion.div
-            key={item.symbol}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className="bg-white border border-gray-200 rounded-2xl p-4 text-center hover:border-emerald-300 hover:shadow-sm transition-all duration-300"
-            data-ocid={`market-intel.forex.item.${i + 1}`}
-          >
-            <div className="text-3xl mb-2">{item.flag}</div>
-            <div className="text-gray-900 font-bold text-sm">{item.label}</div>
-            <div className="text-gray-400 text-xs mb-2">{item.symbol}</div>
-            {loading && item.price === null ? (
-              <div className="h-6 bg-gray-100 rounded animate-pulse mx-auto w-20" />
-            ) : (
-              <div className="font-mono font-bold text-emerald-600 text-sm">
-                {formatPrice(item.price, item.symbol)}
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </section>
+    </motion.div>
   );
 }

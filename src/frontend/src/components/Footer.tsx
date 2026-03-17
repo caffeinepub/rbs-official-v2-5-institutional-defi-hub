@@ -2,26 +2,6 @@ import { SOCIAL_LINKS } from "@/constants/socialLinks";
 import { Heart } from "lucide-react";
 import { SiTelegram, SiWhatsapp } from "react-icons/si";
 
-const FOOTER_TOOLS = [
-  { label: "Trading Tools", href: "/trading-tools" },
-  { label: "G-MAN Intel", href: "/market-intel" },
-  { label: "Fear & Greed", href: "/fear-greed" },
-  { label: "Crypto Heatmap", href: "/crypto-heatmap" },
-  { label: "Funding Rates", href: "/funding-rates" },
-  { label: "Portfolio Tracker", href: "/portfolio-tracker" },
-  { label: "Staking Calculator", href: "/staking" },
-];
-
-const FOOTER_PAGES = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Tokenomics", href: "/tokenomics" },
-  { label: "Roadmap", href: "/roadmap" },
-  { label: "Whitepaper", href: "/whitepaper" },
-  { label: "Acquisition", href: "/acquisition" },
-  { label: "Community", href: "/community" },
-];
-
 export function Footer() {
   const appIdentifier =
     typeof window !== "undefined"
@@ -48,7 +28,7 @@ export function Footer() {
           />
 
           {/* Main footer grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -60,7 +40,7 @@ export function Footer() {
                   }}
                 >
                   <img
-                    src="/assets/uploads/IMG_20250821_154306_073-8-1.jpg"
+                    src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
                     alt="RBS Token Logo"
                     className="w-5 h-5 rounded-full object-cover"
                     onError={(e) => {
@@ -72,21 +52,21 @@ export function Footer() {
                   <p className="text-sm font-bold text-gray-900">
                     RBS Official
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Professional Crypto Token
+                  <p className="text-xs text-sky-600 font-semibold tracking-wide">
+                    Always stay SUPERIOR
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Return Be Superior — Advanced blockchain solutions powered by
-                the Internet Computer.
+              <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
+                Always stay SUPERIOR — The next generation crypto token built on
+                Internet Computer.
               </p>
               <div className="flex items-center gap-4 mt-4">
                 <a
                   href={SOCIAL_LINKS.telegram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-emerald-600 transition-colors"
+                  className="text-gray-400 hover:text-sky-500 transition-colors"
                   aria-label="Telegram"
                 >
                   <SiTelegram className="h-5 w-5" />
@@ -95,48 +75,12 @@ export function Footer() {
                   href={SOCIAL_LINKS.whatsappChannel}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-emerald-600 transition-colors"
+                  className="text-gray-400 hover:text-sky-500 transition-colors"
                   aria-label="WhatsApp"
                 >
                   <SiWhatsapp className="h-5 w-5" />
                 </a>
               </div>
-            </div>
-
-            {/* Pages */}
-            <div>
-              <p className="text-sm font-bold text-gray-700 mb-3">Pages</p>
-              <ul className="space-y-1.5">
-                {FOOTER_PAGES.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="text-xs text-gray-500 hover:text-emerald-600 transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Trading Tools */}
-            <div>
-              <p className="text-sm font-bold text-gray-700 mb-3">
-                Trading Tools
-              </p>
-              <ul className="space-y-1.5">
-                {FOOTER_TOOLS.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="text-xs text-gray-500 hover:text-emerald-600 transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
             </div>
 
             {/* Token info */}
@@ -173,13 +117,12 @@ export function Footer() {
           >
             <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
               © {new Date().getFullYear()}. Built with{" "}
-              <Heart className="h-4 w-4 text-emerald-500 fill-emerald-500" />{" "}
-              using{" "}
+              <Heart className="h-4 w-4 text-sky-500 fill-sky-500" /> using{" "}
               <a
                 href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${appIdentifier}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-emerald-600 hover:text-emerald-500 transition-colors font-semibold"
+                className="text-sky-600 hover:text-sky-500 transition-colors font-semibold"
               >
                 caffeine.ai
               </a>

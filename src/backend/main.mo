@@ -373,6 +373,15 @@ actor {
     userProfiles.add(caller, profile);
   };
 
+  public type UserProfileEntry = {
+    principal : Principal;
+    profile : UserProfile;
+  };
+
+  public query func getAllUserProfiles() : async [UserProfileEntry] {
+    userProfiles.toArray().map(func((k, v)) { { principal = k; profile = v } });
+  };
+
   public query ({ caller }) func hasMarketIntelAccess() : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can check Market Intel access");

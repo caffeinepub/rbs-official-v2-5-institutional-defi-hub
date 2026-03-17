@@ -65,9 +65,12 @@ export default function DeveloperBlogPage() {
   const createPost = useCreateBlogPost();
   const deletePost = useDeleteBlogPost();
 
-  // Global section lock — synced across all users
+  // Global section lock — synced across all users (for global banner only)
   const { isUnlocked: sectionUnlocked, setLock: setSectionLock } =
     useGlobalSectionLock("developerBlog");
+
+  // Local author panel state — independent of global lock
+  const [authorPanelOpen, setAuthorPanelOpen] = useState(false);
 
   // Author panel UI state
   const [authorPasscode, setAuthorPasscode] = useState("");
@@ -102,33 +105,34 @@ export default function DeveloperBlogPage() {
     (a, b) => Number(b.createdAt) - Number(a.createdAt),
   );
 
+  const BLOG_PASSCODE = "BP2420075112009BP";
+
   const handleUnlockAuthor = async () => {
     if (!authorPasscode.trim()) {
-      setAuthorPasscodeError("Enter the passcode");
+      setAuthorPasscodeError(
+        "Enter the developer passcode to access author panel",
+      );
       return;
     }
     setAuthorPasscodeError("");
     setIsVerifying(true);
-    try {
-      // Globally unlock the developer blog section for all users
-      await setSectionLock(authorPasscode.trim(), true);
+    // Local check — blogs are always visible, only author panel requires passcode
+    await new Promise((r) => setTimeout(r, 400));
+    if (authorPasscode.trim() === BLOG_PASSCODE) {
       setVerifiedPasscode(authorPasscode.trim());
+      setAuthorPanelOpen(true);
       setAuthorPasscode("");
-      toast.success("Developer Blog globally unlocked for all users");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Verification failed";
-      if (
-        msg.toLowerCase().includes("invalid") ||
-        msg.toLowerCase().includes("passcode") ||
-        msg.toLowerCase().includes("wrong")
-      ) {
-        setAuthorPasscodeError("Invalid passcode");
-      } else {
-        setAuthorPasscodeError("Verification failed");
+      toast.success("Author panel unlocked");
+      // Also update global lock so other users see the banner
+      try {
+        await setSectionLock(authorPasscode.trim(), true);
+      } catch {
+        /* ignore */
       }
-    } finally {
-      setIsVerifying(false);
+    } else {
+      setAuthorPasscodeError("Invalid passcode");
     }
+    setIsVerifying(false);
   };
 
   const handleLockPanel = async () => {
@@ -141,9 +145,10 @@ export default function DeveloperBlogPage() {
     try {
       await setSectionLock(lockPasscode.trim(), false);
       setVerifiedPasscode("");
+      setAuthorPanelOpen(false);
       setLockPasscode("");
       setShowLockInput(false);
-      toast.success("Developer Blog globally locked for all users");
+      toast.success("Author panel locked");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Lock failed";
       if (
@@ -196,35 +201,7 @@ export default function DeveloperBlogPage() {
       const publishedPost = { ...post, createdAt: BigInt(Date.now()) };
       setLastPublishedPost(publishedPost);
       setShowShareBanner(true);
-      setBinancePostStatus("posting");
-
-      // Attempt direct Binance Square API post
-      try {
-        const response = await fetch(
-          "https://www.binance.com/bapi/growth/v1/friendly/growth/square-social-network/article/create",
-          {
-            method: "POST",
-            headers: {
-              "X-Api-Key": "cb3bc3de8e894ccc9625f1fe0ff6bfc2",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: post.title,
-              content: post.body,
-              tags: post.tags,
-            }),
-          },
-        );
-        if (response.ok) {
-          setBinancePostStatus("success");
-          toast.success("Auto-posted to Binance Square!");
-        } else {
-          setBinancePostStatus("manual");
-        }
-      } catch {
-        // CORS or network error — fallback to manual share
-        setBinancePostStatus("manual");
-      }
+      setBinancePostStatus("manual");
 
       setTitle("");
       setCategory("");
@@ -237,9 +214,9 @@ export default function DeveloperBlogPage() {
     }
   };
 
-  const handleDelete = async (id: bigint) => {
+  const handleDelete = async (id: bigint, passcode: string) => {
     try {
-      await deletePost.mutateAsync({ id, authorCode: verifiedPasscode });
+      await deletePost.mutateAsync({ id, authorCode: passcode });
       toast.success("Post deleted");
       if (selectedPost?.id === id) setSelectedPost(null);
     } catch (err: unknown) {
@@ -372,6 +349,7 @@ export default function DeveloperBlogPage() {
                           </span>
                         </>
                       ) : (
+                        /* Author panel — local unlock, blogs always visible */
                         <>
                           Attempting to post to{" "}
                           <span className="text-yellow-700 font-medium">
@@ -490,6 +468,7 @@ export default function DeveloperBlogPage() {
                           {isLocking ? (
                             <RefreshCw className="w-4 h-4 animate-spin" />
                           ) : (
+                            /* Author panel — local unlock, blogs always visible */
                             "Lock"
                           )}
                         </Button>
@@ -515,7 +494,7 @@ export default function DeveloperBlogPage() {
                   </div>
                 )}
 
-                {!sectionUnlocked ? (
+                {!authorPanelOpen ? (
                   <div className="max-w-sm">
                     <p className="text-gray-500 text-xs sm:text-sm mb-3">
                       Enter the passcode to globally unlock the Author Panel for
@@ -545,6 +524,7 @@ export default function DeveloperBlogPage() {
                         {showPasscode ? (
                           <EyeOff className="w-4 h-4" />
                         ) : (
+                          /* Author panel — local unlock, blogs always visible */
                           <Eye className="w-4 h-4" />
                         )}
                       </button>
@@ -567,6 +547,7 @@ export default function DeveloperBlogPage() {
                       {isVerifying ? (
                         <RefreshCw className="w-4 h-4 animate-spin mr-2" />
                       ) : (
+                        /* Author panel — local unlock, blogs always visible */
                         <Unlock className="w-4 h-4 mr-2" />
                       )}
                       {isVerifying
@@ -593,6 +574,7 @@ export default function DeveloperBlogPage() {
                     </div>
                   </div>
                 ) : (
+                  /* Author panel — local unlock, blogs always visible */
                   <div className="space-y-4">
                     {/* Binance Square integration note when unlocked */}
                     <div
@@ -716,6 +698,7 @@ export default function DeveloperBlogPage() {
                             Publishing...
                           </span>
                         ) : (
+                          /* Author panel — local unlock, blogs always visible */
                           <span className="flex items-center gap-2">
                             <Plus className="w-4 h-4" /> Publish Post
                           </span>
@@ -783,10 +766,12 @@ export default function DeveloperBlogPage() {
                 <SmokySectionTransition key={post.id.toString()}>
                   <BlogPostCard
                     post={post}
-                    authorUnlocked={sectionUnlocked}
+                    isAuthenticated={isAuthenticated}
                     isDeleting={deletePost.isPending}
                     onView={() => setSelectedPost(post)}
-                    onDelete={() => handleDelete(post.id)}
+                    onDelete={(passcode: string) =>
+                      handleDelete(post.id, passcode)
+                    }
                     onShare={() => handleShareToBinanceSquare(post)}
                     animDelay={idx * 60}
                     index={idx + 1}
@@ -885,10 +870,10 @@ export default function DeveloperBlogPage() {
 
 interface BlogPostCardProps {
   post: BlogPost;
-  authorUnlocked: boolean;
+  isAuthenticated: boolean;
   isDeleting: boolean;
   onView: () => void;
-  onDelete: () => void;
+  onDelete: (passcode: string) => void;
   onShare: () => void;
   animDelay?: number;
   index: number;
@@ -896,7 +881,7 @@ interface BlogPostCardProps {
 
 function BlogPostCard({
   post,
-  authorUnlocked,
+  isAuthenticated,
   isDeleting,
   onView,
   onDelete,
@@ -910,6 +895,29 @@ function BlogPostCard({
     "en-US",
     { year: "numeric", month: "short", day: "numeric" },
   );
+  const [deletePasscode, setDeletePasscode] = useState("");
+  const [showDeletePasscode, setShowDeletePasscode] = useState(false);
+  const [deletePasscodeError, setDeletePasscodeError] = useState("");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isSubmittingDelete, setIsSubmittingDelete] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    if (!deletePasscode.trim()) {
+      setDeletePasscodeError("Passcode is required to delete a post");
+      return;
+    }
+    setIsSubmittingDelete(true);
+    setDeletePasscodeError("");
+    try {
+      await onDelete(deletePasscode.trim());
+      setDeletePasscode("");
+      setIsDeleteOpen(false);
+    } catch {
+      setDeletePasscodeError("Wrong passcode or delete failed. Try again.");
+    } finally {
+      setIsSubmittingDelete(false);
+    }
+  };
 
   return (
     <div
@@ -930,16 +938,29 @@ function BlogPostCard({
         >
           {post.category || "General"}
         </Badge>
-        {authorUnlocked && (
-          <AlertDialog>
+        {isAuthenticated && (
+          <AlertDialog
+            open={isDeleteOpen}
+            onOpenChange={(open) => {
+              setIsDeleteOpen(open);
+              if (!open) {
+                setDeletePasscode("");
+                setDeletePasscodeError("");
+                setShowDeletePasscode(false);
+              }
+            }}
+          >
             <AlertDialogTrigger asChild>
               <Button
                 data-ocid={`blog.delete_button.${index}`}
                 variant="ghost"
                 size="icon"
                 className="w-6 h-6 text-red-400/50 hover:text-red-500 hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                disabled={isDeleting}
-                onClick={(e) => e.stopPropagation()}
+                disabled={isDeleting || isSubmittingDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteOpen(true);
+                }}
               >
                 <Trash2 className="w-3 h-3" />
               </Button>
@@ -954,10 +975,56 @@ function BlogPostCard({
                   Delete Post?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-gray-500">
-                  This will permanently delete "{post.title}". This action
-                  cannot be undone.
+                  This will permanently delete "{post.title}". Enter the admin
+                  passcode to confirm deletion.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="px-0 py-2">
+                <label
+                  htmlFor={`delete-blog-passcode-${index}`}
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Admin Passcode
+                </label>
+                <div className="relative">
+                  <Input
+                    id={`delete-blog-passcode-${index}`}
+                    data-ocid={`blog.delete.passcode.input.${index}`}
+                    type={showDeletePasscode ? "text" : "password"}
+                    value={deletePasscode}
+                    onChange={(e) => {
+                      setDeletePasscode(e.target.value);
+                      setDeletePasscodeError("");
+                    }}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleDeleteConfirm()
+                    }
+                    placeholder="Enter admin passcode"
+                    className="bg-gray-50 border-gray-300 text-gray-900 font-mono pr-10 w-full"
+                    disabled={isSubmittingDelete}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletePasscode((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showDeletePasscode ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      /* Author panel — local unlock, blogs always visible */
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {deletePasscodeError && (
+                  <p
+                    data-ocid={`blog.delete.error_state.${index}`}
+                    className="text-red-500 text-xs mt-1.5 flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-3 h-3" /> {deletePasscodeError}
+                  </p>
+                )}
+              </div>
               <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                 <AlertDialogCancel
                   data-ocid="blog.delete.cancel_button"
@@ -965,13 +1032,21 @@ function BlogPostCard({
                 >
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction
+                <Button
                   data-ocid="blog.delete.confirm_button"
-                  onClick={onDelete}
+                  onClick={handleDeleteConfirm}
+                  disabled={isSubmittingDelete || !deletePasscode.trim()}
                   className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto"
                 >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </AlertDialogAction>
+                  {isSubmittingDelete ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Deleting...
+                    </span>
+                  ) : (
+                    /* Author panel — local unlock, blogs always visible */
+                    "Delete Post"
+                  )}
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

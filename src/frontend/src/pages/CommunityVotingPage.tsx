@@ -44,7 +44,6 @@ import {
   getVotePercentage,
   useCommunityVoting,
 } from "../hooks/useCommunityVoting";
-import { useGlobalSectionLock } from "../hooks/useGlobalSectionLock";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 export default function CommunityVotingPage() {
@@ -63,84 +62,15 @@ export default function CommunityVotingPage() {
     isDeleting,
   } = useCommunityVoting();
 
-  // Global section lock for polls
-  const { isUnlocked: pollsUnlocked, setLock: setPollsLock } =
-    useGlobalSectionLock("polls");
-
-  // Unlock gate state
-  const [unlockPasscode, setUnlockPasscode] = useState("");
-  const [unlockError, setUnlockError] = useState("");
-  const [isUnlocking, setIsUnlocking] = useState(false);
-  const [showUnlockPasscode, setShowUnlockPasscode] = useState(false);
-
-  // Lock state
-  const [showLockForm, setShowLockForm] = useState(false);
-  const [lockPasscode, setLockPasscode] = useState("");
-  const [lockError, setLockError] = useState("");
-  const [isLocking, setIsLocking] = useState(false);
-
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [createError, setCreateError] = useState("");
+  const [createPasscode, setCreatePasscode] = useState("");
+  const [showCreatePasscode, setShowCreatePasscode] = useState(false);
 
   const stats = computeCommunityStats(polls);
   const activityFeed = buildActivityFeed(polls, 10);
-
-  const handleUnlockPolls = async () => {
-    if (!unlockPasscode.trim()) {
-      setUnlockError("Enter the passcode");
-      return;
-    }
-    setIsUnlocking(true);
-    setUnlockError("");
-    try {
-      await setPollsLock(unlockPasscode.trim(), true);
-      setUnlockPasscode("");
-      toast.success("Polls section globally unlocked for all users");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unlock failed";
-      if (
-        msg.toLowerCase().includes("invalid") ||
-        msg.toLowerCase().includes("passcode") ||
-        msg.toLowerCase().includes("wrong")
-      ) {
-        setUnlockError("Invalid passcode");
-      } else {
-        setUnlockError("Unlock failed. Try again.");
-      }
-    } finally {
-      setIsUnlocking(false);
-    }
-  };
-
-  const handleLockPolls = async () => {
-    if (!lockPasscode.trim()) {
-      setLockError("Enter passcode to lock");
-      return;
-    }
-    setIsLocking(true);
-    setLockError("");
-    try {
-      await setPollsLock(lockPasscode.trim(), false);
-      setLockPasscode("");
-      setShowLockForm(false);
-      toast.success("Polls section globally locked for all users");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lock failed";
-      if (
-        msg.toLowerCase().includes("invalid") ||
-        msg.toLowerCase().includes("passcode") ||
-        msg.toLowerCase().includes("wrong")
-      ) {
-        setLockError("Invalid passcode");
-      } else {
-        setLockError("Lock failed. Try again.");
-      }
-    } finally {
-      setIsLocking(false);
-    }
-  };
 
   const handleAddOption = () => setOptions((prev) => [...prev, ""]);
   const handleOptionChange = (i: number, val: string) =>
@@ -150,6 +80,10 @@ export default function CommunityVotingPage() {
 
   const handleCreatePoll = async () => {
     setCreateError("");
+    if (!createPasscode.trim()) {
+      setCreateError("Admin passcode is required to create a poll");
+      return;
+    }
     const validOptions = options.filter((o) => o.trim());
     if (!question.trim()) {
       setCreateError("Question is required");
@@ -164,11 +98,12 @@ export default function CommunityVotingPage() {
         question: question.trim(),
         options: validOptions,
         isActive: true,
-        code: "BP2420075112009BP",
+        code: createPasscode.trim(),
       });
       toast.success("Poll created! Visible to all users in real-time.");
       setQuestion("");
       setOptions(["", ""]);
+      setCreatePasscode("");
       setShowCreateForm(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create poll";
@@ -238,14 +173,12 @@ export default function CommunityVotingPage() {
         >
           <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
           <span className="text-emerald-700">
-            All polls are visible to every user in real-time
+            All polls are visible to every logged-in user in real-time
           </span>
-          {pollsUnlocked && (
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
-              <Globe className="w-3 h-3 mr-1" />
-              Poll creation globally enabled — anyone with the code can create
-            </Badge>
-          )}
+          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+            <Globe className="w-3 h-3 mr-1" />
+            Create polls with admin passcode
+          </Badge>
         </div>
 
         {/* Hero */}
@@ -264,12 +197,6 @@ export default function CommunityVotingPage() {
             <p className="text-gray-500 text-sm sm:text-base max-w-xl mx-auto px-2">
               Shape the future of RBS through decentralized governance polls
             </p>
-            {pollsUnlocked && (
-              <div className="inline-flex items-center gap-2 mt-3 sm:mt-4 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Globe className="w-3.5 h-3.5" />
-                Poll creation globally enabled for all users
-              </div>
-            )}
           </div>
         </SmokySectionTransition>
 
@@ -316,88 +243,12 @@ export default function CommunityVotingPage() {
           </SmokySectionTransition>
 
           {/* Passcode Gate for unlocking polls creation */}
-          {isAuthenticated && !pollsUnlocked && (
-            <SmokySectionTransition>
-              <div
-                className="rounded-xl sm:rounded-2xl p-4 sm:p-6"
-                style={{
-                  background: "rgba(240, 249, 255, 0.8)",
-                  border: "1px solid rgba(14, 165, 233, 0.2)",
-                  boxShadow: "0 4px 20px rgba(14, 165, 233, 0.06)",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
-                  <h3 className="text-gray-900 font-bold text-sm sm:text-base">
-                    Unlock Poll Creation
-                  </h3>
-                </div>
-                <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4 max-w-md">
-                  Enter the passcode to enable poll creation globally for all
-                  users. Polls are always visible — only creation requires the
-                  code.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-sm">
-                  <div className="relative flex-1">
-                    <Input
-                      data-ocid="polls.passcode.input"
-                      type={showUnlockPasscode ? "text" : "password"}
-                      value={unlockPasscode}
-                      onChange={(e) => {
-                        setUnlockPasscode(e.target.value);
-                        setUnlockError("");
-                      }}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && handleUnlockPolls()
-                      }
-                      placeholder="Enter passcode"
-                      className="bg-white border-gray-300 text-gray-900 pr-10 font-mono w-full"
-                      disabled={isUnlocking}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowUnlockPasscode((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showUnlockPasscode ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  <Button
-                    data-ocid="polls.unlock.button"
-                    onClick={handleUnlockPolls}
-                    disabled={isUnlocking || !unlockPasscode.trim()}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold w-full sm:w-auto"
-                  >
-                    {isUnlocking ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Unlock className="w-4 h-4 mr-1" /> Unlock
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {unlockError && (
-                  <p
-                    data-ocid="polls.passcode.error_state"
-                    className="text-red-500 text-xs mt-2 flex items-center gap-1"
-                  >
-                    <AlertTriangle className="w-3 h-3" /> {unlockError}
-                  </p>
-                )}
-              </div>
-            </SmokySectionTransition>
-          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Polls Column */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Lock/Create Poll Controls */}
-              {isAuthenticated && pollsUnlocked && (
+              {isAuthenticated && (
                 <SmokySectionTransition>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Button
@@ -408,77 +259,12 @@ export default function CommunityVotingPage() {
                       <Plus className="w-4 h-4 mr-2" />
                       {showCreateForm ? "Cancel" : "Create New Poll"}
                     </Button>
-                    {!showLockForm && (
-                      <Button
-                        data-ocid="polls.lock.button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowLockForm(true)}
-                        className="border-gray-300 text-gray-500 hover:bg-gray-50 text-xs"
-                      >
-                        <Lock className="w-3 h-3 mr-1" /> Lock Poll Creation
-                      </Button>
-                    )}
-                    {showLockForm && (
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                        <Input
-                          type="password"
-                          value={lockPasscode}
-                          onChange={(e) => {
-                            setLockPasscode(e.target.value);
-                            setLockError("");
-                          }}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleLockPolls()
-                          }
-                          placeholder="Passcode to lock"
-                          className="bg-gray-50 border-gray-300 text-gray-900 font-mono w-full sm:w-48 text-sm"
-                          disabled={isLocking}
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            data-ocid="polls.lock.confirm_button"
-                            size="sm"
-                            onClick={handleLockPolls}
-                            disabled={isLocking || !lockPasscode.trim()}
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                          >
-                            {isLocking ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              "Lock"
-                            )}
-                          </Button>
-                          <Button
-                            data-ocid="polls.lock.cancel_button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setShowLockForm(false);
-                              setLockPasscode("");
-                              setLockError("");
-                            }}
-                            className="border-gray-300"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    {lockError && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> {lockError}
-                      </p>
-                    )}
-                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
-                      <Globe className="w-3 h-3 mr-1" /> Globally Active
-                    </Badge>
                   </div>
                 </SmokySectionTransition>
               )}
 
               {/* Create Form */}
-              {showCreateForm && pollsUnlocked && (
+              {showCreateForm && (
                 <SmokySectionTransition>
                   <div
                     className="rounded-xl sm:rounded-2xl p-4 sm:p-6"
@@ -545,6 +331,37 @@ export default function CommunityVotingPage() {
                           </Button>
                         </div>
                       </div>
+                      {/* Passcode input */}
+                      <div>
+                        <label
+                          htmlFor="create-poll-passcode"
+                          className="text-gray-600 text-sm mb-1 block"
+                        >
+                          Admin Passcode (required to create)
+                        </label>
+                        <div className="relative">
+                          <Input
+                            id="create-poll-passcode"
+                            data-ocid="polls.passcode.input"
+                            type={showCreatePasscode ? "text" : "password"}
+                            value={createPasscode}
+                            onChange={(e) => setCreatePasscode(e.target.value)}
+                            placeholder="Enter admin passcode"
+                            className="bg-gray-50 border-gray-300 text-gray-900 font-mono pr-10 w-full"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCreatePasscode((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showCreatePasscode ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                       {createError && (
                         <p
                           data-ocid="polls.form.error_state"
@@ -556,7 +373,7 @@ export default function CommunityVotingPage() {
                       <Button
                         data-ocid="polls.submit.button"
                         onClick={handleCreatePoll}
-                        disabled={isCreating}
+                        disabled={isCreating || !createPasscode.trim()}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold w-full"
                       >
                         {isCreating ? (
@@ -604,15 +421,10 @@ export default function CommunityVotingPage() {
                 >
                   <Vote className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-30" />
                   <p className="text-sm sm:text-base">No polls yet.</p>
-                  {pollsUnlocked ? (
-                    <p className="text-xs sm:text-sm mt-1 text-gray-500">
-                      Use the form above to create the first poll.
-                    </p>
-                  ) : (
-                    <p className="text-xs sm:text-sm mt-1 text-gray-500">
-                      Enter the passcode above to create the first poll.
-                    </p>
-                  )}
+                  <p className="text-xs sm:text-sm mt-1 text-gray-500">
+                    Use the Create Poll button to create the first poll (admin
+                    passcode required).
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
@@ -635,8 +447,6 @@ export default function CommunityVotingPage() {
                 </div>
               )}
             </div>
-
-            {/* Activity Feed */}
             <div className="space-y-3 sm:space-y-4">
               <SmokySectionTransition>
                 <div
