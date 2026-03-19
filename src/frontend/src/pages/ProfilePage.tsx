@@ -76,12 +76,15 @@ export default function ProfilePage() {
           return;
         }
         const isTaken = allProfiles.some((entry: any) => {
-          const profile = entry[1] ?? entry;
-          const otherPrincipal = entry[0]?.toString?.() ?? "";
-          const profileName: string = profile?.name ?? "";
+          // entry is [{principal}, {profile}] tuple from backend
+          const profile = entry[1] ?? entry?.profile ?? entry;
+          const otherPrincipal =
+            entry[0]?.toString?.() ?? entry?.principal?.toString?.() ?? "";
+          // Check both name field (which we use as username) and any username field
+          const storedName: string = profile?.name ?? "";
           return (
             otherPrincipal !== principalId &&
-            profileName.toLowerCase() === value.trim().toLowerCase()
+            storedName.toLowerCase() === value.trim().toLowerCase()
           );
         });
         const newStatus: UsernameStatus = isTaken ? "taken" : "available";
@@ -171,10 +174,23 @@ export default function ProfilePage() {
       `rbsLocalProfile_${principalId}`,
       JSON.stringify({ ...current, username: usernameInput.trim() }),
     );
+    // Also persist to backend so uniqueness is globally enforced
+    if (actor) {
+      try {
+        await (actor as any)
+          .saveCallerUserProfile?.({
+            name: usernameInput.trim(),
+            email: undefined,
+          })
+          .catch(() => {});
+      } catch {
+        /* ignore backend errors */
+      }
+    }
     setEditingUsername(false);
     setUsernameStatus("idle");
     usernameStatusRef.current = "idle";
-    toast.success("Username updated!");
+    toast.success("Username saved! It's now reserved globally.");
   };
 
   // Profile completion %

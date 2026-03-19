@@ -17,7 +17,7 @@ const features = [
     icon: Shield,
     title: "Enterprise Security",
     description:
-      "Bank-grade security protocols protecting your assets and transactions 24/7 on the Internet Computer.",
+      "Bank-grade security protocols protecting your assets and transactions 24/7 on the BNB Smart Chain.",
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
     border: "border-blue-100 hover:border-blue-300",
@@ -26,7 +26,7 @@ const features = [
     icon: Zap,
     title: "Lightning Fast",
     description:
-      "Sub-second transaction finality on the Internet Computer Protocol with virtually zero fees.",
+      "Sub-second transaction finality on the BNB Smart Chain with virtually zero fees.",
     iconBg: "bg-yellow-50",
     iconColor: "text-yellow-600",
     border: "border-yellow-100 hover:border-yellow-300",
@@ -72,8 +72,8 @@ const features = [
 const techPillars = [
   {
     icon: Globe,
-    title: "ICP Architecture",
-    desc: "Built on the Internet Computer Protocol — the world's first blockchain that runs at web speed with near-zero cost transactions.",
+    title: "BNB Chain Architecture",
+    desc: "Built on the BNB Smart Chain — the world's first blockchain that runs at web speed with near-zero cost transactions.",
     color: "text-emerald-600",
     bg: "bg-emerald-50",
   },
@@ -112,9 +112,8 @@ export default function AboutPage() {
             </h1>
             <p className="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
               Return Be Superior is pioneering the next generation of blockchain
-              solutions on the Internet Computer Protocol. We're building a
-              transparent, secure, and scalable ecosystem for the decentralized
-              future.
+              solutions on the BNB Smart Chain. We're building a transparent,
+              secure, and scalable ecosystem for the decentralized future.
             </p>
           </AnimatedSection>
 

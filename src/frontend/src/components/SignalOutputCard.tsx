@@ -5,6 +5,7 @@ import {
   Clock,
   Cpu,
   Minus,
+  Sparkles,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -200,11 +201,19 @@ export default function SignalOutputCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
-          <Clock className="w-3 h-3" />
-          <span className="font-mono">
-            {new Date(result.calculatedAt).toLocaleTimeString()}
-          </span>
+        <div className="flex flex-col items-end gap-1">
+          {result.geminiEnhanced && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+              <Sparkles className="w-3 h-3" />
+              AI Enhanced
+            </span>
+          )}
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            <Clock className="w-3 h-3" />
+            <span className="font-mono">
+              {new Date(result.calculatedAt).toLocaleTimeString()}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -343,6 +352,16 @@ export default function SignalOutputCard({
           </div>
         </div>
       </div>
+
+      {/* Gemini Insight */}
+      {result.geminiEnhanced && result.geminiInsight && (
+        <div className="flex items-start gap-2 p-3 bg-purple-50 border border-purple-100 rounded-xl mb-4">
+          <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-purple-700 font-medium">
+            {result.geminiInsight}
+          </p>
+        </div>
+      )}
 
       {/* Analysis Summary */}
       <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">

@@ -186,8 +186,14 @@ export function ProfileSetupModal() {
 
     setSaving(true);
     try {
+      // Save display name to backend
       await actor.saveCallerUserProfile({
         name: displayName.trim(),
+        email: email.trim() || undefined,
+      } as any);
+      // Also save username to backend (using name field) for global uniqueness
+      await actor.saveCallerUserProfile({
+        name: username.trim(),
         email: email.trim() || undefined,
       } as any);
       saveLocalProfile(principalId, {

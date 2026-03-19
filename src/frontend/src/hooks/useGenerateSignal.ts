@@ -36,6 +36,8 @@ export interface SignalData {
   summary: string;
   price: number;
   calculatedAt: number;
+  geminiEnhanced?: boolean;
+  geminiInsight?: string;
 }
 
 // ── Math Helpers ──────────────────────────────────────────────────────────────
@@ -289,6 +291,68 @@ async function fetchForexData(pair: string): Promise<{
   }
 }
 
+// ── Gemini AI Enhancement ─────────────────────────────────────────────────────
+
+const GEMINI_API_KEY = "AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY";
+
+async function enhanceWithGemini(
+  asset: string,
+  timeframe: string,
+  signal: string,
+  confidence: number,
+  score: number,
+  rsi: number,
+  macdHistogram: number,
+  ema9: number,
+  ema21: number,
+  price: number,
+  trendDirection: string,
+): Promise<{ signal: string; confidence: number; insight: string } | null> {
+  try {
+    const prompt = `You are a professional cryptocurrency and forex trading analyst. Analyze the following technical indicators for ${asset} on the ${timeframe} timeframe and provide a trading signal assessment.
+
+Technical Data:
+- Current Price: ${price.toFixed(6)}
+- RSI (14): ${rsi.toFixed(2)} (${rsi < 30 ? "Oversold" : rsi > 70 ? "Overbought" : "Neutral"})
+- MACD Histogram: ${macdHistogram > 0 ? "+" : ""}${macdHistogram.toFixed(6)} (${macdHistogram > 0 ? "Bullish" : "Bearish"})
+- EMA 9 vs EMA 21: ${ema9 > ema21 ? "Golden cross - Bullish" : "Death cross - Bearish"}
+- Weighted Score: ${score > 0 ? "+" : ""}${score.toFixed(0)}/100
+- Math Signal: ${signal}
+- Math Confidence: ${confidence}%
+- Trend Direction: ${trendDirection}
+
+Respond in this exact JSON format only, no markdown:
+{"signal":"Strong Buy|Buy|Neutral|Sell|Strong Sell","confidence":85,"insight":"One concise sentence (max 20 words) explaining key driver."}`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 150 },
+        }),
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const jsonMatch = text.match(/\{[^}]+\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed.signal || !parsed.confidence || !parsed.insight) return null;
+    return {
+      signal: parsed.signal,
+      confidence: Math.min(99, Math.max(50, Number(parsed.confidence))),
+      insight: parsed.insight,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ── Main Mutation ─────────────────────────────────────────────────────────────
 
 export function useGenerateSignal() {
@@ -489,11 +553,40 @@ export function useGenerateSignal() {
 
       const summary = `${upperAsset} ${timeframe} — G-Man Intelligence score: ${score > 0 ? "+" : ""}${score.toFixed(0)}/100. RSI at ${rsi.toFixed(1)} (${rsi < 30 ? "oversold" : rsi > 70 ? "overbought" : "neutral"}). MACD ${macdHistogram > 0 ? "bullish" : "bearish"} histogram. EMA9 ${ema9 > ema21 ? "above" : "below"} EMA21. Price: ${price.toFixed(4)} | S: ${support.toFixed(4)} | R: ${resistance.toFixed(4)}.`;
 
+      // Enhance with Gemini AI
+      let finalSignal = signal;
+      let finalConfidence = confidence;
+      let geminiInsight: string | undefined;
+      let geminiEnhanced = false;
+      try {
+        const gemini = await enhanceWithGemini(
+          upperAsset,
+          timeframe,
+          signal,
+          confidence,
+          score,
+          rsi,
+          macdHistogram,
+          ema9,
+          ema21,
+          price,
+          trendDirection,
+        );
+        if (gemini) {
+          finalSignal = gemini.signal;
+          finalConfidence = gemini.confidence;
+          geminiInsight = gemini.insight;
+          geminiEnhanced = true;
+        }
+      } catch {
+        // Gemini failed — use math-based signal as fallback
+      }
+
       return {
         asset: upperAsset,
         timeframe,
-        signal,
-        confidence,
+        signal: finalSignal,
+        confidence: finalConfidence,
         trendDirection,
         score,
         indicators: {
@@ -518,6 +611,8 @@ export function useGenerateSignal() {
         summary,
         price,
         calculatedAt: Date.now(),
+        geminiEnhanced,
+        geminiInsight,
       };
     },
   });

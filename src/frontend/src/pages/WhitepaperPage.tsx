@@ -101,7 +101,7 @@ export default function WhitepaperPage() {
               <span>•</span>
               <span>Fixed Supply: 100,000 RBS</span>
               <span>•</span>
-              <span>Internet Computer Protocol</span>
+              <span>BNB Smart Chain</span>
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export default function WhitepaperPage() {
                     RBS Official represents a paradigm shift in institutional
                     decentralized finance, combining cutting-edge blockchain
                     technology with enterprise-grade security and scalability.
-                    Built on the Internet Computer Protocol (ICP), RBS leverages
+                    Built on the BNB Smart Chain (BNB Chain), RBS leverages
                     advanced architecture to deliver sub-second transaction
                     finality while maintaining the highest standards of
                     decentralization and security.
@@ -355,7 +355,7 @@ export default function WhitepaperPage() {
                   <p className="metallic-text-secondary font-inter leading-relaxed mb-4 text-base">
                     Upon the initial DEX listing, price is determined by the
                     liquidity seeding ratio — the amount of RBS tokens and
-                    paired assets (USDT/ICP) deposited into the pool. The
+                    paired assets (USDT/BNB) deposited into the pool. The
                     liquidity provision of 40,000 RBS tokens ensures immediate
                     trading depth and reduces initial price volatility. Market
                     makers provide additional depth through coordinated
@@ -942,7 +942,7 @@ export default function WhitepaperPage() {
                     decentralized consensus mechanisms, combining proof-of-stake
                     security with efficiency. We achieve sub-second finality
                     while maintaining enterprise-grade security standards on the
-                    Internet Computer Protocol.
+                    BNB Smart Chain.
                   </p>
                   <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
                     Performance metrics: transaction throughput exceeds 10,000
@@ -1117,11 +1117,12 @@ export default function WhitepaperPage() {
                   </div>
                   <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
                   <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
-                    Built on the Internet Computer Protocol (ICP), RBS leverages
+                    Built on the BNB Smart Chain (BNB Chain), RBS leverages
                     cutting-edge blockchain infrastructure for unparalleled
-                    performance. ICP provides web-speed transactions, infinite
-                    scalability, and native integration with web technologies —
-                    making it ideal for a consumer-facing DeFi platform.
+                    performance. BNB Chain provides web-speed transactions,
+                    infinite scalability, and native integration with web
+                    technologies — making it ideal for a consumer-facing DeFi
+                    platform.
                   </p>
                   <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
                     Smart contracts are written in Motoko, ensuring type safety,

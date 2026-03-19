@@ -222,7 +222,7 @@ const SECURITY_BADGES = [
   {
     icon: Shield,
     title: "Blockchain Verified",
-    desc: "Built on Internet Computer Protocol",
+    desc: "Built on BNB Smart Chain",
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
   },
@@ -639,7 +639,7 @@ export default function HomePage() {
                   {
                     value: "1",
                     label: "Blockchain",
-                    sublabel: "Built on Internet Computer",
+                    sublabel: "Built on BNB Smart Chain",
                     icon: Shield,
                     color: "text-emerald-600",
                     bg: "bg-emerald-50",

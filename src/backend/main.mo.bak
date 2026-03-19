@@ -700,10 +700,14 @@ actor {
 
   // Sets the global lock/unlock state for a section.
   // Authenticated user required. Requires Market Intel passcode verification.
-  public shared ({ caller = _ }) func setGlobalSectionLock(section : Text, passcode : Text, unlock : Bool) : async () {
-    // Passcode is the only security gate — no role check needed
+  public shared ({ caller }) func setGlobalSectionLock(section : Text, passcode : Text, unlock : Bool) : async () {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can modify section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
     if (passcode != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode");
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to modify section locks");
     };
     // Validate section name before updating
     if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
@@ -716,10 +720,14 @@ actor {
   // Toggle (invert) the global lock/unlock state for a section.
   // Authenticated user required. Requires Market Intel passcode verification.
   // Returns the new state (true = unlocked, false = locked).
-  public shared ({ caller = _ }) func toggleGlobalSectionLock(section : Text, passcode : Text) : async Bool {
-    // Passcode is the only security gate — no role check needed
+  public shared ({ caller }) func toggleGlobalSectionLock(section : Text, passcode : Text) : async Bool {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can toggle section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
     if (passcode != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode");
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to toggle section locks");
     };
     // Validate section name before updating
     if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
@@ -743,8 +751,11 @@ actor {
   };
 
   public shared ({ caller }) func createPoll(input : CreatePollInput) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create polls");
+    };
     if (input.code != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode for poll creation");
+      Runtime.trap("Unauthorized: Invalid Market Intel passcode for poll creation");
     };
     let newPoll : Poll = {
       id = pollIdCounter;
@@ -1106,9 +1117,12 @@ actor {
     };
   };
 
-  public shared ({ caller = _ }) func publishBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+  public shared ({ caller }) func publishBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only authenticated users can publish blog posts");
+    };
     if (passcode != hiddenMarketIntelPassword) {
-      return #err("Unauthorized: Invalid passcode");
+      return #err("Unauthorized: Valid Market Intel passcode required to publish blog posts");
     };
     blogIdCounter += 1;
     let newId = blogIdCounter;
@@ -1127,9 +1141,12 @@ actor {
     #ok("BLOG_PUBLISHED");
   };
 
-  public shared ({ caller = _ }) func createBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+  public shared ({ caller }) func createBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only authenticated users can create blog posts");
+    };
     if (passcode != hiddenMarketIntelPassword) {
-      return #err("Unauthorized: Invalid passcode");
+      return #err("Unauthorized: Valid Market Intel passcode required to create blog posts");
     };
     blogIdCounter += 1;
     let newId = blogIdCounter;
