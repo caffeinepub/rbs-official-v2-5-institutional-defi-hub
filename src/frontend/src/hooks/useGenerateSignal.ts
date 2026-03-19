@@ -38,6 +38,12 @@ export interface SignalData {
   calculatedAt: number;
   geminiEnhanced?: boolean;
   geminiInsight?: string;
+  entry: number;
+  tp1: number;
+  tp2: number;
+  tp3: number;
+  sl: number;
+  riskRewardRatio: string;
 }
 
 // ── Math Helpers ──────────────────────────────────────────────────────────────
@@ -582,6 +588,43 @@ export function useGenerateSignal() {
         // Gemini failed — use math-based signal as fallback
       }
 
+      // ── TP / SL / Entry calculation ──────────────────────────────────────────────
+      // Entry: current market price
+      const entry = price;
+      // ATR-based stop and targets
+      const atrMult = atr > 0 ? atr : price * 0.005; // fallback 0.5%
+
+      let sl: number;
+      let tp1: number;
+      let tp2: number;
+      let tp3: number;
+
+      const isBullish = finalSignal === "Strong Buy" || finalSignal === "Buy";
+      const isBearish = finalSignal === "Strong Sell" || finalSignal === "Sell";
+
+      if (isBullish) {
+        sl = Math.max(support - atrMult * 0.5, entry - atrMult * 1.5);
+        tp1 = entry + atrMult * 1.5;
+        tp2 = resistance;
+        tp3 = resistance + atrMult * 1.5;
+      } else if (isBearish) {
+        sl = Math.min(resistance + atrMult * 0.5, entry + atrMult * 1.5);
+        tp1 = entry - atrMult * 1.5;
+        tp2 = support;
+        tp3 = support - atrMult * 1.5;
+      } else {
+        // Neutral — symmetric targets
+        sl = entry - atrMult * 1.2;
+        tp1 = entry + atrMult * 1.2;
+        tp2 = entry + atrMult * 2.0;
+        tp3 = entry + atrMult * 3.0;
+      }
+
+      const riskDist = Math.abs(entry - sl);
+      const rewardDist = Math.abs(tp2 - entry);
+      const riskRewardRatio =
+        riskDist > 0 ? `${(rewardDist / riskDist).toFixed(2)}:1` : "N/A";
+
       return {
         asset: upperAsset,
         timeframe,
@@ -613,6 +656,12 @@ export function useGenerateSignal() {
         calculatedAt: Date.now(),
         geminiEnhanced,
         geminiInsight,
+        entry,
+        tp1,
+        tp2,
+        tp3,
+        sl,
+        riskRewardRatio,
       };
     },
   });

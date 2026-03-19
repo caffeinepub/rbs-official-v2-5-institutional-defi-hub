@@ -21,9 +21,7 @@ import AirdropPresaleHubPage from "./pages/AirdropPresaleHubPage";
 import CommunityGovernancePage from "./pages/CommunityGovernancePage";
 import CommunityHighlightsPage from "./pages/CommunityHighlightsPage";
 import CommunityLeaderboardPage from "./pages/CommunityLeaderboardPage";
-import CommunityVotingPage from "./pages/CommunityVotingPage";
 import ContactPage from "./pages/ContactPage";
-import DeveloperBlogPage from "./pages/DeveloperBlogPage";
 import EcosystemGrowthPage from "./pages/EcosystemGrowthPage";
 import FundingRatesPage from "./pages/FundingRatesPage";
 import HomePage from "./pages/HomePage";
@@ -31,7 +29,6 @@ import LoginPage from "./pages/LoginPage";
 import MarketIntelPage from "./pages/MarketIntelPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PartnersPage from "./pages/PartnersPage";
-import PortfolioTrackerPage from "./pages/PortfolioTrackerPage";
 import ProfilePage from "./pages/ProfilePage";
 import RbsPricePage from "./pages/RbsPricePage";
 import RoadmapPage from "./pages/RoadmapPage";
@@ -121,11 +118,6 @@ const marketIntelRoute = createRoute({
   path: "/market-intel",
   component: MarketIntelPage,
 });
-const communityVotingRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/voting",
-  component: CommunityVotingPage,
-});
 const communityGovernanceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/governance",
@@ -135,11 +127,6 @@ const communityHighlightsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/community",
   component: CommunityHighlightsPage,
-});
-const developerBlogRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/blog",
-  component: DeveloperBlogPage,
 });
 const ecosystemGrowthRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -186,11 +173,6 @@ const fundingRatesRoute = createRoute({
   path: "/funding-rates",
   component: FundingRatesPage,
 });
-const portfolioTrackerRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/portfolio-tracker",
-  component: PortfolioTrackerPage,
-});
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
@@ -219,10 +201,8 @@ const routeTree = rootRoute.addChildren([
   contactRoute,
   acquisitionRoute,
   marketIntelRoute,
-  communityVotingRoute,
   communityGovernanceRoute,
   communityHighlightsRoute,
-  developerBlogRoute,
   ecosystemGrowthRoute,
   securityRoute,
   testimonialsRoute,
@@ -232,7 +212,6 @@ const routeTree = rootRoute.addChildren([
   adultFormRoute,
   tradingToolsRoute,
   fundingRatesRoute,
-  portfolioTrackerRoute,
   profileRoute,
   rbsPriceRoute,
   notFoundRoute,

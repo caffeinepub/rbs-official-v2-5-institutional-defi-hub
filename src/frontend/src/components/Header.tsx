@@ -113,12 +113,6 @@ const navItems: NavItem[] = [
         desc: "DAO governance",
       },
       {
-        label: "Community Voting",
-        path: "/voting",
-        icon: Activity,
-        desc: "Cast your vote",
-      },
-      {
         label: "Leaderboard",
         path: "/leaderboard",
         icon: Star,
@@ -161,22 +155,10 @@ const navItems: NavItem[] = [
     icon: BookOpen,
     children: [
       {
-        label: "Developer Blog",
-        path: "/blog",
-        icon: BookOpen,
-        desc: "Technical updates",
-      },
-      {
         label: "Staking Calculator",
         path: "/staking",
         icon: BarChart2,
         desc: "Estimate rewards",
-      },
-      {
-        label: "Portfolio Tracker",
-        path: "/portfolio-tracker",
-        icon: PieChart,
-        desc: "Track holdings",
       },
       {
         label: "Partners",

@@ -59,7 +59,7 @@ export function Footer() {
               </div>
               <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
                 Always stay SUPERIOR — The next generation crypto token built on
-                Internet Computer.
+                BNB Chain (BEP-20).
               </p>
               <div className="flex items-center gap-4 mt-4">
                 <a
@@ -105,7 +105,7 @@ export function Footer() {
                 </div>
                 <div className="flex justify-between">
                   <span>Blockchain</span>
-                  <span className="font-semibold text-gray-700">ICP</span>
+                  <span className="font-semibold text-gray-700">BNB Chain</span>
                 </div>
               </div>
             </div>

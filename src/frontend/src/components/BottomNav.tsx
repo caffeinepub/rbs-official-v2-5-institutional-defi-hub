@@ -1,11 +1,9 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, BookOpen, Home, TrendingUp, Users } from "lucide-react";
+import { Bell, Home, TrendingUp } from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: TrendingUp, label: "Market", path: "/dashboard" },
-  { icon: BookOpen, label: "Blog", path: "/blog" },
-  { icon: Users, label: "Community", path: "/voting" },
   { icon: Bell, label: "Alerts", path: "/alerts" },
 ];
 

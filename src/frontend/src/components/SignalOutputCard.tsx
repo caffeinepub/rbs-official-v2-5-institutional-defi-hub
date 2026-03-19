@@ -6,6 +6,7 @@ import {
   Cpu,
   Minus,
   Sparkles,
+  Target,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -269,6 +270,86 @@ export default function SignalOutputCard({
         <span className={`text-sm font-bold ${style.text}`}>
           {result.trendDirection}
         </span>
+      </div>
+
+      {/* Trade Plan: Entry / TP / SL */}
+      <div className="mb-5 rounded-xl overflow-hidden border border-gray-100">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+          <Target className="w-4 h-4 text-sky-500" />
+          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+            Trade Plan
+          </span>
+          <span className="ml-auto text-xs text-gray-400 font-mono">
+            R:R {result.riskRewardRatio}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-0">
+          <div className="p-3 bg-white border-b border-r border-gray-100">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-1">
+              Entry Price
+            </p>
+            <p className="text-sm font-mono font-bold text-sky-600">
+              {result.entry > 100
+                ? result.entry.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : result.entry.toFixed(6)}
+            </p>
+          </div>
+          <div className="p-3 bg-red-50 border-b border-gray-100">
+            <p className="text-[10px] text-red-400 uppercase tracking-wider font-medium mb-1">
+              Stop Loss
+            </p>
+            <p className="text-sm font-mono font-bold text-red-600">
+              {result.sl > 100
+                ? result.sl.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : result.sl.toFixed(6)}
+            </p>
+          </div>
+          <div className="p-3 bg-emerald-50 border-r border-gray-100">
+            <p className="text-[10px] text-emerald-500 uppercase tracking-wider font-medium mb-1">
+              TP 1
+            </p>
+            <p className="text-sm font-mono font-bold text-emerald-600">
+              {result.tp1 > 100
+                ? result.tp1.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : result.tp1.toFixed(6)}
+            </p>
+          </div>
+          <div className="p-3 bg-emerald-50">
+            <p className="text-[10px] text-emerald-500 uppercase tracking-wider font-medium mb-1">
+              TP 2
+            </p>
+            <p className="text-sm font-mono font-bold text-emerald-700">
+              {result.tp2 > 100
+                ? result.tp2.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : result.tp2.toFixed(6)}
+            </p>
+          </div>
+          <div className="col-span-2 p-3 bg-emerald-100 border-t border-emerald-200">
+            <p className="text-[10px] text-emerald-600 uppercase tracking-wider font-medium mb-1">
+              TP 3 (Extended Target)
+            </p>
+            <p className="text-sm font-mono font-bold text-emerald-800">
+              {result.tp3 > 100
+                ? result.tp3.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : result.tp3.toFixed(6)}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Indicator Grid */}
