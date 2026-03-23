@@ -88,6 +88,7 @@ function PresaleForm() {
   const { actor } = useActor();
   const [form, setForm] = useState({
     name: "",
+    email: "",
     country: "",
     wallet: "",
     amount: "",
@@ -174,6 +175,22 @@ function PresaleForm() {
       </div>
       <div>
         <label
+          htmlFor="presale-email"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Email Address
+        </label>
+        <Input
+          id="presale-email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+          placeholder="your@email.com (optional)"
+          disabled={submitting}
+        />
+      </div>
+      <div>
+        <label
           htmlFor="presale-country"
           className="block text-sm font-medium text-foreground mb-1"
         >
@@ -242,6 +259,7 @@ function AirdropForm() {
   const { actor } = useActor();
   const [form, setForm] = useState({
     name: "",
+    email: "",
     country: "",
     wallet: "",
     amount: "",
@@ -325,6 +343,22 @@ function AirdropForm() {
         {errors.name && (
           <p className="text-xs text-destructive mt-1">{errors.name}</p>
         )}
+      </div>
+      <div>
+        <label
+          htmlFor="airdrop-email"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
+          Email Address
+        </label>
+        <Input
+          id="airdrop-email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+          placeholder="your@email.com (optional)"
+          disabled={submitting}
+        />
       </div>
       <div>
         <label

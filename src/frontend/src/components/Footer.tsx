@@ -39,14 +39,7 @@ export function Footer() {
                     border: "1px solid rgba(14, 165, 233, 0.25)",
                   }}
                 >
-                  <img
-                    src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-                    alt="RBS Token Logo"
-                    className="w-5 h-5 rounded-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  <span className="text-sky-600 font-black text-xs">RBS</span>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900">

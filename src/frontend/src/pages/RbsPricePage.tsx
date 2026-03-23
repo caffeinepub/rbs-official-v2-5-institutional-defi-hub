@@ -378,11 +378,9 @@ export default function RbsPricePage() {
                 transition={{ delay: 0.1 }}
                 className="flex items-center justify-center gap-3 mb-4"
               >
-                <img
-                  src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-                  alt="RBS Token"
-                  className="h-14 w-14 rounded-full object-cover ring-2 ring-emerald-200"
-                />
+                <div className="h-14 w-14 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-lg ring-2 ring-sky-200">
+                  RBS
+                </div>
                 <div className="text-left">
                   <h1 className="text-3xl sm:text-5xl font-black text-gray-900 leading-none">
                     RBS Token

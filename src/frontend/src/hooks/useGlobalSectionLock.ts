@@ -51,15 +51,26 @@ export function useGlobalSectionLock(
   }, [actor, section]);
 
   useEffect(() => {
+    // If actor is not fetching and still null, stop loading — backend unreachable
+    if (!actor && !isFetching) {
+      setIsLoading(false);
+      return;
+    }
     if (!actor || isFetching) return;
     fetchLockState();
     const interval = setInterval(fetchLockState, 10000);
     return () => clearInterval(interval);
   }, [actor, isFetching, fetchLockState]);
 
+  // Safety timeout: if loading hasn't resolved after 10s, unblock the UI
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 10000);
+    return () => clearTimeout(t);
+  }, []);
+
   const toggle = useCallback(
     async (passcode: string): Promise<boolean> => {
-      if (!actor) throw new Error("System not ready");
+      if (!actor) throw new Error("System not ready — please refresh the page");
       try {
         const newState = await actor.toggleGlobalSectionLock(section, passcode);
         setIsUnlocked(newState);
@@ -73,7 +84,7 @@ export function useGlobalSectionLock(
 
   const setLock = useCallback(
     async (passcode: string, unlock: boolean): Promise<void> => {
-      if (!actor) throw new Error("System not ready");
+      if (!actor) throw new Error("System not ready — please refresh the page");
       try {
         await actor.setGlobalSectionLock(section, passcode, unlock);
         setIsUnlocked(unlock);

@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, Home, TrendingUp } from "lucide-react";
+import { Activity, Home, Zap } from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
-  { icon: TrendingUp, label: "Market", path: "/dashboard" },
-  { icon: Bell, label: "Alerts", path: "/alerts" },
+  { icon: Activity, label: "Funding", path: "/funding-rates" },
+  { icon: Zap, label: "Intel", path: "/market-intel" },
 ];
 
 export default function BottomNav() {

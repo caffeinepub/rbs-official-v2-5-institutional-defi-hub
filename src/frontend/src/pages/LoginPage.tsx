@@ -161,11 +161,9 @@ export default function LoginPage() {
                 animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
                 transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
               />
-              <img
-                src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-                alt="RBS Token"
-                className="relative w-20 h-20 rounded-full object-cover ring-4 ring-emerald-100 ring-offset-2"
-              />
+              <div className="relative w-20 h-20 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-2xl ring-4 ring-sky-100 ring-offset-2">
+                RBS
+              </div>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
               Welcome to <span className="text-emerald-600">RBS Superior</span>

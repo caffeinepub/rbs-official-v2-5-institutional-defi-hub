@@ -33,15 +33,94 @@ export default function ProfilePage() {
     enabled: !!actor && !actorFetching && isAuthenticated,
   });
 
+  const { data: registrationDateMs } = useQuery({
+    queryKey: ["callerRegistrationDate", principalId],
+    queryFn: async () => {
+      if (!actor) return null;
+      const result = await (actor as any).getCallerRegistrationDate?.();
+      if (!result || result.length === 0) return null;
+      return Number(result[0]) / 1_000_000;
+    },
+    enabled: !!actor && !actorFetching && isAuthenticated,
+  });
+
+  const memberSince = useMemo(() => {
+    if (!principalId) return "—";
+    // Use backend registrationDate first
+    if (registrationDateMs) {
+      return new Date(registrationDateMs).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    // Fallback to localStorage
+    const key = `rbsMemberSince_${principalId}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const d = new Date(stored);
+      return d.toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    return "—";
+  }, [principalId, registrationDateMs]);
+
+  const accountBadge = useMemo(() => {
+    if (!registrationDateMs) return null;
+    const years =
+      (Date.now() - registrationDateMs) / (1000 * 60 * 60 * 24 * 365.25);
+    if (years >= 5)
+      return {
+        title: "RBS MASTER",
+        emoji: "👑",
+        color: "from-yellow-500 to-amber-600",
+      };
+    if (years >= 4)
+      return {
+        title: "RBS HEROIC",
+        emoji: "🔥",
+        color: "from-red-500 to-rose-600",
+      };
+    if (years >= 3)
+      return {
+        title: "Superior Community",
+        emoji: "⚡",
+        color: "from-purple-500 to-violet-600",
+      };
+    if (years >= 2)
+      return {
+        title: "Early Adaptor",
+        emoji: "🚀",
+        color: "from-sky-500 to-blue-600",
+      };
+    if (years >= 1)
+      return {
+        title: "Newbie",
+        emoji: "🌱",
+        color: "from-emerald-500 to-green-600",
+      };
+    return null;
+  }, [registrationDateMs]);
+
   const localProfile = useMemo(() => {
     if (!principalId) return null;
     return getLocalProfile(principalId);
   }, [principalId]);
 
-  const displayName = (backendProfile as any)?.name ?? "";
-  const backendUsername = (backendProfile as any)?.username ?? "";
+  const displayName =
+    (backendProfile as any)?.displayName ?? (backendProfile as any)?.name ?? "";
+  const backendUsername = (() => {
+    const u = (backendProfile as any)?.username;
+    return u ?? "";
+  })();
   const username = localProfile?.username || backendUsername || "";
-  const avatarUrl = localProfile?.avatarUrl ?? null;
+  const avatarUrl = (() => {
+    const bu = (backendProfile as any)?.avatarUrl;
+    return (Array.isArray(bu) ? bu[0] : bu) ?? localProfile?.avatarUrl ?? null;
+  })();
 
   const [editingName, setEditingName] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -70,23 +149,7 @@ export default function ProfilePage() {
       setUsernameStatus("checking");
       usernameStatusRef.current = "checking";
       try {
-        const allProfiles = await (actor as any).getAllUserProfiles?.();
-        if (!allProfiles) {
-          setUsernameStatus("available");
-          return;
-        }
-        const isTaken = allProfiles.some((entry: any) => {
-          // entry is [{principal}, {profile}] tuple from backend
-          const profile = entry[1] ?? entry?.profile ?? entry;
-          const otherPrincipal =
-            entry[0]?.toString?.() ?? entry?.principal?.toString?.() ?? "";
-          // Check both name field (which we use as username) and any username field
-          const storedName: string = profile?.name ?? "";
-          return (
-            otherPrincipal !== principalId &&
-            storedName.toLowerCase() === value.trim().toLowerCase()
-          );
-        });
+        const isTaken = await actor.isUsernameTaken(value.trim());
         const newStatus: UsernameStatus = isTaken ? "taken" : "available";
         setUsernameStatus(newStatus);
         usernameStatusRef.current = newStatus;
@@ -94,7 +157,7 @@ export default function ProfilePage() {
         setUsernameStatus("available");
       }
     },
-    [actor, principalId, username],
+    [actor, username],
   );
 
   const handleUsernameChange = (value: string) => {
@@ -114,7 +177,7 @@ export default function ProfilePage() {
       const file = e.target.files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const dataUrl = ev.target?.result as string;
         if (!principalId) return;
         const current = getLocalProfile(principalId) ?? {};
@@ -122,12 +185,28 @@ export default function ProfilePage() {
           `rbsLocalProfile_${principalId}`,
           JSON.stringify({ ...current, avatarUrl: dataUrl }),
         );
+        // Also save to backend
+        if (actor) {
+          try {
+            await (actor as any)
+              .saveCallerUserProfile?.({
+                username: username || "",
+                displayName: displayName || "",
+                email: [],
+                avatarUrl: [dataUrl],
+              })
+              .catch(() => {});
+          } catch {
+            /* ignore */
+          }
+        }
         toast.success("Profile picture updated!");
         void refetchProfile();
       };
       reader.readAsDataURL(file);
     },
-    [principalId, refetchProfile],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [principalId, refetchProfile, actor, username, displayName],
   );
 
   const handleSaveName = async () => {
@@ -136,7 +215,12 @@ export default function ProfilePage() {
     try {
       if (actor) {
         await (actor as any)
-          .saveCallerUserProfile?.({ name: nameInput.trim(), email: undefined })
+          .saveCallerUserProfile?.({
+            username: username || "",
+            displayName: nameInput.trim(),
+            email: undefined,
+            avatarUrl: undefined,
+          })
           .catch(() => {});
       }
       const current = getLocalProfile(principalId) ?? {};
@@ -145,6 +229,11 @@ export default function ProfilePage() {
         JSON.stringify({ ...current, displayName: nameInput.trim() }),
       );
       await refetchProfile();
+      // Save first login date if not already set
+      const msKey = `rbsMemberSince_${principalId}`;
+      if (!localStorage.getItem(msKey)) {
+        localStorage.setItem(msKey, new Date().toISOString());
+      }
       setEditingName(false);
       toast.success("Name updated!");
     } catch {
@@ -179,8 +268,10 @@ export default function ProfilePage() {
       try {
         await (actor as any)
           .saveCallerUserProfile?.({
-            name: usernameInput.trim(),
+            username: usernameInput.trim(),
+            displayName: displayName || "",
             email: undefined,
+            avatarUrl: undefined,
           })
           .catch(() => {});
       } catch {
@@ -558,31 +649,60 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* Stats grid */}
+          {/* Member Since — Free Fire-style stat card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="grid grid-cols-3 gap-4 mb-6"
+            className="mb-6"
           >
-            {[
-              { label: "Member Since", value: "2025", icon: "📅" },
-              { label: "Polls Voted", value: "—", icon: "🗳️" },
-              { label: "Alerts Set", value: "—", icon: "🔔" },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.15 + i * 0.08 }}
-                className="bg-white border border-gray-200 rounded-2xl p-4 text-center shadow-sm"
-              >
-                <div className="text-2xl mb-1">{stat.icon}</div>
-                <p className="text-lg font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-400">{stat.label}</p>
-              </motion.div>
-            ))}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl p-5 shadow-lg"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">📅</span>
+                </div>
+                <div>
+                  <p className="text-sky-100 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                    Member Since
+                  </p>
+                  <p className="text-white text-xl font-bold">{memberSince}</p>
+                  <p className="text-sky-200 text-[11px] mt-0.5">
+                    Registration Date · RBS Official
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
+          {accountBadge && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className={`bg-gradient-to-br ${accountBadge.color} rounded-2xl p-5 shadow-lg mt-4`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">{accountBadge.emoji}</span>
+                </div>
+                <div>
+                  <p className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                    Account Badge
+                  </p>
+                  <p className="text-white text-xl font-bold">
+                    {accountBadge.title}
+                  </p>
+                  <p className="text-white/70 text-[11px] mt-0.5">
+                    Earned by account age · RBS Official
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </>

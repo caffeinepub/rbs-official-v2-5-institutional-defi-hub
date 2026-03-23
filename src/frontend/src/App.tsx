@@ -20,7 +20,6 @@ import AdultFormPage from "./pages/AdultFormPage";
 import AirdropPresaleHubPage from "./pages/AirdropPresaleHubPage";
 import CommunityGovernancePage from "./pages/CommunityGovernancePage";
 import CommunityHighlightsPage from "./pages/CommunityHighlightsPage";
-import CommunityLeaderboardPage from "./pages/CommunityLeaderboardPage";
 import ContactPage from "./pages/ContactPage";
 import EcosystemGrowthPage from "./pages/EcosystemGrowthPage";
 import FundingRatesPage from "./pages/FundingRatesPage";
@@ -56,7 +55,6 @@ function Layout() {
       <AuthInitializer />
       <AuthGate />
       <ProfileSetupModal />
-      {/* h-8 spacer for ticker bar (in addition to page-level pt-20/pt-24 offsets) */}
       <div className="h-8 flex-shrink-0" aria-hidden="true" />
       <main className="flex-1">
         <Outlet />
@@ -143,7 +141,7 @@ const testimonialsRoute = createRoute({
   path: "/testimonials",
   component: TestimonialsPage,
 });
-const airdropPresaleHubRoute = createRoute({
+const _airdropPresaleHubRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/airdrop-presale",
   component: AirdropPresaleHubPage,
@@ -152,11 +150,6 @@ const stakingSimulatorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/staking",
   component: StakingSimulatorPage,
-});
-const communityLeaderboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/leaderboard",
-  component: CommunityLeaderboardPage,
 });
 const adultFormRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -178,7 +171,6 @@ const profileRoute = createRoute({
   path: "/profile",
   component: ProfilePage,
 });
-
 const rbsPriceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/rbs-price",
@@ -206,9 +198,7 @@ const routeTree = rootRoute.addChildren([
   ecosystemGrowthRoute,
   securityRoute,
   testimonialsRoute,
-  airdropPresaleHubRoute,
   stakingSimulatorRoute,
-  communityLeaderboardRoute,
   adultFormRoute,
   tradingToolsRoute,
   fundingRatesRoute,

@@ -103,47 +103,88 @@ function determineSignal(
   rsi: number,
   macd: number,
   closes: number[],
+  highs: number[] = [],
+  lows: number[] = [],
+  volumes: number[] = [],
 ): Pick<SignalResult, "signal" | "color" | "confidence"> {
   let score = 0;
-  if (rsi < 30) score += 2;
-  else if (rsi < 45) score += 1;
-  else if (rsi > 70) score -= 2;
-  else if (rsi > 55) score -= 1;
+  // RSI (weight 20)
+  if (rsi < 25) score += 20;
+  else if (rsi < 35) score += 15;
+  else if (rsi < 45) score += 8;
+  else if (rsi > 75) score -= 20;
+  else if (rsi > 65) score -= 15;
+  else if (rsi > 55) score -= 8;
 
-  if (macd > 0) score += 1;
-  else score -= 1;
+  // MACD (weight 15)
+  if (macd > 0) score += 15;
+  else score -= 15;
 
-  if (closes.length >= 20) {
+  // SMA trend (weight 15)
+  if (closes.length >= 50) {
     const sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-    if (closes[closes.length - 1] > sma20) score += 1;
-    else score -= 1;
+    const sma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / 50;
+    const price = closes[closes.length - 1];
+    if (price > sma20 && sma20 > sma50) score += 15;
+    else if (price < sma20 && sma20 < sma50) score -= 15;
+    else if (price > sma20) score += 7;
+    else score -= 7;
   }
 
-  if (score >= 3)
+  // EMA crossover (weight 10)
+  if (closes.length >= 21) {
+    const k9 = 2 / 10;
+    const k21 = 2 / 22;
+    let ema9 = closes[0];
+    let ema21 = closes[0];
+    for (let i = 1; i < closes.length; i++) {
+      ema9 = closes[i] * k9 + ema9 * (1 - k9);
+      ema21 = closes[i] * k21 + ema21 * (1 - k21);
+    }
+    if (ema9 > ema21) score += 10;
+    else score -= 10;
+  }
+
+  // Volume confirmation (weight 10)
+  if (volumes.length >= 20) {
+    const avgVol = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+    const lastVol = volumes[volumes.length - 1];
+    if (lastVol > avgVol * 1.5) score += 10 * (macd > 0 ? 1 : -1);
+  }
+
+  // Suppress unused parameter warnings
+  void highs;
+  void lows;
+
+  // Normalize to -100..100
+  const maxScore = 70;
+  const normalized = Math.max(-100, Math.min(100, (score / maxScore) * 100));
+
+  if (normalized >= 60)
     return {
       signal: "Strong Buy",
       color: "#16a34a",
-      confidence: Math.min(95, 70 + score * 5),
+      confidence: Math.min(95, 70 + normalized * 0.25),
     };
-  if (score >= 1)
+  if (normalized >= 20)
     return {
       signal: "Buy",
       color: "#22c55e",
-      confidence: Math.min(80, 60 + score * 5),
+      confidence: Math.min(80, 55 + normalized * 0.25),
     };
-  if (score === 0)
-    return { signal: "Neutral", color: "#f59e0b", confidence: 50 };
-  if (score >= -2)
+  if (normalized <= -60)
+    return {
+      signal: "Strong Sell",
+      color: "#dc2626",
+      confidence: Math.min(95, 70 + Math.abs(normalized) * 0.25),
+    };
+  if (normalized <= -20)
     return {
       signal: "Sell",
       color: "#ef4444",
-      confidence: Math.min(80, 60 + Math.abs(score) * 5),
+      confidence: Math.min(80, 55 + Math.abs(normalized) * 0.25),
     };
-  return {
-    signal: "Strong Sell",
-    color: "#dc2626",
-    confidence: Math.min(95, 70 + Math.abs(score) * 5),
-  };
+  return { signal: "Neutral", color: "#f59e0b", confidence: 50 };
 }
 
 // Map asset names to Binance symbols
@@ -201,8 +242,11 @@ async function computeLiveSignal(
   label: string,
 ): Promise<LiveSignalItem> {
   try {
-    const klines = await fetchKlines(symbol, "1h", 100);
+    const klines = await fetchKlines(symbol, "1h", 200);
     const closes = klines.map((k) => k.close);
+    const highs = klines.map((k) => k.high);
+    const lows = klines.map((k) => k.low);
+    const volumes = klines.map((k) => k.volume);
     const price = closes[closes.length - 1];
     const rsi = calculateRSI(closes);
     const macd = calculateMACD(closes);
@@ -212,7 +256,14 @@ async function computeLiveSignal(
         ? ((price - closes[closes.length - 25]) / closes[closes.length - 25]) *
           100
         : 0;
-    const { signal, color, confidence } = determineSignal(rsi, macd, closes);
+    const { signal, color, confidence } = determineSignal(
+      rsi,
+      macd,
+      closes,
+      highs,
+      lows,
+      volumes,
+    );
     return {
       asset: label,
       signal,
@@ -387,8 +438,15 @@ export default function MarketIntelPage() {
         />
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
-            <RefreshCw className="w-8 h-8 text-emerald-600 animate-spin mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Loading system status...</p>
+            <div className="relative inline-block mb-4">
+              <div className="w-12 h-12 rounded-full border-2 border-sky-200 border-t-sky-500 animate-spin" />
+            </div>
+            <p className="text-gray-600 font-medium">
+              Connecting to G-MAN Intel...
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              Checking global lock status
+            </p>
           </div>
         </div>
       </>
@@ -432,14 +490,56 @@ export default function MarketIntelPage() {
             >
               {/* Logo */}
               <div className="flex flex-col items-center mb-8">
-                <img
-                  src="/assets/generated/gman-intelligence-logo.dim_256x256.png"
-                  alt="G-MAN Intelligence"
-                  className="w-20 h-20 mb-4 drop-shadow-md"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
+                {/* Animated shield/lock icon with glow ring */}
+                <div className="relative mb-5">
+                  {/* Outer glow ring */}
+                  <motion.div
+                    animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.8, 0.4] }}
+                    transition={{
+                      duration: 2.8,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(14,165,233,0.22) 0%, transparent 70%)",
+                      width: "100px",
+                      height: "100px",
+                      top: "-10px",
+                      left: "-10px",
+                    }}
+                  />
+                  {/* Middle ring */}
+                  <motion.div
+                    animate={{ scale: [1, 1.06, 1], opacity: [0.6, 1, 0.6] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                      delay: 0.4,
+                    }}
+                    className="absolute inset-0 rounded-full border-2"
+                    style={{
+                      borderColor: "rgba(14,165,233,0.3)",
+                      width: "96px",
+                      height: "96px",
+                      top: "-8px",
+                      left: "-8px",
+                    }}
+                  />
+                  {/* Icon container */}
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center relative z-10"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                      boxShadow: "0 6px 24px rgba(14,165,233,0.35)",
+                    }}
+                  >
+                    <Shield className="w-10 h-10 text-white drop-shadow" />
+                  </div>
+                </div>
                 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                   G-MAN Intel
                 </h1>
@@ -447,8 +547,8 @@ export default function MarketIntelPage() {
                   Advanced Market Intelligence System
                 </p>
                 <div className="flex items-center gap-2 mt-3">
-                  <Lock className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-600/80 text-xs font-mono uppercase tracking-widest">
+                  <Lock className="w-4 h-4 text-sky-600" />
+                  <span className="text-sky-600/80 text-xs font-mono uppercase tracking-widest">
                     Secured Access
                   </span>
                 </div>
@@ -534,28 +634,53 @@ export default function MarketIntelPage() {
               </div>
 
               <div
-                className="mt-6 pt-6 grid grid-cols-3 gap-3 text-center"
+                className="mt-6 pt-6"
                 style={{ borderTop: "1px solid rgba(14, 165, 233, 0.1)" }}
               >
-                {[
-                  {
-                    icon: <TrendingUp className="w-4 h-4" />,
-                    label: "Real-Time Signals",
-                  },
-                  { icon: <Zap className="w-4 h-4" />, label: "AI-Powered" },
-                  {
-                    icon: <Shield className="w-4 h-4" />,
-                    label: "Secure Access",
-                  },
-                ].map((f) => (
-                  <div
-                    key={f.label}
-                    className="flex flex-col items-center gap-1 text-emerald-600/70"
-                  >
-                    {f.icon}
-                    <span className="text-xs text-gray-500">{f.label}</span>
-                  </div>
-                ))}
+                <p className="text-xs text-gray-400 text-center mb-3 uppercase tracking-widest font-medium">
+                  What's inside
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    {
+                      icon: <TrendingUp className="w-3.5 h-3.5" />,
+                      label: "Real-Time Signals",
+                      desc: "Live Binance kline data",
+                    },
+                    {
+                      icon: <Zap className="w-3.5 h-3.5" />,
+                      label: "Gemini AI",
+                      desc: "AI-enhanced accuracy",
+                    },
+                    {
+                      icon: <Shield className="w-3.5 h-3.5" />,
+                      label: "10 Indicators",
+                      desc: "RSI, MACD, EMA & more",
+                    },
+                    {
+                      icon: <TrendingDown className="w-3.5 h-3.5" />,
+                      label: "Trade Plan",
+                      desc: "TP1 / TP2 / TP3 + SL",
+                    },
+                  ].map((f) => (
+                    <div
+                      key={f.label}
+                      className="flex items-center gap-2 p-2 rounded-lg"
+                      style={{
+                        background: "rgba(14,165,233,0.04)",
+                        border: "1px solid rgba(14,165,233,0.1)",
+                      }}
+                    >
+                      <div className="text-sky-500 flex-shrink-0">{f.icon}</div>
+                      <div>
+                        <div className="text-xs font-semibold text-gray-700">
+                          {f.label}
+                        </div>
+                        <div className="text-xs text-gray-400">{f.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

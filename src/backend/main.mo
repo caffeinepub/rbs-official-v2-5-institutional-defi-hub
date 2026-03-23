@@ -9,11 +9,11 @@ import Text "mo:core/Text";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 
+
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import OutCall "http-outcalls/outcall";
-
 
 
 actor {
@@ -29,7 +29,9 @@ actor {
   include MixinAuthorization(accessControlState);
 
   public type UserProfile = {
-    name : Text;
+    displayName : Text;
+    username : Text;
+    avatarUrl : ?Text;
     email : ?Text;
   };
 
@@ -255,6 +257,7 @@ actor {
 
   let blogStore = Map.empty<Nat, BlogPost>();
   let userProfiles = Map.empty<Principal, UserProfile>();
+  let userRegistrationDates = Map.empty<Principal, Int>();
   let submissions = Map.empty<Nat, FormSubmission>();
   let timers = Map.empty<Text, TimerState>();
   let marketIntelAccess = Map.empty<Principal, Int>();
@@ -352,6 +355,45 @@ actor {
     initialized := true;
   };
 
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (profile.username == "" or profile.displayName == "") {
+      Runtime.trap("Display name and username required");
+    };
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+
+    let existingProfile = userProfiles.get(caller);
+    var profileWithUsername : UserProfile = profile;
+
+    switch (existingProfile) {
+      case (?oldProfile) {
+        // Prevent changing username if it already exists
+        if (oldProfile.username != profile.username) {
+          Runtime.trap("Changing username not allowed after profile creation");
+        };
+        profileWithUsername := profile;
+      };
+      case (null) {
+        // Verify new username is not already taken
+        switch (getProfileByUsername(profile.username)) {
+          case (null) {};
+          case (?_) { Runtime.trap("This username is already taken") };
+        };
+        profileWithUsername := profile;
+        // Set registration timestamp if not present
+        if (not userRegistrationDates.containsKey(caller)) {
+          userRegistrationDates.add(caller, Int.abs(Time.now()));
+        };
+      };
+    };
+    userProfiles.add(caller, profileWithUsername);
+  };
+
+  func getProfileByUsername(username : Text) : ?UserProfile {
+    userProfiles.values().toArray().find(func(profile) { profile.username == username });
+  };
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");
@@ -366,20 +408,40 @@ actor {
     userProfiles.get(user);
   };
 
-  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
+  public query func isUsernameTaken(username : Text) : async Bool {
+    switch (getProfileByUsername(username)) {
+      case (null) { false };
+      case (?_) { true };
     };
-    userProfiles.add(caller, profile);
   };
 
   public type UserProfileEntry = {
     principal : Principal;
     profile : UserProfile;
+    registeredAt : ?Int;
   };
 
-  public query func getAllUserProfiles() : async [UserProfileEntry] {
-    userProfiles.toArray().map(func((k, v)) { { principal = k; profile = v } });
+  public query ({ caller }) func getAllUserProfiles() : async [UserProfileEntry] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view all profiles");
+    };
+    userProfiles.toArray().map(func((k, v)) {
+      { principal = k; profile = v; registeredAt = userRegistrationDates.get(k) };
+    });
+  };
+
+  public query ({ caller }) func getUserRegistrationDate(user : Principal) : async ?Int {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own registration date unless admin");
+    };
+    userRegistrationDates.get(user);
+  };
+
+  public query ({ caller }) func getCallerRegistrationDate() : async ?Int {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view registration date");
+    };
+    userRegistrationDates.get(caller);
   };
 
   public query ({ caller }) func hasMarketIntelAccess() : async Bool {
@@ -700,10 +762,14 @@ actor {
 
   // Sets the global lock/unlock state for a section.
   // Authenticated user required. Requires Market Intel passcode verification.
-  public shared ({ caller = _ }) func setGlobalSectionLock(section : Text, passcode : Text, unlock : Bool) : async () {
-    // Passcode is the only security gate — no role check needed
+  public shared ({ caller }) func setGlobalSectionLock(section : Text, passcode : Text, unlock : Bool) : async () {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can modify section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
     if (passcode != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode");
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to modify section locks");
     };
     // Validate section name before updating
     if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
@@ -716,10 +782,14 @@ actor {
   // Toggle (invert) the global lock/unlock state for a section.
   // Authenticated user required. Requires Market Intel passcode verification.
   // Returns the new state (true = unlocked, false = locked).
-  public shared ({ caller = _ }) func toggleGlobalSectionLock(section : Text, passcode : Text) : async Bool {
-    // Passcode is the only security gate — no role check needed
+  public shared ({ caller }) func toggleGlobalSectionLock(section : Text, passcode : Text) : async Bool {
+    // Require authenticated user, not just admin
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can toggle section locks");
+    };
+    // Passcode verification required for ALL users (admin _AND_ normal)
     if (passcode != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode");
+      Runtime.trap("Unauthorized: Valid Market Intel passcode required to toggle section locks");
     };
     // Validate section name before updating
     if (section != "marketIntel" and section != "developerBlog" and section != "polls") {
@@ -743,8 +813,11 @@ actor {
   };
 
   public shared ({ caller }) func createPoll(input : CreatePollInput) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create polls");
+    };
     if (input.code != hiddenMarketIntelPassword) {
-      Runtime.trap("Unauthorized: Invalid passcode for poll creation");
+      Runtime.trap("Unauthorized: Invalid Market Intel passcode for poll creation");
     };
     let newPoll : Poll = {
       id = pollIdCounter;
@@ -1095,7 +1168,10 @@ actor {
     };
   };
 
-  public query func getMarketPulseTally() : async VoteTally {
+  public query ({ caller }) func getMarketPulseTally() : async VoteTally {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view market pulse tally");
+    };
     let total = bullishVotes + bearishVotes + neutralVotes;
     {
       bullish = bullishVotes;
@@ -1106,9 +1182,12 @@ actor {
     };
   };
 
-  public shared ({ caller = _ }) func publishBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+  public shared ({ caller }) func publishBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only authenticated users can publish blog posts");
+    };
     if (passcode != hiddenMarketIntelPassword) {
-      return #err("Unauthorized: Invalid passcode");
+      return #err("Unauthorized: Valid Market Intel passcode required to publish blog posts");
     };
     blogIdCounter += 1;
     let newId = blogIdCounter;
@@ -1127,9 +1206,12 @@ actor {
     #ok("BLOG_PUBLISHED");
   };
 
-  public shared ({ caller = _ }) func createBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+  public shared ({ caller }) func createBlogPost(post : BlogPost, passcode : Text) : async { #ok : Text; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only authenticated users can create blog posts");
+    };
     if (passcode != hiddenMarketIntelPassword) {
-      return #err("Unauthorized: Invalid passcode");
+      return #err("Unauthorized: Valid Market Intel passcode required to create blog posts");
     };
     blogIdCounter += 1;
     let newId = blogIdCounter;
@@ -1148,17 +1230,26 @@ actor {
     #ok("BLOG_CREATED");
   };
 
-  public query func getAllBlogPosts() : async [BlogPost] {
+  public query ({ caller }) func getAllBlogPosts() : async [BlogPost] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view blog posts");
+    };
     let allPosts = blogStore.values().toArray();
     allPosts.filter(func(p) { p.isPublished });
   };
 
-  public query func getPublishedPosts() : async [BlogPost] {
+  public query ({ caller }) func getPublishedPosts() : async [BlogPost] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view blog posts");
+    };
     let allPosts = blogStore.values().toArray();
     allPosts.filter(func(p) { p.isPublished });
   };
 
-  public query func getBlogPostById(id : Nat) : async ?BlogPost {
+  public query ({ caller }) func getBlogPostById(id : Nat) : async ?BlogPost {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view blog posts");
+    };
     switch (blogStore.get(id)) {
       case (?post) {
         if (post.isPublished) { ?post } else { null };
@@ -1196,6 +1287,9 @@ actor {
   };
 
   public shared ({ caller }) func deletePollWithPasscode(pollId : Nat, passcode : Text) : async { #ok : (); #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only authenticated users can delete polls");
+    };
     if (passcode != hiddenMarketIntelPassword) {
       return #err("Invalid passcode");
     };
@@ -1207,3 +1301,4 @@ actor {
     #ok(());
   };
 };
+

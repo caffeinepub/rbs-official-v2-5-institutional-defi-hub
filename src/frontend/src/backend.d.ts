@@ -7,17 +7,81 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface TimerState {
-    endTime: bigint;
-    lastUpdate: bigint;
-    isUnlocked: boolean;
-}
 export interface TransformationOutput {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
 }
 export type Time = bigint;
+export interface UserProfileEntry {
+    principal: Principal;
+    registeredAt?: bigint;
+    profile: UserProfile;
+}
+export interface SignalConfidence {
+    signal: Signal;
+    confidence: bigint;
+}
+export interface PollView {
+    id: bigint;
+    creator: Principal;
+    question: string;
+    votes: Array<KeyVal>;
+    code: string;
+    createdAt: Time;
+    isActive: boolean;
+    options: Array<string>;
+}
+export interface TransformationInput {
+    context: Uint8Array;
+    response: http_request_result;
+}
+export interface ScheduledTask {
+    name: string;
+    lastRunTimestamp: bigint;
+    intervalSeconds: bigint;
+}
+export interface MarketIntelligence {
+    id: bigint;
+    historicalAccuracy: number;
+    asset: string;
+    timeframe: string;
+    overallSignal: SignalConfidence;
+    indicators: Array<TechnicalIndicator>;
+    timestamp: bigint;
+}
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    triggerEnabled: boolean;
+    message: string;
+    timestamp: bigint;
+    lastChecked: bigint;
+    autoCreated: boolean;
+}
+export interface CreatePollInput {
+    question: string;
+    code: string;
+    isActive: boolean;
+    options: Array<string>;
+}
+export interface BlogPost {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt?: bigint;
+    category: string;
+}
+export interface TimerState {
+    endTime: bigint;
+    lastUpdate: bigint;
+    isUnlocked: boolean;
+}
 export interface CryptoCurrency {
     lastUpdateTimestamp: bigint;
     currentPriceUsd: number;
@@ -41,27 +105,6 @@ export interface FormSubmission {
     rbsAmount: number;
     timestamp: bigint;
 }
-export interface BlogPost {
-    id: bigint;
-    title: string;
-    isPublished: boolean;
-    body: string;
-    createdAt: bigint;
-    tags: Array<string>;
-    author: string;
-    updatedAt?: bigint;
-    category: string;
-}
-export interface Alert {
-    id: bigint;
-    title: string;
-    read: boolean;
-    triggerEnabled: boolean;
-    message: string;
-    timestamp: bigint;
-    lastChecked: bigint;
-    autoCreated: boolean;
-}
 export interface http_header {
     value: string;
     name: string;
@@ -76,55 +119,15 @@ export interface TechnicalIndicator {
     indicatorType: IndicatorType;
     signal: SignalConfidence;
 }
-export interface SignalConfidence {
-    signal: Signal;
-    confidence: bigint;
-}
-export interface PollView {
-    id: bigint;
-    creator: Principal;
-    question: string;
-    votes: Array<KeyVal>;
-    code: string;
-    createdAt: Time;
-    isActive: boolean;
-    options: Array<string>;
-}
-export interface TransformationInput {
-    context: Uint8Array;
-    response: http_request_result;
-}
 export interface KeyVal {
     key: string;
     value: bigint;
 }
-export interface ScheduledTask {
-    name: string;
-    lastRunTimestamp: bigint;
-    intervalSeconds: bigint;
-}
-export interface MarketIntelligence {
-    id: bigint;
-    historicalAccuracy: number;
-    asset: string;
-    timeframe: string;
-    overallSignal: SignalConfidence;
-    indicators: Array<TechnicalIndicator>;
-    timestamp: bigint;
-}
-export interface CreatePollInput {
-    question: string;
-    code: string;
-    isActive: boolean;
-    options: Array<string>;
-}
 export interface UserProfile {
-    name: string;
+    username: string;
+    displayName: string;
     email?: string;
-}
-export interface UserProfileEntry {
-    principal: Principal;
-    profile: UserProfile;
+    avatarUrl?: string;
 }
 export enum IndicatorType {
     fvg = "fvg",
@@ -191,7 +194,6 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
-
     enableTrigger(enable: boolean): Promise<void>;
     getAirdropRemainingTime(): Promise<bigint>;
     getAirdropTimerEnd(): Promise<bigint>;
@@ -202,8 +204,10 @@ export interface backendInterface {
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllPolls(): Promise<Array<PollView>>;
     getAllSubmissions(): Promise<Array<FormSubmission>>;
+    getAllUserProfiles(): Promise<Array<UserProfileEntry>>;
     getBTCPriceFromCoingecko(): Promise<string>;
     getBlogPostById(id: bigint): Promise<BlogPost | null>;
+    getCallerRegistrationDate(): Promise<bigint | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
@@ -220,11 +224,13 @@ export interface backendInterface {
     getScheduledTasks(): Promise<Array<ScheduledTask>>;
     getTimerState(timerType: TimerType): Promise<TimerState>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserRegistrationDate(user: Principal): Promise<bigint | null>;
     grantMarketIntelAccess(password: string): Promise<boolean>;
     hasMarketIntelAccess(): Promise<boolean>;
     hasMarketIntelAccessCheck(principal: Principal): Promise<boolean>;
     initialize(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    isUsernameTaken(username: string): Promise<boolean>;
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     publishBlogPost(post: BlogPost, passcode: string): Promise<{
         __kind__: "ok";
@@ -235,7 +241,6 @@ export interface backendInterface {
     }>;
     revokeMarketIntelAccessWithPassword(password: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    getAllUserProfiles(): Promise<UserProfileEntry[]>;
     setGlobalSectionLock(section: string, passcode: string, unlock: boolean): Promise<void>;
     setMarketIntelPasscode(newPasscode: string): Promise<void>;
     setTimerEnd(timerType: TimerType, endTime: bigint): Promise<void>;

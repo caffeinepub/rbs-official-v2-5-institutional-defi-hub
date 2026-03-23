@@ -26,9 +26,19 @@ export function useSaveCallerUserProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (profile: { name: string; email?: string }) => {
+    mutationFn: async (profile: {
+      username: string;
+      displayName: string;
+      email?: string;
+      avatarUrl?: string;
+    }) => {
       if (!actor) throw new Error("Actor not available");
-      return actor.saveCallerUserProfile(profile);
+      return actor.saveCallerUserProfile({
+        username: profile.username,
+        displayName: profile.displayName,
+        email: profile.email,
+        avatarUrl: profile.avatarUrl,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });

@@ -270,30 +270,21 @@ const TRADING_TOOLS = [
   },
   {
     icon: Activity,
-    title: "Alerts Center",
-    desc: "Set price and indicator alerts — get notified when markets move.",
-    path: "/alerts",
+    title: "Trading Tools Hub",
+    desc: "Professional calculators: position sizing, pivot points, risk management, and more.",
+    path: "/trading-tools",
     color: "text-red-600",
     bg: "bg-red-50",
     border: "border-red-200 hover:border-red-400",
   },
   {
     icon: TrendingUp,
-    title: "Market Dashboard",
-    desc: "Live market overview with real-time prices, dominance, and analytics.",
-    path: "/dashboard",
+    title: "Funding Rates",
+    desc: "Live perpetual funding rates across 15+ crypto pairs with market sentiment.",
+    path: "/funding-rates",
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200 hover:border-blue-400",
-  },
-  {
-    icon: BarChart2,
-    title: "Market Dashboard",
-    desc: "Full crypto market overview with live prices and analytics.",
-    path: "/dashboard",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
-    border: "border-purple-200 hover:border-purple-400",
   },
 ];
 
@@ -446,11 +437,9 @@ export default function HomePage() {
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-emerald-200 rounded-full blur-xl opacity-60 animate-neon-pulse" />
-                <img
-                  src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-                  alt="RBS Token Logo"
-                  className="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover relative z-10 animate-float"
-                />
+                <div className="relative w-20 h-20 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-2xl ring-4 ring-sky-100 ring-offset-2">
+                  RBS
+                </div>
               </div>
             </motion.div>
 
@@ -1216,53 +1205,7 @@ export default function HomePage() {
           </section>
         </SmokySectionTransition>
 
-        {/* ── 11. Developer Blog Preview ──────────────────────────────────── */}
-        <SmokySectionTransition delay={100}>
-          <section className="py-20 px-4 bg-white">
-            <div className="container mx-auto max-w-4xl">
-              <motion.div
-                initial={{ opacity: 0, x: -60 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-                className="relative p-8 rounded-3xl bg-white border border-emerald-200 shadow-sm overflow-hidden group hover:shadow-md transition-all"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-50/50 to-transparent pointer-events-none rounded-3xl" />
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl pointer-events-none opacity-50" />
-
-                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 flex-shrink-0">
-                    <BookOpen className="w-8 h-8" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium mb-3">
-                      Developer Updates
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                      Stay Up to Date
-                    </h2>
-                    <p className="text-gray-500 leading-relaxed mb-4">
-                      Read in-depth technical updates, development progress, and
-                      ecosystem insights from the RBS core team. Published using
-                      the G-MAN passcode.
-                    </p>
-                    <Button
-                      data-ocid="home.blog.button"
-                      onClick={() => navigate({ to: "/blog" })}
-                      variant="outline"
-                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    >
-                      Read Developer Blogs{" "}
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </section>
-        </SmokySectionTransition>
-
-        {/* ── 12. Join Community CTA ──────────────────────────────────────── */}
+        {/* ── 11. Join Community CTA ──────────────────────────────────────── */}
         <SmokySectionTransition delay={100}>
           <section className="py-20 px-4 bg-gray-50 border-t border-gray-100">
             <div className="container mx-auto text-center max-w-3xl">

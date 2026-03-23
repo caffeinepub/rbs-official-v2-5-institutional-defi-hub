@@ -102,54 +102,7 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  {
-    label: "Community",
-    icon: Users,
-    children: [
-      {
-        label: "Governance",
-        path: "/governance",
-        icon: Globe,
-        desc: "DAO governance",
-      },
-      {
-        label: "Leaderboard",
-        path: "/leaderboard",
-        icon: Star,
-        desc: "Top contributors",
-      },
-      {
-        label: "Highlights",
-        path: "/community",
-        icon: Layers,
-        desc: "Community news",
-      },
-      {
-        label: "Testimonials",
-        path: "/testimonials",
-        icon: Users,
-        desc: "Member stories",
-      },
-    ],
-  },
-  {
-    label: "Acquire",
-    icon: Wallet,
-    children: [
-      {
-        label: "Acquisition",
-        path: "/acquisition",
-        icon: Wallet,
-        desc: "Buy RBS tokens",
-      },
-      {
-        label: "Airdrop & Presale Hub",
-        path: "/airdrop-presale",
-        icon: Zap,
-        desc: "Free token events",
-      },
-    ],
-  },
+  { label: "Acquire", path: "/acquisition" },
   {
     label: "Resources",
     icon: BookOpen,
@@ -165,12 +118,6 @@ const navItems: NavItem[] = [
         path: "/partners",
         icon: Users,
         desc: "Our ecosystem",
-      },
-      {
-        label: "Ecosystem",
-        path: "/ecosystem",
-        icon: Globe,
-        desc: "Integrations",
       },
       {
         label: "Security",
@@ -230,9 +177,14 @@ export default function Header() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [principalId]);
 
-  const displayName = (backendProfile as any)?.name ?? "";
-  const username = localProfile?.username ?? "";
-  const avatarUrl = localProfile?.avatarUrl ?? null;
+  const displayName =
+    (backendProfile as any)?.displayName ?? (backendProfile as any)?.name ?? "";
+  const username =
+    (backendProfile as any)?.username ?? localProfile?.username ?? "";
+  const avatarUrl = (() => {
+    const bu = (backendProfile as any)?.avatarUrl;
+    return (Array.isArray(bu) ? bu[0] : bu) ?? localProfile?.avatarUrl ?? null;
+  })();
 
   const handleAuth = async () => {
     if (isAuthenticated) {
@@ -292,11 +244,9 @@ export default function Header() {
             className="flex items-center gap-2.5 group flex-shrink-0"
           >
             <div className="relative">
-              <img
-                src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-                alt="RBS Token Logo"
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-sky-100 group-hover:ring-sky-300 transition-all group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.4)]"
-              />
+              <div className="h-9 w-9 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-sm ring-2 ring-sky-100 group-hover:ring-sky-300 transition-all group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.4)]">
+                RBS
+              </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
             </div>
             <div className="leading-none">

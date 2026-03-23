@@ -121,7 +121,6 @@ export default function TokenomicsPage() {
   const chartAnim = useScrollAnimation({ threshold: 0.1 });
   const statsAnim = useScrollAnimation({ threshold: 0.1 });
   const utilityAnim = useScrollAnimation({ threshold: 0.1 });
-  const deflationAnim = useScrollAnimation({ threshold: 0.1 });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -333,43 +332,6 @@ export default function TokenomicsPage() {
                 <p className="text-muted-foreground text-sm">{item.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Deflationary Model */}
-      <section
-        ref={deflationAnim.ref as React.RefObject<HTMLElement>}
-        className={`py-16 px-4 bg-card/30 ${useScrollAnimationClass(deflationAnim.isVisible, "fade-up")}`}
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6 text-foreground">
-            🔥 Deflationary Model
-          </h2>
-          <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">
-            15,000 RBS (15% of total supply) is allocated for systematic burns,
-            creating a deflationary pressure that increases the value of
-            remaining tokens over time.
-          </p>
-          <div className="bg-card border border-primary/30 rounded-2xl p-8">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-foreground font-semibold">
-                Burn Progress
-              </span>
-              <span className="text-primary font-bold">5,000 / 15,000 RBS</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
-              <div
-                className="h-4 rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all duration-2000"
-                style={{
-                  width: deflationAnim.isVisible ? "33.3%" : "0%",
-                  transition: "width 2s ease 0.3s",
-                }}
-              />
-            </div>
-            <p className="text-muted-foreground text-sm mt-3">
-              33.3% of burn target completed
-            </p>
           </div>
         </div>
       </section>

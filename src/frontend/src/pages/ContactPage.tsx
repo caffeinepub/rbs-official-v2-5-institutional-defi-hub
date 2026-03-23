@@ -36,10 +36,10 @@ export default function ContactPage() {
     const emailBody = `Name: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0ASubject: ${formData.subject}%0D%0A%0D%0AMessage:%0D%0A${formData.message}`;
     const mailtoLink = `mailto:design.crafters.official@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${emailBody}`;
 
-    window.location.href = mailtoLink;
+    window.open(mailtoLink, "_blank");
 
     setTimeout(() => {
-      toast.success("Email client opened. Please send your message.");
+      toast.success("Email client opened — please send your message!");
       setFormData({ name: "", email: "", subject: "", message: "" });
       setIsSubmitting(false);
     }, 1000);

@@ -29,6 +29,27 @@ const CHAPTERS = [
   { id: "institutional", title: "Institutional Integration", icon: Globe },
   { id: "roadmap", title: "Strategic Roadmap", icon: TrendingUp },
   { id: "technical", title: "Technical Stack", icon: Code },
+  { id: "bnb-architecture", title: "BNB Chain Architecture", icon: Network },
+  {
+    id: "token-distribution",
+    title: "Token Distribution Deep Dive",
+    icon: BarChart2,
+  },
+  {
+    id: "price-mechanics",
+    title: "Price Discovery & Market Mechanics",
+    icon: TrendingUp,
+  },
+  { id: "dao-structure", title: "Governance & DAO Structure", icon: Users },
+  { id: "staking-arch", title: "Staking Architecture", icon: Zap },
+  { id: "security-framework", title: "Security Framework", icon: Shield },
+  { id: "regulatory", title: "Regulatory Considerations", icon: Globe },
+  {
+    id: "market-intel-platform",
+    title: "Market Intelligence Platform",
+    icon: Code,
+  },
+  { id: "risk-factors", title: "Risk Factors", icon: Shield },
   { id: "conclusion", title: "Conclusion", icon: FileText },
 ];
 
@@ -1144,6 +1165,517 @@ export default function WhitepaperPage() {
                     enables rapid response to anomalies. Comprehensive logging
                     facilitates debugging and maintains complete audit trails
                     for all protocol actions.
+                  </p>
+                </div>
+
+                {/* BNB Chain Architecture */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["bnb-architecture"] = el;
+                  }}
+                  className={sectionClass("bnb-architecture")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Network className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      BNB Chain Smart Contract Architecture
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS token is deployed as a BEP-20 compliant smart
+                    contract on the BNB Smart Chain, one of the world's
+                    highest-throughput public blockchains. The BEP-20 standard
+                    represents a superset of the widely adopted ERC-20
+                    specification, providing full compatibility with the broader
+                    DeFi ecosystem while benefiting from BNB Chain's superior
+                    transaction throughput, sub-second finality, and negligible
+                    gas fees compared to Ethereum mainnet. This architectural
+                    choice was deliberate: it places RBS directly within the
+                    largest retail-facing DeFi ecosystem in the world, ensuring
+                    maximum accessibility for token holders across every major
+                    exchange and wallet provider.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS contract enforces an absolutely fixed total supply
+                    of 100,000 tokens at the bytecode level. There is no mint
+                    function, no inflation mechanism, and no administrative
+                    backdoor that could increase the circulating supply at any
+                    future date. This immutability is not a governance parameter
+                    — it is hard-coded into the contract's constructor and
+                    cannot be overridden by any entity, including the founding
+                    team. The contract's source code has been verified on
+                    BscScan, allowing any independent party to audit the logic
+                    at any time without requiring trust in the development
+                    team's assertions.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Administrative functions, including the ability to designate
+                    burn addresses and adjust liquidity parameters, are
+                    protected by a multi-signature wallet structure requiring
+                    approval from a minimum of three out of five authorized
+                    signatories. This arrangement prevents any single actor —
+                    including any founding team member — from unilaterally
+                    executing administrative operations that could affect token
+                    holders. All multi-sig wallet addresses are published
+                    publicly, enabling the community to monitor all proposed and
+                    executed transactions in real time.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Time-locked upgrade mechanisms provide an additional layer
+                    of protection. Any proposed change to contract parameters is
+                    subject to a mandatory delay period before execution, giving
+                    token holders and the community sufficient time to review,
+                    debate, and contest changes that conflict with the
+                    protocol's stated principles. This governance delay acts as
+                    a circuit breaker against rushed or malicious upgrades,
+                    ensuring that the long-term integrity of the RBS contract is
+                    protected even as the ecosystem evolves.
+                  </p>
+                </div>
+
+                {/* Token Distribution Deep Dive */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["token-distribution"] = el;
+                  }}
+                  className={sectionClass("token-distribution")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <BarChart2 className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Token Distribution Deep Dive
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS distribution model was designed to balance three
+                    competing priorities: long-term ecosystem sustainability,
+                    fair community access, and responsible team incentive
+                    alignment. After extensive review of comparable token
+                    launches and post-mortem analyses of failed projects, the
+                    founding team concluded that concentrating too much supply
+                    in team or investor wallets was the single most common cause
+                    of early price collapse and community erosion. Accordingly,
+                    the RBS distribution deliberately minimizes insiders' share
+                    and maximizes community-facing allocations.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Community Rewards receive the largest allocation at 35,000
+                    RBS (35%), distributed over a rolling five-year schedule to
+                    reward staking participants, governance voters, and
+                    ecosystem contributors. Ecosystem Development receives
+                    25,000 RBS (25%) to fund protocol integrations, developer
+                    grants, partnership programs, and marketing initiatives. The
+                    Founding Team allocation stands at 15,000 RBS (15%), subject
+                    to a twelve-month cliff and a subsequent twenty-four-month
+                    linear vesting schedule — meaning no team tokens are liquid
+                    until one full year after the mainnet launch, and complete
+                    vesting requires three years of continued contribution.
+                    Liquidity Pool seeding receives 15,000 RBS (15%) to ensure
+                    deep, stable trading liquidity from day one. The remaining
+                    10,000 RBS (10%) constitutes the Strategic Burns reserve,
+                    allocated for periodic deflationary burn events according to
+                    a predetermined schedule published in the roadmap.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Cliff periods are enforced at the contract level, not merely
+                    as social commitments. The vesting smart contract holds all
+                    team and ecosystem allocations in escrow and releases them
+                    according to a time-based schedule that cannot be
+                    accelerated. Emergency unlock provisions are deliberately
+                    absent, as the founding team believes that the credibility
+                    of a vesting commitment is only meaningful when it cannot be
+                    revoked. This structure aligns team incentives with the
+                    long-term health of the token over a multi-year horizon.
+                  </p>
+                </div>
+
+                {/* Price Discovery & Market Mechanics */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["price-mechanics"] = el;
+                  }}
+                  className={sectionClass("price-mechanics")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <TrendingUp className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Price Discovery & Market Mechanics
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    RBS will establish its initial listing price through a
+                    presale process scheduled for Q1 2027. The presale price is
+                    determined by a combination of comparable token valuations
+                    at comparable supply levels, the fundamental utility value
+                    of the ecosystem at launch, and the capital requirements for
+                    sustainable liquidity pool seeding. The founding team will
+                    publish a detailed price derivation document prior to the
+                    presale opening, providing full transparency into the
+                    methodology and assumptions underlying the initial
+                    valuation.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Upon listing, RBS will utilize PancakeSwap V3 as its primary
+                    decentralized exchange, leveraging the Automated Market
+                    Maker model for continuous price discovery. AMM mechanics
+                    ensure that a buyer or seller can always find a counterparty
+                    at a fair price determined by the constant product formula,
+                    without relying on a traditional order book that could be
+                    thin or manipulated. The liquidity pool will be seeded with
+                    the full 15,000 RBS liquidity allocation alongside a
+                    proportional BNB reserve, establishing sufficient depth to
+                    absorb early trading volume without excessive slippage.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Anti-dump provisions form a critical component of the RBS
+                    market structure. Large sell orders from presale
+                    participants are subject to graduated time-lock conditions
+                    that stagger potential selling pressure across a defined
+                    window following the initial listing. This mechanism does
+                    not prevent holders from exiting positions but ensures that
+                    large volumes cannot be deposited and immediately dumped in
+                    a manner that would harm the broader community of retail
+                    purchasers. The specific parameters of these provisions will
+                    be published alongside the presale terms and incorporated
+                    into the vesting contract.
+                  </p>
+                </div>
+
+                {/* Governance & DAO Structure */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["dao-structure"] = el;
+                  }}
+                  className={sectionClass("dao-structure")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Users className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Governance & DAO Structure
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS governance model transitions from a
+                    founding-team-led structure to a full decentralized
+                    autonomous organization over a three-phase timeline. During
+                    the first phase, covering the period from token launch
+                    through the first community governance vote, core protocol
+                    parameters are managed by the founding multi-sig council.
+                    This transitional period allows time for the community to
+                    grow to a size sufficient for meaningful on-chain
+                    participation without the risk of governance attacks from
+                    small but coordinated voter blocs.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Proposal submission requires a minimum holding of 500 RBS to
+                    prevent spam and ensure that only stakeholders with genuine
+                    economic alignment can initiate governance actions. Each
+                    proposal enters a three-day discussion period followed by a
+                    seven-day on-chain voting window. Quorum is set at 10% of
+                    circulating supply, a threshold calibrated to be achievable
+                    by an engaged community while protecting against low-turnout
+                    governance capture. Proposals reaching quorum and majority
+                    approval are automatically queued for execution after a
+                    mandatory 48-hour time lock, providing a final window for
+                    the community to raise objections or for the security
+                    council to veto clearly malicious actions.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Treasury management operates through a community-controlled
+                    multi-sig wallet funded by protocol fees and ecosystem
+                    development allocations. Spending proposals above defined
+                    thresholds require full governance approval, while routine
+                    operational expenses below those thresholds can be
+                    authorized by the multi-sig council. All treasury
+                    transactions are published on-chain and accompanied by
+                    detailed spending justifications to maintain community
+                    accountability. Quarterly treasury reports are published in
+                    the developer blog section of the RBS platform.
+                  </p>
+                </div>
+
+                {/* Staking Architecture */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["staking-arch"] = el;
+                  }}
+                  className={sectionClass("staking-arch")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Zap className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Staking Architecture
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS staking system provides four duration-tiered pools
+                    designed to reward long-term commitment while maintaining
+                    sufficient flexibility for participants with varying
+                    liquidity needs. The thirty-day pool offers a base APY
+                    appropriate for short-term liquidity providers, while the
+                    ninety-day, one-hundred-eighty-day, and
+                    three-hundred-sixty-five-day pools provide progressively
+                    higher APY rates that reflect the genuine economic value of
+                    committing liquidity over longer horizons. The exact APY
+                    figures for each pool are published in the staking
+                    calculator and updated quarterly based on
+                    governance-approved parameters.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Reward distribution is calculated on a per-block basis using
+                    a weighted proportional system. A staker's share of rewards
+                    for any given block equals their staked balance divided by
+                    the total staked balance across all participants in that
+                    pool tier. This mechanism ensures that rewards scale
+                    linearly with contribution and that no participant receives
+                    disproportionate rewards by virtue of timing their entry.
+                    The reward pool is funded from the 35,000 RBS Community
+                    Rewards allocation, providing several years of sustain at
+                    projected staking participation rates.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Compounding mechanics allow stakers to automatically
+                    reinvest earned rewards into their staking position without
+                    claiming and re-depositing manually. Auto-compound
+                    transactions are executed by a keeper bot at regular
+                    intervals, and the associated gas costs are covered from the
+                    protocol treasury as an incentive for long-term staking
+                    participation. Early exit from a locked staking pool
+                    triggers a graduated penalty that declines linearly as the
+                    lock period approaches completion, ensuring that exit
+                    penalties are proportional to the unexpired commitment
+                    rather than a flat fee that would be unusually punitive for
+                    late-stage withdrawals.
+                  </p>
+                </div>
+
+                {/* Security Framework */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["security-framework"] = el;
+                  }}
+                  className={sectionClass("security-framework")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Shield className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Security Framework
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Smart contract security is treated as a first-order concern
+                    throughout the RBS development process, not an afterthought
+                    addressed at the end of the development cycle. The core RBS
+                    contract and all associated staking, vesting, and governance
+                    contracts undergo a minimum of two independent security
+                    audits by firms with demonstrated expertise in BEP-20
+                    contract security prior to mainnet deployment. Audit reports
+                    are published in full on the RBS website and on-chain,
+                    including any identified issues and the fixes applied.
+                    Contracts with unresolved high-severity findings are not
+                    deployed under any circumstances.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    A public bug bounty program provides ongoing financial
+                    incentives for independent security researchers to identify
+                    and responsibly disclose vulnerabilities. Bounties are
+                    tiered by severity, with critical vulnerabilities qualifying
+                    for awards commensurate with the potential impact of
+                    exploitation. The bounty program operates through a
+                    dedicated platform that ensures clear communication channels
+                    and guaranteed payment for valid submissions. All disclosed
+                    vulnerabilities are triaged, remediated, and disclosed
+                    publicly once fixes are deployed, maintaining a complete
+                    public record of the protocol's security evolution.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Emergency pause functionality is built into all RBS smart
+                    contracts, allowing the multi-sig council to temporarily
+                    halt protocol operations in the event of a detected exploit
+                    or critical vulnerability. This functionality is designed
+                    with narrow scope — it can halt token transfers and staking
+                    operations but cannot move or redirect user funds. An
+                    insurance fund equivalent to a defined percentage of the
+                    treasury is maintained in stablecoins to provide coverage
+                    against losses resulting from smart contract failures,
+                    providing token holders with an additional layer of
+                    financial protection beyond the technical security measures.
+                  </p>
+                </div>
+
+                {/* Regulatory Considerations */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current.regulatory = el;
+                  }}
+                  className={sectionClass("regulatory")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Globe className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Regulatory Considerations
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The RBS team has conducted a good-faith analysis of the
+                    token's classification under applicable frameworks, with
+                    primary focus on jurisdictions where the community has the
+                    largest concentration of participants. The token is designed
+                    to function as a utility token within the RBS ecosystem,
+                    providing governance rights, staking rewards, and access to
+                    premium platform features. It is not structured as a
+                    security, does not carry promises of profit derived from the
+                    efforts of others in the manner contemplated by the Howey
+                    test, and does not represent ownership in any legal entity.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The presale process will incorporate KYC and AML screening
+                    procedures appropriate for the jurisdictions of
+                    participating buyers. Participants from jurisdictions with
+                    explicit prohibitions on participation in digital asset
+                    sales, including the United States, will be restricted from
+                    the presale process. These restrictions are implemented both
+                    at the smart contract level and through the presale platform
+                    interface, with geolocation and identity verification
+                    serving as complementary enforcement mechanisms.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    This whitepaper does not constitute legal advice, financial
+                    advice, or an offer or solicitation to buy or sell
+                    securities in any jurisdiction. Potential participants
+                    should consult their own legal and financial advisors to
+                    understand the implications of participation under the laws
+                    of their applicable jurisdictions. The regulatory landscape
+                    for digital assets continues to evolve rapidly, and the RBS
+                    team is committed to maintaining dialogue with legal counsel
+                    and adapting compliance procedures as the regulatory
+                    environment develops.
+                  </p>
+                </div>
+
+                {/* Market Intelligence Platform */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["market-intel-platform"] = el;
+                  }}
+                  className={sectionClass("market-intel-platform")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Code className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Market Intelligence Platform
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The G-Man Intelligence platform represents one of the most
+                    distinctive utility components of the RBS ecosystem. It
+                    provides RBS token holders with access to professional-grade
+                    trading signal generation that would typically require
+                    expensive subscriptions to institutional data providers. The
+                    signal engine operates across multiple asset classes
+                    including the top ten cryptocurrency pairs by market
+                    capitalization, the ten most actively traded forex pairs,
+                    and precious metals including gold and silver, providing
+                    genuine cross-market intelligence rather than narrow
+                    crypto-centric analysis.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    The signal methodology is built on a weighted composite of
+                    nine technical indicators computed from live Binance API
+                    data. These indicators include RSI with Wilder smoothing,
+                    MACD with standard parameter settings, EMA crossover
+                    analysis using the 9 and 21-period pair, SMA crossover using
+                    the 20 and 50-period pair, Bollinger Band position analysis,
+                    volume ratio against a 20-period moving average, ATR for
+                    volatility quantification, ten-period momentum, and
+                    dynamically computed support and resistance levels derived
+                    from local price extrema. Each indicator is assigned a
+                    weight in the composite scoring function based on its
+                    historically demonstrated reliability across the relevant
+                    asset class.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Google Gemini AI augments the technical signal with natural
+                    language interpretation and contextual market awareness.
+                    After the quantitative indicators produce a raw signal
+                    score, the Gemini integration performs a second-pass
+                    analysis that incorporates broader market context,
+                    interprets the combined weight of the indicator evidence,
+                    and produces a human-readable signal narrative alongside the
+                    numeric output. When the AI enhancement is active, signal
+                    cards are marked with the AI Enhanced badge and include a
+                    one-sentence insight that explains the primary driver of the
+                    signal recommendation. The combined quantitative and
+                    qualitative output consistently outperforms either component
+                    in isolation across backtested scenarios.
+                  </p>
+                </div>
+
+                {/* Risk Factors */}
+                <div
+                  ref={(el) => {
+                    sectionRefs.current["risk-factors"] = el;
+                  }}
+                  className={sectionClass("risk-factors")}
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Shield className="h-7 w-7 text-gold" />
+                    <h2 className="text-4xl font-poppins font-bold text-gold tracking-tight">
+                      Risk Factors
+                    </h2>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-gold via-gold/50 to-transparent mb-8 rounded-full" />
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Market risk is inherent in any digital asset and RBS is not
+                    exempt from this reality. The price of RBS tokens will
+                    fluctuate based on supply and demand dynamics, broader
+                    cryptocurrency market sentiment, macroeconomic conditions,
+                    and factors specific to the RBS ecosystem. Potential
+                    participants should only commit capital that they are
+                    prepared to lose in its entirety. The deflationary mechanics
+                    and utility design of RBS are intended to support long-term
+                    value, but no mechanism can guarantee price appreciation or
+                    protect against losses in a declining market environment.
+                    Historical performance of comparable tokens is not a
+                    reliable predictor of future RBS price performance.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Smart contract risk remains present despite the
+                    comprehensive audit and security program described in this
+                    whitepaper. No audit process can guarantee the absence of
+                    all vulnerabilities, and the complexity of interacting with
+                    other DeFi protocols introduces additional attack surface
+                    that is difficult to fully enumerate in advance. The
+                    insurance fund provides partial coverage but may not be
+                    sufficient to make all affected parties whole in the event
+                    of a significant exploit. Participants should assess their
+                    individual risk tolerance in light of these inherent
+                    limitations.
+                  </p>
+                  <p className="metallic-text-secondary font-inter leading-relaxed mb-6 text-lg">
+                    Regulatory risk has grown significantly across the digital
+                    asset industry and has the potential to materially affect
+                    the RBS ecosystem, including the availability of the
+                    presale, the ability to list on centralized exchanges in
+                    certain jurisdictions, and the legal status of staking
+                    rewards in various tax regimes. Changes in applicable law
+                    could require modifications to the platform, restrict
+                    participation by certain users, or in extreme cases require
+                    the wind-down of certain ecosystem features. The founding
+                    team is committed to proactive regulatory engagement but
+                    cannot guarantee that future legal developments will not
+                    adversely affect token holders. Liquidity risk, team risk,
+                    and execution risk round out the primary risk categories,
+                    each addressed in detail in the full risk disclosure
+                    document available on the RBS website.
                   </p>
                 </div>
 

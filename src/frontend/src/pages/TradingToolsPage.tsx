@@ -77,71 +77,7 @@ const TOOLS: ToolCard[] = [
     iconColor: "text-emerald-600",
     border: "border-emerald-200 hover:border-emerald-400",
   },
-  {
-    icon: Bell,
-    title: "Alerts Center",
-    description:
-      "Set custom price and indicator alerts. Get notified when markets hit your target levels.",
-    features: [
-      "Custom thresholds",
-      "Price & indicator alerts",
-      "Toggle on/off",
-      "Persistent storage",
-    ],
-    path: "/alerts",
-    iconBg: "bg-red-50",
-    iconColor: "text-red-600",
-    border: "border-red-200 hover:border-red-400",
-  },
-  {
-    icon: Users,
-    title: "Community Voting",
-    description:
-      "Vote on ecosystem proposals and governance decisions. Shape the future of the RBS protocol.",
-    features: [
-      "One vote per user",
-      "Live vote counts",
-      "Passcode-gated creation",
-      "Global visibility",
-    ],
-    path: "/voting",
-    iconBg: "bg-pink-50",
-    iconColor: "text-pink-600",
-    border: "border-pink-200 hover:border-pink-400",
-  },
-  {
-    icon: BookOpen,
-    title: "Developer Blog",
-    description:
-      "In-depth technical updates and development insights from the RBS core team. Read the latest progress.",
-    features: [
-      "Technical articles",
-      "Dev updates",
-      "Ecosystem insights",
-      "Published by team",
-    ],
-    path: "/blog",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    border: "border-indigo-200 hover:border-indigo-400",
-  },
-  {
-    icon: Globe,
-    title: "Crypto Heatmap",
-    description:
-      "Visual market heatmap of top 50 coins colored by 24h % change. Spot trends at a glance.",
-    features: [
-      "Top 50 coins",
-      "Color by % change",
-      "Market cap sizing",
-      "Real-time refresh",
-    ],
-    path: "/crypto-heatmap",
-    iconBg: "bg-teal-50",
-    iconColor: "text-teal-600",
-    border: "border-teal-200 hover:border-teal-400",
-    badge: "New",
-  },
+
   {
     icon: Activity,
     title: "Funding Rates",
@@ -157,23 +93,6 @@ const TOOLS: ToolCard[] = [
     iconBg: "bg-violet-50",
     iconColor: "text-violet-600",
     border: "border-violet-200 hover:border-violet-400",
-    badge: "New",
-  },
-  {
-    icon: Coins,
-    title: "Portfolio Tracker",
-    description:
-      "Track your crypto portfolio value in real-time with live prices and % allocation breakdown.",
-    features: [
-      "Live prices",
-      "% allocation",
-      "localStorage save",
-      "P&L tracking",
-    ],
-    path: "/portfolio-tracker",
-    iconBg: "bg-cyan-50",
-    iconColor: "text-cyan-600",
-    border: "border-cyan-200 hover:border-cyan-400",
     badge: "New",
   },
 ];
@@ -3185,6 +3104,12 @@ function CalculatorHub() {
           description: "Estimate tax on your crypto gains",
           component: CryptoTaxTool,
         },
+        {
+          id: "adv-profit",
+          label: "Advanced Profit Calc",
+          description: "P&L with fees, leverage, and ROI breakdown",
+          component: AdvancedProfitCalcTool,
+        },
       ],
     },
     {
@@ -3202,6 +3127,18 @@ function CalculatorHub() {
           label: "Risk / Reward",
           description: "Visualize your trade risk-reward ratio",
           component: RiskRewardVisualizerTool,
+        },
+        {
+          id: "trend-strength",
+          label: "Trend Strength Meter",
+          description: "Live EMA-based trend strength gauge for any coin",
+          component: TrendStrengthTool,
+        },
+        {
+          id: "session-timer",
+          label: "Session Overlap Timer",
+          description: "Live market session clocks — best trading windows",
+          component: MarketSessionTimerTool,
         },
       ],
     },
@@ -3542,8 +3479,8 @@ export default function TradingToolsPage() {
               Ready to Trade Smarter?
             </h2>
             <p className="text-gray-500 mb-8">
-              Start with G-MAN Intel for live trading signals, then join
-              community polls and governance decisions.
+              Start with G-MAN Intel for live trading signals and explore our
+              comprehensive suite of professional trading tools.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
@@ -3552,14 +3489,6 @@ export default function TradingToolsPage() {
                 className="bg-emerald-500 hover:bg-emerald-500 text-white font-bold"
               >
                 Open G-MAN Intel <Zap className="ml-2 w-4 h-4" />
-              </Button>
-              <Button
-                data-ocid="trading-tools.voting.secondary_button"
-                onClick={() => navigate({ to: "/voting" })}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Community Voting <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -4637,6 +4566,418 @@ function CompoundReturnsTool() {
             </table>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ── Trend Strength Meter ─────────────────────────────────────────────────────
+function TrendStrengthTool() {
+  const [coin, setCoin] = useState("BTC");
+  const [timeframe, setTimeframe] = useState("1h");
+  const [strength, setStrength] = useState<number | null>(null);
+  const [trend, setTrend] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const INTERVAL_MAP: Record<string, string> = {
+    "1H": "1h",
+    "4H": "4h",
+    "1D": "1d",
+  };
+
+  const calculate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const symbol = `${coin.toUpperCase()}USDT`;
+      const interval = INTERVAL_MAP[timeframe] ?? timeframe;
+      const res = await fetch(
+        `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=50`,
+      );
+      if (!res.ok) throw new Error("API error");
+      const data: Array<Array<string>> = await res.json();
+      const closes = data.map((k) => Number.parseFloat(k[4]));
+      if (closes.length < 20) throw new Error("Not enough data");
+
+      // EMA slope (EMA9 vs EMA21 trend direction)
+      const ema = (arr: number[], p: number) => {
+        const k2 = 2 / (p + 1);
+        return arr.reduce(
+          (prev, v, i) => (i === 0 ? v : prev * (1 - k2) + v * k2),
+          arr[0],
+        );
+      };
+      const ema9 = ema(closes.slice(-20), 9);
+      const ema21 = ema(closes.slice(-30), 21);
+      const ema9_prev = ema(closes.slice(-25, -5), 9);
+      const slopeScore = ((ema9 - ema9_prev) / ema9_prev) * 100;
+
+      // Momentum: price vs 20 periods ago
+      const momentum =
+        ((closes[closes.length - 1] - closes[closes.length - 20]) /
+          closes[closes.length - 20]) *
+        100;
+
+      // Combined strength 0-100
+      const raw = Math.min(
+        100,
+        Math.max(0, 50 + slopeScore * 5 + momentum * 2),
+      );
+      const emaAbove = ema9 > ema21;
+
+      setStrength(Math.round(raw));
+      if (raw > 65)
+        setTrend(emaAbove ? "Strong Uptrend 🚀" : "Strong Downtrend 🔴");
+      else if (raw > 45)
+        setTrend(emaAbove ? "Weak Uptrend 📈" : "Weak Downtrend 📉");
+      else setTrend("Ranging / Neutral ↔");
+    } catch {
+      setError("Could not fetch data. Check coin symbol.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const strengthColor =
+    strength !== null
+      ? strength > 65
+        ? "text-emerald-600"
+        : strength > 45
+          ? "text-amber-600"
+          : "text-red-500"
+      : "text-gray-400";
+  const barColor =
+    strength !== null
+      ? strength > 65
+        ? "bg-emerald-500"
+        : strength > 45
+          ? "bg-amber-400"
+          : "bg-red-500"
+      : "bg-gray-200";
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="block text-xs font-semibold text-gray-500 mb-1">
+            Coin Symbol
+          </p>
+          <input
+            data-ocid="trend-strength.input"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400"
+            value={coin}
+            onChange={(e) => setCoin(e.target.value.toUpperCase())}
+            placeholder="BTC"
+          />
+        </div>
+        <div>
+          <p className="block text-xs font-semibold text-gray-500 mb-1">
+            Timeframe
+          </p>
+          <div className="flex gap-1">
+            {["1H", "4H", "1D"].map((tf) => (
+              <button
+                key={tf}
+                type="button"
+                onClick={() => setTimeframe(tf)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  timeframe === tf
+                    ? "bg-sky-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-sky-50"
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        data-ocid="trend-strength.button"
+        onClick={calculate}
+        disabled={loading}
+        className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50"
+      >
+        {loading ? "Analyzing..." : "Analyze Trend"}
+      </button>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {strength !== null && !error && (
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-700">
+              Trend Strength
+            </span>
+            <span className={`text-2xl font-black ${strengthColor}`}>
+              {strength}/100
+            </span>
+          </div>
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+              style={{ width: `${strength}%` }}
+            />
+          </div>
+          <p className={`text-center font-bold text-lg ${strengthColor}`}>
+            {trend}
+          </p>
+          <p className="text-xs text-gray-400 text-center">
+            {coin}USDT · {timeframe} timeframe
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Advanced Profit Calculator ────────────────────────────────────────────────
+function AdvancedProfitCalcTool() {
+  const [buyPrice, setBuyPrice] = useState("");
+  const [sellPrice, setSellPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [feePercent, setFeePercent] = useState("0.1");
+  const [leverage, setLeverage] = useState("1");
+  const [result, setResult] = useState<{
+    gross: number;
+    feeCost: number;
+    net: number;
+    roi: number;
+    leveragedRoi: number;
+  } | null>(null);
+
+  const calculate = () => {
+    const buy = Number.parseFloat(buyPrice);
+    const sell = Number.parseFloat(sellPrice);
+    const qty = Number.parseFloat(quantity);
+    const fee = Number.parseFloat(feePercent) / 100;
+    const lev = Number.parseFloat(leverage);
+    if (
+      [buy, sell, qty, fee, lev].some(Number.isNaN) ||
+      buy <= 0 ||
+      qty <= 0 ||
+      lev <= 0
+    )
+      return;
+    const gross = (sell - buy) * qty;
+    const feeCost = (buy + sell) * qty * fee;
+    const net = gross - feeCost;
+    const roi = (net / (buy * qty)) * 100;
+    const leveragedRoi = roi * lev;
+    setResult({ gross, feeCost, net, roi, leveragedRoi });
+  };
+
+  const isProfit = result ? result.net >= 0 : null;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          {
+            label: "Buy Price ($)",
+            val: buyPrice,
+            set: setBuyPrice,
+            id: "adv-buy",
+          },
+          {
+            label: "Sell Price ($)",
+            val: sellPrice,
+            set: setSellPrice,
+            id: "adv-sell",
+          },
+          { label: "Quantity", val: quantity, set: setQuantity, id: "adv-qty" },
+          {
+            label: "Fee (%)",
+            val: feePercent,
+            set: setFeePercent,
+            id: "adv-fee",
+          },
+          {
+            label: "Leverage (1x = spot)",
+            val: leverage,
+            set: setLeverage,
+            id: "adv-lev",
+          },
+        ].map(({ label, val, set, id }) => (
+          <div key={id}>
+            <p className="block text-xs font-semibold text-gray-500 mb-1">
+              {label}
+            </p>
+            <input
+              data-ocid={`adv-profit.${id}.input`}
+              type="number"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-400"
+              value={val}
+              onChange={(e) => set(e.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        data-ocid="adv-profit.button"
+        onClick={calculate}
+        className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2.5 rounded-xl transition-colors"
+      >
+        Calculate
+      </button>
+      {result && (
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {[
+            {
+              label: "Gross Profit",
+              value: `$${result.gross.toFixed(2)}`,
+              color: result.gross >= 0 ? "text-emerald-600" : "text-red-500",
+            },
+            {
+              label: "Fee Cost",
+              value: `$${result.feeCost.toFixed(2)}`,
+              color: "text-amber-600",
+            },
+            {
+              label: "Net Profit",
+              value: `$${result.net.toFixed(2)}`,
+              color: isProfit ? "text-emerald-600" : "text-red-500",
+            },
+            {
+              label: "ROI",
+              value: `${result.roi.toFixed(2)}%`,
+              color: isProfit ? "text-emerald-600" : "text-red-500",
+            },
+            {
+              label: `Leveraged ROI (${leverage}x)`,
+              value: `${result.leveragedRoi.toFixed(2)}%`,
+              color: isProfit ? "text-sky-600" : "text-red-600",
+            },
+          ].map(({ label, value, color }) => (
+            <div
+              key={label}
+              className="bg-gray-50 rounded-xl p-3 border border-gray-100"
+            >
+              <p className="text-xs text-gray-500 mb-1">{label}</p>
+              <p className={`text-lg font-black ${color}`}>{value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Market Session Overlap Timer ──────────────────────────────────────────────
+function MarketSessionTimerTool() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const utcH = now.getUTCHours();
+  const utcM = now.getUTCMinutes();
+  const utcS = now.getUTCSeconds();
+  const utcDecimal = utcH + utcM / 60;
+
+  const sessions = [
+    { name: "Tokyo", flag: "🇯🇵", start: 0, end: 9, color: "sky" },
+    { name: "London", flag: "🇬🇧", start: 8, end: 17, color: "blue" },
+    { name: "New York", flag: "🇺🇸", start: 13, end: 22, color: "violet" },
+    { name: "Sydney", flag: "🇦🇺", start: 22, end: 32, color: "emerald" }, // 22-08 next day
+  ];
+
+  const isActive = (start: number, end: number) => {
+    if (end > 24) {
+      // crosses midnight
+      return utcDecimal >= start || utcDecimal < end - 24;
+    }
+    return utcDecimal >= start && utcDecimal < end;
+  };
+
+  const secsUntilNext = (start: number) => {
+    const startSec = start * 3600;
+    const nowSec = utcH * 3600 + utcM * 60 + utcS;
+    const diff =
+      startSec > nowSec ? startSec - nowSec : 86400 - nowSec + startSec;
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const activeSessions = sessions.filter((s) => isActive(s.start, s.end));
+  const isOverlap = isActive(8, 9) || isActive(13, 17); // Tokyo/London or London/NY
+
+  const colorMap: Record<string, string> = {
+    sky: "bg-sky-50 border-sky-300 text-sky-700",
+    blue: "bg-blue-50 border-blue-300 text-blue-700",
+    violet: "bg-violet-50 border-violet-300 text-violet-700",
+    emerald: "bg-emerald-50 border-emerald-300 text-emerald-700",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gradient-to-r from-sky-500 to-blue-600 rounded-xl p-4 text-white text-center">
+        <p className="text-xs font-semibold opacity-80 mb-1">
+          Current UTC Time
+        </p>
+        <p className="text-3xl font-black tabular-nums">
+          {String(utcH).padStart(2, "0")}:{String(utcM).padStart(2, "0")}:
+          {String(utcS).padStart(2, "0")}
+        </p>
+      </div>
+      {isOverlap && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-xl">⭐</span>
+          <div>
+            <p className="text-sm font-bold text-amber-800">
+              Best Trading Time!
+            </p>
+            <p className="text-xs text-amber-600">
+              Session overlap — highest liquidity & volatility
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="space-y-3">
+        {sessions.map((s) => {
+          const active = isActive(s.start, s.end);
+          const endHour = s.end > 24 ? s.end - 24 : s.end;
+          return (
+            <div
+              key={s.name}
+              className={`rounded-xl border p-3 flex items-center justify-between transition-all ${
+                active
+                  ? `${colorMap[s.color]} shadow-sm`
+                  : "bg-gray-50 border-gray-200 text-gray-500"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{s.flag}</span>
+                <div>
+                  <p className="font-bold text-sm">{s.name}</p>
+                  <p className="text-xs opacity-70">
+                    {String(s.start).padStart(2, "0")}:00 –{" "}
+                    {String(endHour).padStart(2, "0")}:00 UTC
+                  </p>
+                </div>
+              </div>
+              {active ? (
+                <span className="text-xs font-bold px-2 py-1 rounded-full bg-white/60">
+                  ● OPEN
+                </span>
+              ) : (
+                <span className="text-xs font-medium opacity-60">
+                  Opens in {secsUntilNext(s.start % 24)}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {activeSessions.length === 0 && (
+        <p className="text-center text-xs text-gray-400">
+          No major sessions open · Low volatility period
+        </p>
       )}
     </div>
   );

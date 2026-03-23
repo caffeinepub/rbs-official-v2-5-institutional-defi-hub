@@ -89,81 +89,23 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface TimerState {
-    endTime: bigint;
-    lastUpdate: bigint;
-    isUnlocked: boolean;
-}
 export interface TransformationOutput {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
 }
 export type Time = bigint;
-export interface CryptoCurrency {
-    lastUpdateTimestamp: bigint;
-    currentPriceUsd: number;
-    symbol: string;
-    updateIntervalSecs: bigint;
-}
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
-export interface VoteTally {
-    total: bigint;
-    bullish: bigint;
-    bearish: bigint;
-    lastVoted?: MarketPulseVote;
-    neutral: bigint;
-}
-export interface FormSubmission {
-    id: bigint;
-    country: string;
-    isPresale: boolean;
-    name: string;
-    submittedBy: Principal;
-    walletAddress: string;
-    rbsAmount: number;
-    timestamp: bigint;
-}
-export interface BlogPost {
-    id: bigint;
-    title: string;
-    isPublished: boolean;
-    body: string;
-    createdAt: bigint;
-    tags: Array<string>;
-    author: string;
-    updatedAt?: bigint;
-    category: string;
+export interface UserProfileEntry {
+    principal: Principal;
+    registeredAt?: bigint;
+    profile: UserProfile;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
-}
-export interface Alert {
-    id: bigint;
-    title: string;
-    read: boolean;
-    triggerEnabled: boolean;
-    message: string;
-    timestamp: bigint;
-    lastChecked: bigint;
-    autoCreated: boolean;
-}
-export interface http_header {
-    value: string;
-    name: string;
-}
-export interface http_request_result {
-    status: bigint;
-    body: Uint8Array;
-    headers: Array<http_header>;
-}
-export interface TechnicalIndicator {
-    value: number;
-    indicatorType: IndicatorType;
-    signal: SignalConfidence;
 }
 export interface SignalConfidence {
     signal: Signal;
@@ -183,10 +125,6 @@ export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
 }
-export interface KeyVal {
-    key: string;
-    value: bigint;
-}
 export interface ScheduledTask {
     name: string;
     lastRunTimestamp: bigint;
@@ -201,15 +139,84 @@ export interface MarketIntelligence {
     indicators: Array<TechnicalIndicator>;
     timestamp: bigint;
 }
+export interface Alert {
+    id: bigint;
+    title: string;
+    read: boolean;
+    triggerEnabled: boolean;
+    message: string;
+    timestamp: bigint;
+    lastChecked: bigint;
+    autoCreated: boolean;
+}
 export interface CreatePollInput {
     question: string;
     code: string;
     isActive: boolean;
     options: Array<string>;
 }
-export interface UserProfile {
+export interface BlogPost {
+    id: bigint;
+    title: string;
+    isPublished: boolean;
+    body: string;
+    createdAt: bigint;
+    tags: Array<string>;
+    author: string;
+    updatedAt?: bigint;
+    category: string;
+}
+export interface TimerState {
+    endTime: bigint;
+    lastUpdate: bigint;
+    isUnlocked: boolean;
+}
+export interface CryptoCurrency {
+    lastUpdateTimestamp: bigint;
+    currentPriceUsd: number;
+    symbol: string;
+    updateIntervalSecs: bigint;
+}
+export interface VoteTally {
+    total: bigint;
+    bullish: bigint;
+    bearish: bigint;
+    lastVoted?: MarketPulseVote;
+    neutral: bigint;
+}
+export interface FormSubmission {
+    id: bigint;
+    country: string;
+    isPresale: boolean;
     name: string;
+    submittedBy: Principal;
+    walletAddress: string;
+    rbsAmount: number;
+    timestamp: bigint;
+}
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface TechnicalIndicator {
+    value: number;
+    indicatorType: IndicatorType;
+    signal: SignalConfidence;
+}
+export interface KeyVal {
+    key: string;
+    value: bigint;
+}
+export interface UserProfile {
+    username: string;
+    displayName: string;
     email?: string;
+    avatarUrl?: string;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
@@ -297,8 +304,10 @@ export interface backendInterface {
     getAllMarketIntelligence(): Promise<Array<MarketIntelligence>>;
     getAllPolls(): Promise<Array<PollView>>;
     getAllSubmissions(): Promise<Array<FormSubmission>>;
+    getAllUserProfiles(): Promise<Array<UserProfileEntry>>;
     getBTCPriceFromCoingecko(): Promise<string>;
     getBlogPostById(id: bigint): Promise<BlogPost | null>;
+    getCallerRegistrationDate(): Promise<bigint | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;
@@ -315,11 +324,13 @@ export interface backendInterface {
     getScheduledTasks(): Promise<Array<ScheduledTask>>;
     getTimerState(timerType: TimerType): Promise<TimerState>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserRegistrationDate(user: Principal): Promise<bigint | null>;
     grantMarketIntelAccess(password: string): Promise<boolean>;
     hasMarketIntelAccess(): Promise<boolean>;
     hasMarketIntelAccessCheck(principal: Principal): Promise<boolean>;
     initialize(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    isUsernameTaken(username: string): Promise<boolean>;
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     publishBlogPost(post: BlogPost, passcode: string): Promise<{
         __kind__: "ok";
@@ -347,7 +358,7 @@ export interface backendInterface {
     vote(pollId: bigint, option: string): Promise<boolean>;
     voteMarketPulse(sentiment: string): Promise<VoteTally>;
 }
-import type { Alert as _Alert, BlogPost as _BlogPost, CryptoCurrency as _CryptoCurrency, IndicatorType as _IndicatorType, MarketIntelligence as _MarketIntelligence, MarketPulseVote as _MarketPulseVote, PollView as _PollView, Signal as _Signal, SignalConfidence as _SignalConfidence, TechnicalIndicator as _TechnicalIndicator, TimerType as _TimerType, UserProfile as _UserProfile, UserRole as _UserRole, VoteTally as _VoteTally, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Alert as _Alert, BlogPost as _BlogPost, CryptoCurrency as _CryptoCurrency, IndicatorType as _IndicatorType, MarketIntelligence as _MarketIntelligence, MarketPulseVote as _MarketPulseVote, PollView as _PollView, Signal as _Signal, SignalConfidence as _SignalConfidence, TechnicalIndicator as _TechnicalIndicator, TimerType as _TimerType, UserProfile as _UserProfile, UserProfileEntry as _UserProfileEntry, UserRole as _UserRole, VoteTally as _VoteTally, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -601,14 +612,14 @@ export class Backend implements backendInterface {
     }> {
         if (this.processError) {
             try {
-                const result = await (this.actor as any).deletePollWithPasscode(arg0, arg1);
+                const result = await this.actor.deletePollWithPasscode(arg0, arg1);
                 return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await (this.actor as any).deletePollWithPasscode(arg0, arg1);
+            const result = await this.actor.deletePollWithPasscode(arg0, arg1);
             return from_candid_variant_n14(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -752,6 +763,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getAllUserProfiles(): Promise<Array<UserProfileEntry>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllUserProfiles();
+                return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllUserProfiles();
+            return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getBTCPriceFromCoingecko(): Promise<string> {
         if (this.processError) {
             try {
@@ -770,56 +795,70 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getBlogPostById(arg0);
-                return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n37(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getBlogPostById(arg0);
-            return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n37(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCallerRegistrationDate(): Promise<bigint | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerRegistrationDate();
+                return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerRegistrationDate();
+            return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getCallerUserRole(): Promise<UserRole> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n36(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n36(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getCryptoCurrency(arg0: string): Promise<CryptoCurrency | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getCryptoCurrency(arg0);
                 return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getCryptoCurrency(arg0);
+            const result = await this.actor.getCallerUserProfile();
             return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCallerUserRole(): Promise<UserRole> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerUserRole();
+                return from_candid_UserRole_n39(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerUserRole();
+            return from_candid_UserRole_n39(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCryptoCurrency(arg0: string): Promise<CryptoCurrency | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCryptoCurrency(arg0);
+                return from_candid_opt_n41(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCryptoCurrency(arg0);
+            return from_candid_opt_n41(this._uploadFile, this._downloadFile, result);
         }
     }
     async getGlobalSectionLock(arg0: string): Promise<boolean> {
@@ -854,28 +893,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getMarketIntelligence(arg0);
-                return from_candid_opt_n39(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n42(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMarketIntelligence(arg0);
-            return from_candid_opt_n39(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n42(this._uploadFile, this._downloadFile, result);
         }
     }
     async getMarketPulseTally(): Promise<VoteTally> {
         if (this.processError) {
             try {
                 const result = await this.actor.getMarketPulseTally();
-                return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+                return from_candid_VoteTally_n43(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMarketPulseTally();
-            return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+            return from_candid_VoteTally_n43(this._uploadFile, this._downloadFile, result);
         }
     }
     async getMySubmissions(): Promise<Array<FormSubmission>> {
@@ -896,14 +935,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getPoll(arg0);
-                return from_candid_opt_n45(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n48(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getPoll(arg0);
-            return from_candid_opt_n45(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n48(this._uploadFile, this._downloadFile, result);
         }
     }
     async getPollsByCode(arg0: string): Promise<Array<PollView>> {
@@ -979,14 +1018,14 @@ export class Backend implements backendInterface {
     async getTimerState(arg0: TimerType): Promise<TimerState> {
         if (this.processError) {
             try {
-                const result = await this.actor.getTimerState(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.getTimerState(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getTimerState(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.getTimerState(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -994,14 +1033,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n32(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n38(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getUserRegistrationDate(arg0: Principal): Promise<bigint | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserRegistrationDate(arg0);
+                return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserRegistrationDate(arg0);
+            return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
         }
     }
     async grantMarketIntelAccess(arg0: string): Promise<boolean> {
@@ -1074,6 +1127,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isUsernameTaken(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isUsernameTaken(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isUsernameTaken(arg0);
+            return result;
+        }
+    }
     async markAlertAsRead(arg0: bigint): Promise<boolean> {
         if (this.processError) {
             try {
@@ -1125,14 +1192,14 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n48(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n51(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n48(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n51(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1167,28 +1234,28 @@ export class Backend implements backendInterface {
     async setTimerEnd(arg0: TimerType, arg1: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setTimerEnd(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0), arg1);
+                const result = await this.actor.setTimerEnd(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0), arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setTimerEnd(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0), arg1);
+            const result = await this.actor.setTimerEnd(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0), arg1);
             return result;
         }
     }
     async storeMarketIntelligence(arg0: string, arg1: string, arg2: Array<TechnicalIndicator>, arg3: SignalConfidence, arg4: number): Promise<MarketIntelligence> {
         if (this.processError) {
             try {
-                const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n50(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n55(this._uploadFile, this._downloadFile, arg3), arg4);
+                const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n53(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n58(this._uploadFile, this._downloadFile, arg3), arg4);
                 return from_candid_MarketIntelligence_n20(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n50(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n55(this._uploadFile, this._downloadFile, arg3), arg4);
+            const result = await this.actor.storeMarketIntelligence(arg0, arg1, to_candid_vec_n53(this._uploadFile, this._downloadFile, arg2), to_candid_SignalConfidence_n58(this._uploadFile, this._downloadFile, arg3), arg4);
             return from_candid_MarketIntelligence_n20(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -1265,14 +1332,14 @@ export class Backend implements backendInterface {
     async toggleTimer(arg0: TimerType): Promise<TimerState> {
         if (this.processError) {
             try {
-                const result = await this.actor.toggleTimer(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.toggleTimer(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.toggleTimer(to_candid_TimerType_n46(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.toggleTimer(to_candid_TimerType_n49(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1350,14 +1417,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.voteMarketPulse(arg0);
-                return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+                return from_candid_VoteTally_n43(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.voteMarketPulse(arg0);
-            return from_candid_VoteTally_n40(this._uploadFile, this._downloadFile, result);
+            return from_candid_VoteTally_n43(this._uploadFile, this._downloadFile, result);
         }
     }
 }
@@ -1370,8 +1437,8 @@ function from_candid_IndicatorType_n29(_uploadFile: (file: ExternalBlob) => Prom
 function from_candid_MarketIntelligence_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketIntelligence): MarketIntelligence {
     return from_candid_record_n21(_uploadFile, _downloadFile, value);
 }
-function from_candid_MarketPulseVote_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketPulseVote): MarketPulseVote {
-    return from_candid_variant_n44(_uploadFile, _downloadFile, value);
+function from_candid_MarketPulseVote_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MarketPulseVote): MarketPulseVote {
+    return from_candid_variant_n47(_uploadFile, _downloadFile, value);
 }
 function from_candid_SignalConfidence_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SignalConfidence): SignalConfidence {
     return from_candid_record_n23(_uploadFile, _downloadFile, value);
@@ -1382,14 +1449,17 @@ function from_candid_Signal_n24(_uploadFile: (file: ExternalBlob) => Promise<Uin
 function from_candid_TechnicalIndicator_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TechnicalIndicator): TechnicalIndicator {
     return from_candid_record_n28(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserProfile_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
-    return from_candid_record_n34(_uploadFile, _downloadFile, value);
+function from_candid_UserProfileEntry_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfileEntry): UserProfileEntry {
+    return from_candid_record_n33(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n37(_uploadFile, _downloadFile, value);
+function from_candid_UserProfile_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
+    return from_candid_record_n35(_uploadFile, _downloadFile, value);
 }
-function from_candid_VoteTally_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VoteTally): VoteTally {
-    return from_candid_record_n41(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n40(_uploadFile, _downloadFile, value);
+}
+function from_candid_VoteTally_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VoteTally): VoteTally {
+    return from_candid_record_n44(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
@@ -1400,25 +1470,25 @@ function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_BlogPost]): BlogPost | null {
+function from_candid_opt_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_BlogPost]): BlogPost | null {
     return value.length === 0 ? null : from_candid_BlogPost_n16(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : from_candid_UserProfile_n33(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : from_candid_UserProfile_n34(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_opt_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CryptoCurrency]): CryptoCurrency | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CryptoCurrency]): CryptoCurrency | null {
-    return value.length === 0 ? null : value[0];
-}
-function from_candid_opt_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketIntelligence]): MarketIntelligence | null {
+function from_candid_opt_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketIntelligence]): MarketIntelligence | null {
     return value.length === 0 ? null : from_candid_MarketIntelligence_n20(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketPulseVote]): MarketPulseVote | null {
-    return value.length === 0 ? null : from_candid_MarketPulseVote_n43(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MarketPulseVote]): MarketPulseVote | null {
+    return value.length === 0 ? null : from_candid_MarketPulseVote_n46(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
+function from_candid_opt_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PollView]): PollView | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -1514,19 +1584,40 @@ function from_candid_record_n28(_uploadFile: (file: ExternalBlob) => Promise<Uin
         signal: from_candid_SignalConfidence_n22(_uploadFile, _downloadFile, value.signal)
     };
 }
-function from_candid_record_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    name: string;
-    email: [] | [string];
+function from_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    principal: Principal;
+    registeredAt: [] | [bigint];
+    profile: _UserProfile;
 }): {
-    name: string;
-    email?: string;
+    principal: Principal;
+    registeredAt?: bigint;
+    profile: UserProfile;
 } {
     return {
-        name: value.name,
-        email: record_opt_to_undefined(from_candid_opt_n35(_uploadFile, _downloadFile, value.email))
+        principal: value.principal,
+        registeredAt: record_opt_to_undefined(from_candid_opt_n18(_uploadFile, _downloadFile, value.registeredAt)),
+        profile: from_candid_UserProfile_n34(_uploadFile, _downloadFile, value.profile)
     };
 }
-function from_candid_record_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    username: string;
+    displayName: string;
+    email: [] | [string];
+    avatarUrl: [] | [string];
+}): {
+    username: string;
+    displayName: string;
+    email?: string;
+    avatarUrl?: string;
+} {
+    return {
+        username: value.username,
+        displayName: value.displayName,
+        email: record_opt_to_undefined(from_candid_opt_n36(_uploadFile, _downloadFile, value.email)),
+        avatarUrl: record_opt_to_undefined(from_candid_opt_n36(_uploadFile, _downloadFile, value.avatarUrl))
+    };
+}
+function from_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     total: bigint;
     bullish: bigint;
     bearish: bigint;
@@ -1543,7 +1634,7 @@ function from_candid_record_n41(_uploadFile: (file: ExternalBlob) => Promise<Uin
         total: value.total,
         bullish: value.bullish,
         bearish: value.bearish,
-        lastVoted: record_opt_to_undefined(from_candid_opt_n42(_uploadFile, _downloadFile, value.lastVoted)),
+        lastVoted: record_opt_to_undefined(from_candid_opt_n45(_uploadFile, _downloadFile, value.lastVoted)),
         neutral: value.neutral
     };
 }
@@ -1627,7 +1718,7 @@ function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): IndicatorType {
     return "fvg" in value ? IndicatorType.fvg : "rsi" in value ? IndicatorType.rsi : "macd" in value ? IndicatorType.macd : "vwap" in value ? IndicatorType.vwap : "movingAverage" in value ? IndicatorType.movingAverage : "bollingerBands" in value ? IndicatorType.bollingerBands : "orderBlocks" in value ? IndicatorType.orderBlocks : value;
 }
-function from_candid_variant_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -1636,7 +1727,7 @@ function from_candid_variant_n37(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     bullish: null;
 } | {
     bearish: null;
@@ -1654,26 +1745,29 @@ function from_candid_vec_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_vec_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TechnicalIndicator>): Array<TechnicalIndicator> {
     return value.map((x)=>from_candid_TechnicalIndicator_n27(_uploadFile, _downloadFile, x));
 }
+function from_candid_vec_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserProfileEntry>): Array<UserProfileEntry> {
+    return value.map((x)=>from_candid_UserProfileEntry_n32(_uploadFile, _downloadFile, x));
+}
 function to_candid_BlogPost_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BlogPost): _BlogPost {
     return to_candid_record_n12(_uploadFile, _downloadFile, value);
 }
-function to_candid_IndicatorType_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): _IndicatorType {
-    return to_candid_variant_n54(_uploadFile, _downloadFile, value);
+function to_candid_IndicatorType_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): _IndicatorType {
+    return to_candid_variant_n57(_uploadFile, _downloadFile, value);
 }
-function to_candid_SignalConfidence_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): _SignalConfidence {
-    return to_candid_record_n56(_uploadFile, _downloadFile, value);
+function to_candid_SignalConfidence_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SignalConfidence): _SignalConfidence {
+    return to_candid_record_n59(_uploadFile, _downloadFile, value);
 }
-function to_candid_Signal_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): _Signal {
-    return to_candid_variant_n58(_uploadFile, _downloadFile, value);
+function to_candid_Signal_n60(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): _Signal {
+    return to_candid_variant_n61(_uploadFile, _downloadFile, value);
 }
-function to_candid_TechnicalIndicator_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TechnicalIndicator): _TechnicalIndicator {
+function to_candid_TechnicalIndicator_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TechnicalIndicator): _TechnicalIndicator {
+    return to_candid_record_n55(_uploadFile, _downloadFile, value);
+}
+function to_candid_TimerType_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
+    return to_candid_variant_n50(_uploadFile, _downloadFile, value);
+}
+function to_candid_UserProfile_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
     return to_candid_record_n52(_uploadFile, _downloadFile, value);
-}
-function to_candid_TimerType_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): _TimerType {
-    return to_candid_variant_n47(_uploadFile, _downloadFile, value);
-}
-function to_candid_UserProfile_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n49(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -1726,19 +1820,25 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    name: string;
+function to_candid_record_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    username: string;
+    displayName: string;
     email?: string;
+    avatarUrl?: string;
 }): {
-    name: string;
+    username: string;
+    displayName: string;
     email: [] | [string];
+    avatarUrl: [] | [string];
 } {
     return {
-        name: value.name,
-        email: value.email ? candid_some(value.email) : candid_none()
+        username: value.username,
+        displayName: value.displayName,
+        email: value.email ? candid_some(value.email) : candid_none(),
+        avatarUrl: value.avatarUrl ? candid_some(value.avatarUrl) : candid_none()
     };
 }
-function to_candid_record_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     value: number;
     indicatorType: IndicatorType;
     signal: SignalConfidence;
@@ -1749,11 +1849,11 @@ function to_candid_record_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8
 } {
     return {
         value: value.value,
-        indicatorType: to_candid_IndicatorType_n53(_uploadFile, _downloadFile, value.indicatorType),
-        signal: to_candid_SignalConfidence_n55(_uploadFile, _downloadFile, value.signal)
+        indicatorType: to_candid_IndicatorType_n56(_uploadFile, _downloadFile, value.indicatorType),
+        signal: to_candid_SignalConfidence_n58(_uploadFile, _downloadFile, value.signal)
     };
 }
-function to_candid_record_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n59(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     signal: Signal;
     confidence: bigint;
 }): {
@@ -1761,11 +1861,11 @@ function to_candid_record_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     confidence: bigint;
 } {
     return {
-        signal: to_candid_Signal_n57(_uploadFile, _downloadFile, value.signal),
+        signal: to_candid_Signal_n60(_uploadFile, _downloadFile, value.signal),
         confidence: value.confidence
     };
 }
-function to_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
+function to_candid_variant_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TimerType): {
     presale: null;
 } | {
     airdrop: null;
@@ -1776,7 +1876,7 @@ function to_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint
         airdrop: null
     } : value;
 }
-function to_candid_variant_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): {
+function to_candid_variant_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: IndicatorType): {
     fvg: null;
 } | {
     rsi: null;
@@ -1807,7 +1907,7 @@ function to_candid_variant_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint
         orderBlocks: null
     } : value;
 }
-function to_candid_variant_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): {
+function to_candid_variant_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Signal): {
     buy: null;
 } | {
     strongBuy: null;
@@ -1845,8 +1945,8 @@ function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_vec_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TechnicalIndicator>): Array<_TechnicalIndicator> {
-    return value.map((x)=>to_candid_TechnicalIndicator_n51(_uploadFile, _downloadFile, x));
+function to_candid_vec_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TechnicalIndicator>): Array<_TechnicalIndicator> {
+    return value.map((x)=>to_candid_TechnicalIndicator_n54(_uploadFile, _downloadFile, x));
 }
 export interface CreateActorOptions {
     agent?: Agent;

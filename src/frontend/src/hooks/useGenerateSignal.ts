@@ -140,6 +140,24 @@ function calcATR(
   );
 }
 
+function calcCCI(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period = 20,
+): number {
+  const typicalPrices = closes.map((c, i) => (highs[i] + lows[i] + c) / 3);
+  const slice = typicalPrices.slice(-period);
+  if (slice.length === 0) return 0;
+  const mean = slice.reduce((a, b) => a + b, 0) / slice.length;
+  const meanDeviation =
+    slice.reduce((a, v) => a + Math.abs(v - mean), 0) / slice.length;
+  if (meanDeviation === 0) return 0;
+  return (
+    (typicalPrices[typicalPrices.length - 1] - mean) / (0.015 * meanDeviation)
+  );
+}
+
 function calcWeightedScore(
   rsi: number,
   macdHist: number,
@@ -151,13 +169,22 @@ function calcWeightedScore(
   bb: { upper: number; lower: number; mid: number },
   volumeRatio: number,
   momentum: number,
+  cci: number,
 ): number {
   let score = 0;
 
-  // RSI — weight 20
-  if (rsi < 30) score += 20;
+  // RSI — weight 20 (+ extreme bonus)
+  if (rsi < 25) {
+    score += 20;
+    score += 20;
+  } // extreme oversold bonus
+  else if (rsi < 30) score += 20;
   else if (rsi < 40) score += 12;
   else if (rsi < 50) score += 4;
+  else if (rsi > 75) {
+    score -= 20;
+    score -= 20;
+  } // extreme overbought penalty
   else if (rsi > 70) score -= 20;
   else if (rsi > 60) score -= 12;
   else if (rsi > 50) score -= 4;
@@ -190,6 +217,12 @@ function calcWeightedScore(
   // Momentum — weight 10
   if (momentum > 0) score += 10;
   else score -= 10;
+
+  // CCI — weight 10
+  if (cci > 200) score += 10;
+  else if (cci > 100) score += 7;
+  else if (cci < -200) score -= 10;
+  else if (cci < -100) score -= 7;
 
   return Math.max(-100, Math.min(100, score));
 }
@@ -271,11 +304,13 @@ async function fetchForexData(pair: string): Promise<{
 
     // Synthesize 200 candles with realistic random walk
     const seed = price;
-    const volatility = seed * 0.001;
+    const volatility = seed * 0.002;
+    // Use a slight trend bias based on price momentum
+    const trendBias = (Math.sin(seed * 1000) > 0 ? 1 : -1) * volatility * 0.1;
     const closes: number[] = [seed];
     for (let i = 1; i < 200; i++) {
       const prev = closes[i - 1];
-      const change = (Math.random() - 0.5) * 2 * volatility;
+      const change = (Math.random() - 0.5) * 2 * volatility + trendBias;
       closes.push(prev + change);
     }
     // Set last candle to real price
@@ -299,7 +334,7 @@ async function fetchForexData(pair: string): Promise<{
 
 // ── Gemini AI Enhancement ─────────────────────────────────────────────────────
 
-const GEMINI_API_KEY = "AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY";
+const GEMINI_API_KEY = "AIzaSyCYX3MmN6tK_4QsETugnyacc2WegHjUybY";
 
 async function enhanceWithGemini(
   asset: string,
@@ -313,22 +348,38 @@ async function enhanceWithGemini(
   ema21: number,
   price: number,
   trendDirection: string,
+  sma20?: number,
+  sma50?: number,
+  bb?: { upper: number; lower: number; mid: number },
+  atr?: number,
+  volumeRatio?: number,
+  cci?: number,
 ): Promise<{ signal: string; confidence: number; insight: string } | null> {
   try {
-    const prompt = `You are a professional cryptocurrency and forex trading analyst. Analyze the following technical indicators for ${asset} on the ${timeframe} timeframe and provide a trading signal assessment.
+    const bbPos =
+      bb && bb.upper !== bb.lower
+        ? (((price - bb.lower) / (bb.upper - bb.lower)) * 100).toFixed(1)
+        : "50.0";
+    const prompt = `You are a professional crypto/forex technical analyst. Based on the following real-time indicator data, provide a precise trading signal.
 
-Technical Data:
-- Current Price: ${price.toFixed(6)}
-- RSI (14): ${rsi.toFixed(2)} (${rsi < 30 ? "Oversold" : rsi > 70 ? "Overbought" : "Neutral"})
-- MACD Histogram: ${macdHistogram > 0 ? "+" : ""}${macdHistogram.toFixed(6)} (${macdHistogram > 0 ? "Bullish" : "Bearish"})
-- EMA 9 vs EMA 21: ${ema9 > ema21 ? "Golden cross - Bullish" : "Death cross - Bearish"}
-- Weighted Score: ${score > 0 ? "+" : ""}${score.toFixed(0)}/100
-- Math Signal: ${signal}
-- Math Confidence: ${confidence}%
-- Trend Direction: ${trendDirection}
+Asset: ${asset} | Timeframe: ${timeframe}
+Current Price: $${price.toFixed(6)}
 
-Respond in this exact JSON format only, no markdown:
-{"signal":"Strong Buy|Buy|Neutral|Sell|Strong Sell","confidence":85,"insight":"One concise sentence (max 20 words) explaining key driver."}`;
+Indicator Values:
+- RSI(14): ${rsi.toFixed(2)} [${rsi < 30 ? "OVERSOLD" : rsi > 70 ? "OVERBOUGHT" : "NEUTRAL"}]
+- MACD Histogram: ${macdHistogram.toFixed(6)} [${macdHistogram > 0 ? "BULLISH" : "BEARISH"}]
+- EMA9 vs EMA21: ${ema9 > ema21 ? "EMA9 ABOVE EMA21 (bullish)" : "EMA9 BELOW EMA21 (bearish)"}
+- SMA20 vs SMA50: ${sma20 && sma50 ? (sma20 > sma50 ? "SMA20 ABOVE SMA50 (uptrend)" : "SMA20 BELOW SMA50 (downtrend)") : "N/A"}
+- Bollinger Band Position: ${bbPos}% (0%=lower, 100%=upper)
+- ATR(14): ${atr ? atr.toFixed(6) : "N/A"} (volatility)
+- Volume Ratio: ${volumeRatio ? volumeRatio.toFixed(2) : "1.00"}x average
+- CCI(20): ${cci ? cci.toFixed(2) : "0"} [${cci && cci > 100 ? "OVERBOUGHT" : cci && cci < -100 ? "OVERSOLD" : "NORMAL"}]
+- Math Score: ${score}/100 (weighted indicator consensus)
+- Math Signal: ${signal} (confidence: ${confidence}%)
+- Trend: ${trendDirection}
+
+Respond with ONLY a JSON object (no markdown):
+{"signal":"Strong Buy","confidence":85,"insight":"Key reason in one precise sentence","trend":"Bullish"}`;
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -432,6 +483,9 @@ export function useGenerateSignal() {
           ? closes[closes.length - 1] - closes[closes.length - 10]
           : 0;
 
+      // CCI (20)
+      const cci = calcCCI(highs, lows, closes);
+
       // Support / Resistance from last 50 candles
       const recent = closes.slice(-50);
       const support = Math.min(...recent);
@@ -449,6 +503,7 @@ export function useGenerateSignal() {
         bb,
         volumeRatio,
         momentum,
+        cci,
       );
 
       // Signal label
@@ -555,6 +610,13 @@ export function useGenerateSignal() {
               ? "Above midpoint"
               : "Below midpoint",
         },
+        {
+          name: "CCI (20)",
+          value: cci.toFixed(1),
+          verdict: cci > 100 ? "bullish" : cci < -100 ? "bearish" : "neutral",
+          detail:
+            cci > 100 ? "Overbought" : cci < -100 ? "Oversold" : "Normal range",
+        },
       ];
 
       const summary = `${upperAsset} ${timeframe} — G-Man Intelligence score: ${score > 0 ? "+" : ""}${score.toFixed(0)}/100. RSI at ${rsi.toFixed(1)} (${rsi < 30 ? "oversold" : rsi > 70 ? "overbought" : "neutral"}). MACD ${macdHistogram > 0 ? "bullish" : "bearish"} histogram. EMA9 ${ema9 > ema21 ? "above" : "below"} EMA21. Price: ${price.toFixed(4)} | S: ${support.toFixed(4)} | R: ${resistance.toFixed(4)}.`;
@@ -577,6 +639,12 @@ export function useGenerateSignal() {
           ema21,
           price,
           trendDirection,
+          sma20,
+          sma50,
+          bb,
+          atr,
+          volumeRatio,
+          cci,
         );
         if (gemini) {
           finalSignal = gemini.signal;
@@ -601,23 +669,35 @@ export function useGenerateSignal() {
 
       const isBullish = finalSignal === "Strong Buy" || finalSignal === "Buy";
       const isBearish = finalSignal === "Strong Sell" || finalSignal === "Sell";
+      const isStrongBullish = finalSignal === "Strong Buy";
+      const isStrongBearish = finalSignal === "Strong Sell";
 
-      if (isBullish) {
-        sl = Math.max(support - atrMult * 0.5, entry - atrMult * 1.5);
-        tp1 = entry + atrMult * 1.5;
-        tp2 = resistance;
-        tp3 = resistance + atrMult * 1.5;
+      if (isStrongBullish) {
+        sl = entry - 1.5 * atrMult;
+        tp1 = entry + 1.5 * atrMult;
+        tp2 = entry + 2.5 * atrMult;
+        tp3 = entry + 4 * atrMult;
+      } else if (isBullish) {
+        sl = entry - 1.2 * atrMult;
+        tp1 = entry + 1.2 * atrMult;
+        tp2 = entry + 2 * atrMult;
+        tp3 = entry + 3 * atrMult;
+      } else if (isStrongBearish) {
+        sl = entry + 1.5 * atrMult;
+        tp1 = entry - 1.5 * atrMult;
+        tp2 = entry - 2.5 * atrMult;
+        tp3 = entry - 4 * atrMult;
       } else if (isBearish) {
-        sl = Math.min(resistance + atrMult * 0.5, entry + atrMult * 1.5);
-        tp1 = entry - atrMult * 1.5;
-        tp2 = support;
-        tp3 = support - atrMult * 1.5;
+        sl = entry + 1.2 * atrMult;
+        tp1 = entry - 1.2 * atrMult;
+        tp2 = entry - 2 * atrMult;
+        tp3 = entry - 3 * atrMult;
       } else {
         // Neutral — symmetric targets
-        sl = entry - atrMult * 1.2;
-        tp1 = entry + atrMult * 1.2;
-        tp2 = entry + atrMult * 2.0;
-        tp3 = entry + atrMult * 3.0;
+        sl = entry - 1 * atrMult;
+        tp1 = entry + 1 * atrMult;
+        tp2 = entry + 1.5 * atrMult;
+        tp3 = entry + 2 * atrMult;
       }
 
       const riskDist = Math.abs(entry - sl);

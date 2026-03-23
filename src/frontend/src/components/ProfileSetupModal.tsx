@@ -97,15 +97,7 @@ export function ProfileSetupModal() {
       }
       setUsernameStatus("checking");
       try {
-        const allProfiles = await (actor as any).getAllUserProfiles?.();
-        if (!allProfiles) {
-          setUsernameStatus("available");
-          return;
-        }
-        const isTaken = allProfiles.some((entry: any) => {
-          const p = entry[1] ?? entry;
-          return (p?.name ?? "").toLowerCase() === value.trim().toLowerCase();
-        });
+        const isTaken = await actor.isUsernameTaken(value.trim());
         setUsernameStatus(isTaken ? "taken" : "available");
         if (isTaken) setUsernameError("Username already taken");
         else setUsernameError("");
@@ -186,16 +178,18 @@ export function ProfileSetupModal() {
 
     setSaving(true);
     try {
-      // Save display name to backend
+      // Save profile to backend with username and displayName
       await actor.saveCallerUserProfile({
-        name: displayName.trim(),
+        username: username.trim(),
+        displayName: displayName.trim(),
         email: email.trim() || undefined,
+        avatarUrl: avatarPreview || undefined,
       } as any);
-      // Also save username to backend (using name field) for global uniqueness
-      await actor.saveCallerUserProfile({
-        name: username.trim(),
-        email: email.trim() || undefined,
-      } as any);
+      // Save registration date to localStorage (persistent fallback for account age)
+      const msKey = `rbsMemberSince_${principalId}`;
+      if (!localStorage.getItem(msKey)) {
+        localStorage.setItem(msKey, new Date().toISOString());
+      }
       saveLocalProfile(principalId, {
         username: username.trim(),
         avatarUrl: avatarPreview ?? undefined,
