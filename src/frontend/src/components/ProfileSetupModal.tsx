@@ -185,17 +185,22 @@ export function ProfileSetupModal() {
         email: email.trim() || undefined,
         avatarUrl: avatarPreview || undefined,
       } as any);
-      // Save registration date to localStorage (persistent fallback for account age)
+
+      // ── FIX 3: always set registration date on first profile save ─────────
       const msKey = `rbsMemberSince_${principalId}`;
       if (!localStorage.getItem(msKey)) {
         localStorage.setItem(msKey, new Date().toISOString());
       }
+
       saveLocalProfile(principalId, {
         username: username.trim(),
         avatarUrl: avatarPreview ?? undefined,
       });
       await queryClient.invalidateQueries({ queryKey: profileKey });
       await queryClient.invalidateQueries({ queryKey: ["allUserProfiles"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["callerRegistrationDate", principalId],
+      });
       toast.success("Profile saved! Welcome to RBS Superior.");
       setVisible(false);
     } catch {

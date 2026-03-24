@@ -368,9 +368,12 @@ actor {
 
     switch (existingProfile) {
       case (?oldProfile) {
-        // Prevent changing username if it already exists
+        // Allow username change but enforce uniqueness against other users
         if (oldProfile.username != profile.username) {
-          Runtime.trap("Changing username not allowed after profile creation");
+          switch (getProfileByUsername(profile.username)) {
+            case (null) {};
+            case (?_) { Runtime.trap("This username is already taken") };
+          };
         };
         profileWithUsername := profile;
       };

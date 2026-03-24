@@ -14,6 +14,50 @@ import { useReliableAuth } from "../hooks/useReliableAuth";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken";
 
+const BADGE_TIERS = [
+  {
+    years: 1,
+    title: "Newbie",
+    emoji: "🌱",
+    color: "from-emerald-500 to-green-600",
+  },
+  {
+    years: 2,
+    title: "Early Adaptor",
+    emoji: "🚀",
+    color: "from-sky-500 to-blue-600",
+  },
+  {
+    years: 3,
+    title: "Superior Community",
+    emoji: "⚡",
+    color: "from-purple-500 to-violet-600",
+  },
+  {
+    years: 4,
+    title: "RBS HEROIC",
+    emoji: "🔥",
+    color: "from-red-500 to-rose-600",
+  },
+  {
+    years: 5,
+    title: "RBS MASTER",
+    emoji: "👑",
+    color: "from-yellow-500 to-amber-600",
+  },
+];
+
+function formatAccountAge(ms: number): string {
+  const totalMonths = Math.floor(
+    (Date.now() - ms) / (1000 * 60 * 60 * 24 * 30.44),
+  );
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0) return months <= 1 ? `${months} month` : `${months} months`;
+  if (months === 0) return years === 1 ? "1 year" : `${years} years`;
+  return `${years} yr ${months} mo`;
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { identity, isAuthenticated } = useReliableAuth();
@@ -44,83 +88,84 @@ export default function ProfilePage() {
     enabled: !!actor && !actorFetching && isAuthenticated,
   });
 
-  const memberSince = useMemo(() => {
-    if (!principalId) return "—";
-    // Use backend registrationDate first
-    if (registrationDateMs) {
-      return new Date(registrationDateMs).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    }
-    // Fallback to localStorage
+  // ── FIX 2: effective registration date with localStorage fallback ──────────
+  const effectiveRegistrationDateMs = useMemo(() => {
+    if (registrationDateMs) return registrationDateMs;
+    if (!principalId) return null;
     const key = `rbsMemberSince_${principalId}`;
     const stored = localStorage.getItem(key);
-    if (stored) {
-      const d = new Date(stored);
-      return d.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    }
-    return "—";
-  }, [principalId, registrationDateMs]);
+    if (stored) return new Date(stored).getTime();
+    return null;
+  }, [registrationDateMs, principalId]);
+
+  const memberSince = useMemo(() => {
+    if (!effectiveRegistrationDateMs) return "—";
+    return new Date(effectiveRegistrationDateMs).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, [effectiveRegistrationDateMs]);
 
   const accountBadge = useMemo(() => {
-    if (!registrationDateMs) return null;
+    if (!effectiveRegistrationDateMs) return null;
     const years =
-      (Date.now() - registrationDateMs) / (1000 * 60 * 60 * 24 * 365.25);
-    if (years >= 5)
-      return {
-        title: "RBS MASTER",
-        emoji: "👑",
-        color: "from-yellow-500 to-amber-600",
-      };
-    if (years >= 4)
-      return {
-        title: "RBS HEROIC",
-        emoji: "🔥",
-        color: "from-red-500 to-rose-600",
-      };
-    if (years >= 3)
-      return {
-        title: "Superior Community",
-        emoji: "⚡",
-        color: "from-purple-500 to-violet-600",
-      };
-    if (years >= 2)
-      return {
-        title: "Early Adaptor",
-        emoji: "🚀",
-        color: "from-sky-500 to-blue-600",
-      };
-    if (years >= 1)
-      return {
-        title: "Newbie",
-        emoji: "🌱",
-        color: "from-emerald-500 to-green-600",
-      };
+      (Date.now() - effectiveRegistrationDateMs) /
+      (1000 * 60 * 60 * 24 * 365.25);
+    for (let i = BADGE_TIERS.length - 1; i >= 0; i--) {
+      if (years >= BADGE_TIERS[i].years) return BADGE_TIERS[i];
+    }
     return null;
-  }, [registrationDateMs]);
+  }, [effectiveRegistrationDateMs]);
+
+  // Progress toward next badge
+  const badgeProgress = useMemo(() => {
+    if (!effectiveRegistrationDateMs) return null;
+    const years =
+      (Date.now() - effectiveRegistrationDateMs) /
+      (1000 * 60 * 60 * 24 * 365.25);
+    if (years >= 5)
+      return { maxRank: true, pct: 100, label: "", nextTitle: "" };
+    const nextTier = BADGE_TIERS.find((t) => t.years > years);
+    if (!nextTier) return null;
+    const prevYears = nextTier.years - 1;
+    const pct = Math.min(100, Math.round(((years - prevYears) / 1) * 100));
+    const monthsLeft = Math.ceil((nextTier.years - years) * 12);
+    const label = monthsLeft <= 1 ? "1 month" : `${monthsLeft} months`;
+    return { maxRank: false, pct, label, nextTitle: nextTier.title };
+  }, [effectiveRegistrationDateMs]);
 
   const localProfile = useMemo(() => {
     if (!principalId) return null;
     return getLocalProfile(principalId);
   }, [principalId]);
 
+  // ── FIX 1: backend is source of truth ─────────────────────────────────────
   const displayName =
     (backendProfile as any)?.displayName ?? (backendProfile as any)?.name ?? "";
   const backendUsername = (() => {
     const u = (backendProfile as any)?.username;
     return u ?? "";
   })();
-  const username = localProfile?.username || backendUsername || "";
+  const username = backendUsername || localProfile?.username || "";
   const avatarUrl = (() => {
     const bu = (backendProfile as any)?.avatarUrl;
     return (Array.isArray(bu) ? bu[0] : bu) ?? localProfile?.avatarUrl ?? null;
   })();
+
+  // ── FIX 6: sync backend → localStorage on re-login ───────────────────────
+  useEffect(() => {
+    if (backendUsername && principalId) {
+      const current: { username?: string; avatarUrl?: string } =
+        getLocalProfile(principalId) ?? {};
+      if (current.username !== backendUsername) {
+        localStorage.setItem(
+          `rbsLocalProfile_${principalId}`,
+          JSON.stringify({ ...current, username: backendUsername }),
+        );
+      }
+    }
+  }, [backendUsername, principalId]);
 
   const [editingName, setEditingName] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -142,6 +187,7 @@ export default function ProfilePage() {
 
   const checkUsernameUniqueness = useCallback(
     async (value: string) => {
+      // ── FIX 4: if unchanged, skip check ───────────────────────────────────
       if (!actor || !value.trim() || value.trim() === username) {
         setUsernameStatus("idle");
         return;
@@ -180,12 +226,12 @@ export default function ProfilePage() {
       reader.onload = async (ev) => {
         const dataUrl = ev.target?.result as string;
         if (!principalId) return;
-        const current = getLocalProfile(principalId) ?? {};
+        const current: { username?: string; avatarUrl?: string } =
+          getLocalProfile(principalId) ?? {};
         localStorage.setItem(
           `rbsLocalProfile_${principalId}`,
           JSON.stringify({ ...current, avatarUrl: dataUrl }),
         );
-        // Also save to backend
         if (actor) {
           try {
             await (actor as any)
@@ -205,51 +251,49 @@ export default function ProfilePage() {
       };
       reader.readAsDataURL(file);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [principalId, refetchProfile, actor, username, displayName],
   );
 
+  // ── FIX 5: show backend error in handleSaveName ───────────────────────────
   const handleSaveName = async () => {
     if (!nameInput.trim()) return;
     setIsSaving(true);
     try {
       if (actor) {
-        await (actor as any)
-          .saveCallerUserProfile?.({
-            username: username || "",
-            displayName: nameInput.trim(),
-            email: undefined,
-            avatarUrl: undefined,
-          })
-          .catch(() => {});
+        await (actor as any).saveCallerUserProfile?.({
+          username: username || "",
+          displayName: nameInput.trim(),
+          email: undefined,
+          avatarUrl: undefined,
+        });
       }
-      const current = getLocalProfile(principalId) ?? {};
+      const current: { username?: string; avatarUrl?: string } =
+        getLocalProfile(principalId) ?? {};
       localStorage.setItem(
         `rbsLocalProfile_${principalId}`,
         JSON.stringify({ ...current, displayName: nameInput.trim() }),
       );
-      await refetchProfile();
-      // Save first login date if not already set
       const msKey = `rbsMemberSince_${principalId}`;
       if (!localStorage.getItem(msKey)) {
         localStorage.setItem(msKey, new Date().toISOString());
       }
+      await refetchProfile();
       setEditingName(false);
       toast.success("Name updated!");
-    } catch {
-      toast.error("Failed to save name");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to save name");
     } finally {
       setIsSaving(false);
     }
   };
 
+  // ── FIX 5: show backend error in handleSaveUsername ───────────────────────
   const handleSaveUsername = async () => {
     if (!usernameInput.trim()) return;
     if (usernameStatus === "taken") {
       toast.error("Username is already taken. Choose a different one.");
       return;
     }
-    // Final uniqueness check before saving
     if (usernameInput.trim() !== username) {
       await checkUsernameUniqueness(usernameInput);
       await new Promise((r) => setTimeout(r, 100));
@@ -258,30 +302,32 @@ export default function ProfilePage() {
       toast.error("Username is already taken.");
       return;
     }
-    const current = getLocalProfile(principalId) ?? {};
-    localStorage.setItem(
-      `rbsLocalProfile_${principalId}`,
-      JSON.stringify({ ...current, username: usernameInput.trim() }),
-    );
-    // Also persist to backend so uniqueness is globally enforced
-    if (actor) {
-      try {
-        await (actor as any)
-          .saveCallerUserProfile?.({
-            username: usernameInput.trim(),
-            displayName: displayName || "",
-            email: undefined,
-            avatarUrl: undefined,
-          })
-          .catch(() => {});
-      } catch {
-        /* ignore backend errors */
+    setIsSaving(true);
+    try {
+      if (actor) {
+        await (actor as any).saveCallerUserProfile?.({
+          username: usernameInput.trim(),
+          displayName: displayName || "",
+          email: undefined,
+          avatarUrl: undefined,
+        });
       }
+      const current: { username?: string; avatarUrl?: string } =
+        getLocalProfile(principalId) ?? {};
+      localStorage.setItem(
+        `rbsLocalProfile_${principalId}`,
+        JSON.stringify({ ...current, username: usernameInput.trim() }),
+      );
+      await refetchProfile();
+      setEditingUsername(false);
+      setUsernameStatus("idle");
+      usernameStatusRef.current = "idle";
+      toast.success("Username saved! It's now reserved globally.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to save username");
+    } finally {
+      setIsSaving(false);
     }
-    setEditingUsername(false);
-    setUsernameStatus("idle");
-    usernameStatusRef.current = "idle";
-    toast.success("Username saved! It's now reserved globally.");
   };
 
   // Profile completion %
@@ -508,10 +554,11 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between group">
+                <div className="flex items-center justify-between">
                   <p className="text-gray-900 font-medium text-base">
                     {displayName || "Not set"}
                   </p>
+                  {/* ── FIX 9: always-visible edit button ─────────────────── */}
                   <button
                     type="button"
                     data-ocid="profile.name.edit_button"
@@ -519,7 +566,7 @@ export default function ProfilePage() {
                       setNameInput(displayName);
                       setEditingName(true);
                     }}
-                    className="text-xs text-sky-500 hover:text-sky-700 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded-lg hover:bg-sky-50"
+                    className="text-xs text-sky-500 hover:text-sky-700 transition-colors px-2 py-1 rounded-lg hover:bg-sky-50"
                   >
                     Edit
                   </button>
@@ -530,7 +577,7 @@ export default function ProfilePage() {
             {/* Username */}
             <div className="mb-5 pb-5 border-b border-gray-100">
               <label
-                htmlFor="name-field"
+                htmlFor="username-field"
                 className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5"
               >
                 Username
@@ -544,6 +591,7 @@ export default function ProfilePage() {
                       </span>
                       <Input
                         data-ocid="profile.username.input"
+                        id="username-field"
                         value={usernameInput}
                         onChange={(e) => handleUsernameChange(e.target.value)}
                         onKeyDown={(e) =>
@@ -568,12 +616,13 @@ export default function ProfilePage() {
                       disabled={
                         !usernameInput.trim() ||
                         usernameStatus === "taken" ||
-                        usernameStatus === "checking"
+                        usernameStatus === "checking" ||
+                        isSaving
                       }
                       size="sm"
                       className="bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-50"
                     >
-                      {usernameStatus === "checking" ? (
+                      {usernameStatus === "checking" || isSaving ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         "Save"
@@ -592,7 +641,6 @@ export default function ProfilePage() {
                       Cancel
                     </Button>
                   </div>
-                  {/* Status indicator */}
                   {usernameStatus === "checking" && (
                     <div className="flex items-center gap-1.5 text-xs text-gray-400">
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -619,10 +667,11 @@ export default function ProfilePage() {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-between group">
+                <div className="flex items-center justify-between">
                   <p className="text-gray-900 font-medium text-base">
                     {username ? `@${username}` : "Not set"}
                   </p>
+                  {/* ── FIX 9: always-visible edit button ─────────────────── */}
                   <button
                     type="button"
                     data-ocid="profile.username.edit_button"
@@ -630,7 +679,7 @@ export default function ProfilePage() {
                       setUsernameInput(username);
                       setEditingUsername(true);
                     }}
-                    className="text-xs text-sky-500 hover:text-sky-700 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded-lg hover:bg-sky-50"
+                    className="text-xs text-sky-500 hover:text-sky-700 transition-colors px-2 py-1 rounded-lg hover:bg-sky-50"
                   >
                     Edit
                   </button>
@@ -649,41 +698,47 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* Member Since — Free Fire-style stat card */}
+          {/* ── Member Since card ──────────────────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="mb-6"
+            className="mb-4"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.15 }}
-              className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl p-5 shadow-lg"
-            >
+            <div className="bg-gradient-to-br from-sky-500 to-sky-600 rounded-2xl p-5 shadow-lg">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl">📅</span>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sky-100 text-xs font-semibold uppercase tracking-widest mb-0.5">
                     Member Since
                   </p>
                   <p className="text-white text-xl font-bold">{memberSince}</p>
-                  <p className="text-sky-200 text-[11px] mt-0.5">
-                    Registration Date · RBS Official
-                  </p>
+                  {/* ── FIX 8: account age text ──────────────────────────── */}
+                  {effectiveRegistrationDateMs && (
+                    <p className="text-sky-200 text-[11px] mt-0.5">
+                      Account Age ·{" "}
+                      {formatAccountAge(effectiveRegistrationDateMs)}
+                    </p>
+                  )}
+                  {!effectiveRegistrationDateMs && (
+                    <p className="text-sky-200 text-[11px] mt-0.5">
+                      Registration Date · RBS Official
+                    </p>
+                  )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
+
+          {/* ── Account Badge card ────────────────────────────────────────── */}
           {accountBadge && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className={`bg-gradient-to-br ${accountBadge.color} rounded-2xl p-5 shadow-lg mt-4`}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className={`bg-gradient-to-br ${accountBadge.color} rounded-2xl p-5 shadow-lg mb-4`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -701,6 +756,70 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* ── FIX 7: Badge progress bar ─────────────────────────────────── */}
+          {badgeProgress && effectiveRegistrationDateMs && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.2 }}
+              className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-4"
+            >
+              {badgeProgress.maxRank ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">
+                      Max Rank Achieved
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      You've reached the highest badge level — RBS MASTER.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-gray-700">
+                      Progress toward{" "}
+                      <span className="text-sky-600 font-bold">
+                        {badgeProgress.nextTitle}
+                      </span>
+                    </span>
+                    <span className="text-xs font-bold text-sky-600">
+                      {badgeProgress.pct}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${badgeProgress.pct}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-sky-400 to-sky-600 rounded-full"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    {badgeProgress.label} until next rank · Keep holding!
+                  </p>
+                </>
+              )}
+            </motion.div>
+          )}
+
+          {/* Unlock-once hint for new accounts */}
+          {!effectiveRegistrationDateMs && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-sky-50 border border-sky-100 rounded-2xl p-4 text-center mb-4"
+            >
+              <p className="text-xs text-sky-600">
+                Your account age badge will appear once your registration date
+                is confirmed by the network.
+              </p>
             </motion.div>
           )}
         </div>
