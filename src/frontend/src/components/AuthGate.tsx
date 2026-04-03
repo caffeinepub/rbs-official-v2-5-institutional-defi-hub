@@ -34,17 +34,19 @@ export function AuthGate() {
             <motion.div
               className="absolute inset-0 rounded-full"
               style={{
-                background: "rgba(16,185,129,0.2)",
+                background: "rgba(14,165,233,0.2)",
                 filter: "blur(12px)",
+                top: "-4px",
+                left: "-4px",
+                right: "-4px",
+                bottom: "-4px",
               }}
               animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
               transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
             />
-            <img
-              src="/assets/uploads/IMG_20250821_154306_073-13-1.jpg"
-              alt="RBS"
-              className="relative w-16 h-16 rounded-full object-cover"
-            />
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-black text-xl">RBS</span>
+            </div>
           </div>
           <motion.div
             className="flex gap-1.5"
@@ -55,7 +57,7 @@ export function AuthGate() {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-2 h-2 rounded-full bg-emerald-500"
+                className="w-2 h-2 rounded-full bg-sky-500"
                 animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
                 transition={{
                   duration: 1.2,
@@ -65,7 +67,9 @@ export function AuthGate() {
               />
             ))}
           </motion.div>
-          <p className="text-sm text-gray-500">Loading RBS Superior...</p>
+          <p className="text-sm text-gray-500 font-medium">
+            Loading RBS Superior...
+          </p>
         </motion.div>
       </div>
     );

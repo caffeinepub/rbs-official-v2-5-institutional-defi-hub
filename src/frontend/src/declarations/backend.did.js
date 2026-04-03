@@ -241,6 +241,7 @@ export const idlService = IDL.Service({
   'getBTCPriceFromCoingecko' : IDL.Func([], [IDL.Text], []),
   'getBlogPostById' : IDL.Func([IDL.Nat], [IDL.Opt(BlogPost)], ['query']),
   'getCallerRegistrationDate' : IDL.Func([], [IDL.Opt(IDL.Int)], ['query']),
+  'getCallerProfileLockStatus' : IDL.Func([], [IDL.Bool], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCryptoCurrency' : IDL.Func(
@@ -567,6 +568,7 @@ export const idlFactory = ({ IDL }) => {
     'getBTCPriceFromCoingecko' : IDL.Func([], [IDL.Text], []),
     'getBlogPostById' : IDL.Func([IDL.Nat], [IDL.Opt(BlogPost)], ['query']),
     'getCallerRegistrationDate' : IDL.Func([], [IDL.Opt(IDL.Int)], ['query']),
+    'getCallerProfileLockStatus' : IDL.Func([], [IDL.Bool], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCryptoCurrency' : IDL.Func(

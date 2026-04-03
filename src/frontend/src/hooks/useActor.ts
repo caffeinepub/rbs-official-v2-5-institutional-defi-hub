@@ -26,12 +26,13 @@ export function useActor() {
       };
 
       const actor = await createActorWithConfig(actorOptions);
-      // Silently handle access control init — throws for non-admin users, which is expected
+      const adminToken = getSecretParameter("caffeineAdminToken") || "";
+      // Wrap in try/catch — normal users don't have admin tokens and this
+      // call is expected to fail for them. The actor must still initialize.
       try {
-        const adminToken = getSecretParameter("caffeineAdminToken") || "";
         await actor._initializeAccessControlWithSecret(adminToken);
       } catch {
-        // Non-admin users always fail this call — safe to ignore
+        // Normal users don't have admin tokens — this is expected
       }
       return actor;
     },

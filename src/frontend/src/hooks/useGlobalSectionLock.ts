@@ -25,6 +25,16 @@ function parseBackendError(err: unknown): string {
   return raw || "Operation failed. Please try again.";
 }
 
+/**
+ * Normalize section key to camelCase before passing to backend.
+ * The backend only accepts: "marketIntel", "developerBlog", "polls".
+ */
+function normalizeSection(s: string): string {
+  if (s === "market_intel") return "marketIntel";
+  if (s === "developer_blog") return "developerBlog";
+  return s;
+}
+
 export function useGlobalSectionLock(
   section:
     | "marketIntel"
@@ -38,17 +48,19 @@ export function useGlobalSectionLock(
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const sectionKey = normalizeSection(section);
+
   const fetchLockState = useCallback(async () => {
     if (!actor) return;
     try {
-      const state = await actor.getGlobalSectionLock(section);
+      const state = await actor.getGlobalSectionLock(sectionKey);
       setIsUnlocked(state);
     } catch {
       // keep previous state on error
     } finally {
       setIsLoading(false);
     }
-  }, [actor, section]);
+  }, [actor, sectionKey]);
 
   useEffect(() => {
     // If actor is not fetching and still null, stop loading — backend unreachable
@@ -72,27 +84,30 @@ export function useGlobalSectionLock(
     async (passcode: string): Promise<boolean> => {
       if (!actor) throw new Error("System not ready — please refresh the page");
       try {
-        const newState = await actor.toggleGlobalSectionLock(section, passcode);
+        const newState = await actor.toggleGlobalSectionLock(
+          sectionKey,
+          passcode,
+        );
         setIsUnlocked(newState);
         return newState;
       } catch (err) {
         throw new Error(parseBackendError(err));
       }
     },
-    [actor, section],
+    [actor, sectionKey],
   );
 
   const setLock = useCallback(
     async (passcode: string, unlock: boolean): Promise<void> => {
       if (!actor) throw new Error("System not ready — please refresh the page");
       try {
-        await actor.setGlobalSectionLock(section, passcode, unlock);
+        await actor.setGlobalSectionLock(sectionKey, passcode, unlock);
         setIsUnlocked(unlock);
       } catch (err) {
         throw new Error(parseBackendError(err));
       }
     },
-    [actor, section],
+    [actor, sectionKey],
   );
 
   return {

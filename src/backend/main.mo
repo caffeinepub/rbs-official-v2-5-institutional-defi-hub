@@ -258,6 +258,7 @@ actor {
   let blogStore = Map.empty<Nat, BlogPost>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let userRegistrationDates = Map.empty<Principal, Int>();
+  let profileLockedUsers = Map.empty<Principal, Bool>();
   let submissions = Map.empty<Nat, FormSubmission>();
   let timers = Map.empty<Text, TimerState>();
   let marketIntelAccess = Map.empty<Principal, Int>();
@@ -356,41 +357,61 @@ actor {
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (profile.username == "" or profile.displayName == "") {
-      Runtime.trap("Display name and username required");
-    };
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
 
     let existingProfile = userProfiles.get(caller);
-    var profileWithUsername : UserProfile = profile;
 
     switch (existingProfile) {
       case (?oldProfile) {
-        // Allow username change but enforce uniqueness against other users
-        if (oldProfile.username != profile.username) {
-          switch (getProfileByUsername(profile.username)) {
-            case (null) {};
-            case (?_) { Runtime.trap("This username is already taken") };
-          };
+        // Profile already exists — username and displayName are IMMUTABLE after first set
+        // Only avatarUrl and email can be updated
+        let lockedProfile : UserProfile = {
+          username = oldProfile.username;
+          displayName = oldProfile.displayName;
+          avatarUrl = profile.avatarUrl;
+          email = profile.email;
         };
-        profileWithUsername := profile;
+        userProfiles.add(caller, lockedProfile);
+        profileLockedUsers.add(caller, true);
       };
       case (null) {
+        // First time save — validate and store
+        if (profile.username == "" or profile.displayName == "") {
+          Runtime.trap("Display name and username required");
+        };
         // Verify new username is not already taken
         switch (getProfileByUsername(profile.username)) {
           case (null) {};
           case (?_) { Runtime.trap("This username is already taken") };
         };
-        profileWithUsername := profile;
-        // Set registration timestamp if not present
+        userProfiles.add(caller, profile);
+        // Lock the profile immediately after first save
+        profileLockedUsers.add(caller, true);
+        // Set registration timestamp
         if (not userRegistrationDates.containsKey(caller)) {
           userRegistrationDates.add(caller, Int.abs(Time.now()));
         };
       };
     };
-    userProfiles.add(caller, profileWithUsername);
+  };
+
+  // Returns whether the caller's username and displayName are locked (immutable)
+  public query ({ caller }) func getCallerProfileLockStatus() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can check profile lock status");
+    };
+    switch (profileLockedUsers.get(caller)) {
+      case (?true) { true };
+      case (_) {
+        // Also check if profile exists — if it does, it's locked
+        switch (userProfiles.get(caller)) {
+          case (?_) { true };
+          case (null) { false };
+        };
+      };
+    };
   };
 
   func getProfileByUsername(username : Text) : ?UserProfile {

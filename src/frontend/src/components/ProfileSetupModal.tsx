@@ -186,7 +186,7 @@ export function ProfileSetupModal() {
         avatarUrl: avatarPreview || undefined,
       } as any);
 
-      // ── FIX 3: always set registration date on first profile save ─────────
+      // Always set registration date on first profile save
       const msKey = `rbsMemberSince_${principalId}`;
       if (!localStorage.getItem(msKey)) {
         localStorage.setItem(msKey, new Date().toISOString());
@@ -354,6 +354,13 @@ export function ProfileSetupModal() {
                   {usernameError}
                 </p>
               )}
+              {/* Permanent warning notice */}
+              <div className="mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-amber-700">
+                  ⚠️ Username and display name are permanent and cannot be
+                  changed after registration.
+                </p>
+              </div>
             </div>
 
             {/* Email */}

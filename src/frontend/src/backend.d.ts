@@ -208,6 +208,7 @@ export interface backendInterface {
     getBTCPriceFromCoingecko(): Promise<string>;
     getBlogPostById(id: bigint): Promise<BlogPost | null>;
     getCallerRegistrationDate(): Promise<bigint | null>;
+    getCallerProfileLockStatus(): Promise<boolean>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCryptoCurrency(symbol: string): Promise<CryptoCurrency | null>;

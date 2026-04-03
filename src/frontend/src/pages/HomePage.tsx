@@ -510,6 +510,17 @@ export default function HomePage() {
         >
           <ParticleField count={40} color="rgba(14, 165, 233, 0.2)" />
 
+          {/* Subtle dot-grid background at 3% opacity */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(14,165,233,0.35) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+              opacity: 0.03,
+            }}
+          />
+
           {/* Light orbs */}
           <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
           <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-40 pointer-events-none animate-glow-pulse" />
@@ -622,7 +633,7 @@ export default function HomePage() {
                 onClick={() => navigate({ to: "/market-intel" })}
                 size="lg"
                 variant="outline"
-                className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold text-lg px-8 py-6 magnetic-hover"
+                className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold text-lg px-8 py-6 magnetic-hover hover:shadow-lg hover:shadow-sky-200 transition-shadow"
               >
                 G-MAN Intel <Zap className="ml-2 w-5 h-5" />
               </Button>

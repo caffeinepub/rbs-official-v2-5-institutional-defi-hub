@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Camera, CheckCircle, Loader2, User, XCircle } from "lucide-react";
+import {
+  Camera,
+  CheckCircle,
+  Loader2,
+  Lock,
+  User,
+  XCircle,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -58,6 +65,94 @@ function formatAccountAge(ms: number): string {
   return `${years} yr ${months} mo`;
 }
 
+// Animated blob background for hero
+function HeroBlobs() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Blob 1 */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: 320,
+          height: 320,
+          top: "-80px",
+          left: "-60px",
+          background:
+            "radial-gradient(ellipse, rgba(14,165,233,0.18) 0%, transparent 70%)",
+          filter: "blur(30px)",
+        }}
+        animate={{
+          x: [0, 30, 0],
+          y: [0, 20, 0],
+          scale: [1, 1.08, 1],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+        }}
+      />
+      {/* Blob 2 */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: 240,
+          height: 240,
+          top: "20px",
+          right: "-40px",
+          background:
+            "radial-gradient(ellipse, rgba(16,185,129,0.12) 0%, transparent 70%)",
+          filter: "blur(25px)",
+        }}
+        animate={{
+          x: [0, -20, 0],
+          y: [0, 30, 0],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 11,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+          delay: 1.5,
+        }}
+      />
+      {/* Light grid pattern */}
+      <div
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h32v1H0zm0 16h32v1H0zM0 0v32h1V0zm16 0v32h1V0z' fill='%230ea5e9' fill-opacity='0.8'/%3E%3C/svg%3E\")",
+        }}
+      />
+    </div>
+  );
+}
+
+// Locked field row component
+function LockedField({
+  value,
+  prefix,
+}: {
+  value: string;
+  prefix?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <div className="flex items-center gap-2 min-w-0">
+        <Lock className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+        <span className="text-gray-900 font-medium text-base truncate">
+          {prefix}
+          {value || "Not set"}
+        </span>
+      </div>
+      <span className="ml-3 flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-600 border border-sky-200">
+        <Lock className="w-2.5 h-2.5" />
+        Permanent
+      </span>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { identity, isAuthenticated } = useReliableAuth();
@@ -77,6 +172,20 @@ export default function ProfilePage() {
     enabled: !!actor && !actorFetching && isAuthenticated,
   });
 
+  // Check profile lock status — true = username/displayName permanently set
+  const { data: isProfileLocked = false } = useQuery({
+    queryKey: ["callerProfileLockStatus", principalId],
+    queryFn: async () => {
+      if (!actor) return false;
+      try {
+        return (await (actor as any).getCallerProfileLockStatus?.()) ?? false;
+      } catch {
+        return false;
+      }
+    },
+    enabled: !!actor && !actorFetching && isAuthenticated,
+  });
+
   const { data: registrationDateMs } = useQuery({
     queryKey: ["callerRegistrationDate", principalId],
     queryFn: async () => {
@@ -88,7 +197,7 @@ export default function ProfilePage() {
     enabled: !!actor && !actorFetching && isAuthenticated,
   });
 
-  // ── FIX 2: effective registration date with localStorage fallback ──────────
+  // Effective registration date with localStorage fallback
   const effectiveRegistrationDateMs = useMemo(() => {
     if (registrationDateMs) return registrationDateMs;
     if (!principalId) return null;
@@ -140,7 +249,7 @@ export default function ProfilePage() {
     return getLocalProfile(principalId);
   }, [principalId]);
 
-  // ── FIX 1: backend is source of truth ─────────────────────────────────────
+  // Backend is source of truth
   const displayName =
     (backendProfile as any)?.displayName ?? (backendProfile as any)?.name ?? "";
   const backendUsername = (() => {
@@ -153,7 +262,7 @@ export default function ProfilePage() {
     return (Array.isArray(bu) ? bu[0] : bu) ?? localProfile?.avatarUrl ?? null;
   })();
 
-  // ── FIX 6: sync backend → localStorage on re-login ───────────────────────
+  // Sync backend → localStorage on re-login
   useEffect(() => {
     if (backendUsername && principalId) {
       const current: { username?: string; avatarUrl?: string } =
@@ -167,6 +276,7 @@ export default function ProfilePage() {
     }
   }, [backendUsername, principalId]);
 
+  // Edit state — blocked when profile is locked
   const [editingName, setEditingName] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -187,7 +297,6 @@ export default function ProfilePage() {
 
   const checkUsernameUniqueness = useCallback(
     async (value: string) => {
-      // ── FIX 4: if unchanged, skip check ───────────────────────────────────
       if (!actor || !value.trim() || value.trim() === username) {
         setUsernameStatus("idle");
         return;
@@ -234,10 +343,12 @@ export default function ProfilePage() {
         );
         if (actor) {
           try {
+            // When updating avatar, always pass current locked username/displayName
             await (actor as any)
               .saveCallerUserProfile?.({
-                username: username || "",
-                displayName: displayName || "",
+                username: (backendProfile as any)?.username || username || "",
+                displayName:
+                  (backendProfile as any)?.displayName || displayName || "",
                 email: [],
                 avatarUrl: [dataUrl],
               })
@@ -251,11 +362,11 @@ export default function ProfilePage() {
       };
       reader.readAsDataURL(file);
     },
-    [principalId, refetchProfile, actor, username, displayName],
+    [principalId, refetchProfile, actor, username, displayName, backendProfile],
   );
 
-  // ── FIX 5: show backend error in handleSaveName ───────────────────────────
   const handleSaveName = async () => {
+    if (isProfileLocked) return; // safety guard
     if (!nameInput.trim()) return;
     setIsSaving(true);
     try {
@@ -287,8 +398,8 @@ export default function ProfilePage() {
     }
   };
 
-  // ── FIX 5: show backend error in handleSaveUsername ───────────────────────
   const handleSaveUsername = async () => {
+    if (isProfileLocked) return; // safety guard
     if (!usernameInput.trim()) return;
     if (usernameStatus === "taken") {
       toast.error("Username is already taken. Choose a different one.");
@@ -366,28 +477,15 @@ export default function ProfilePage() {
         description="View and edit your RBS profile"
       />
       <div className="min-h-screen bg-gray-50">
-        {/* Hero banner */}
+        {/* Hero banner with animated blobs */}
         <div
-          className="relative h-36 sm:h-44"
+          className="relative h-40 sm:h-48"
           style={{
             background:
               "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%)",
           }}
         >
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse at 30% 50%, rgba(14,165,233,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(16,185,129,0.08) 0%, transparent 60%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230ea5e9' fill-opacity='0.4'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E\")",
-            }}
-          />
+          <HeroBlobs />
         </div>
 
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20">
@@ -440,6 +538,11 @@ export default function ProfilePage() {
                     ✓ Complete
                   </Badge>
                 )}
+                {isProfileLocked && (
+                  <Badge className="bg-amber-50 text-amber-600 border-amber-200 gap-1">
+                    <Lock className="w-3 h-3" /> Identity Locked
+                  </Badge>
+                )}
               </div>
               {username && (
                 <p className="text-lg font-bold text-gray-900">@{username}</p>
@@ -450,12 +553,32 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Locked profile notice */}
+          {isProfileLocked && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3"
+            >
+              <Lock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">
+                  Identity permanently set
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Your username and display name are locked and cannot be
+                  changed. Your avatar and email can still be updated.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Completion bar */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-5"
+            className="bg-white border border-gray-200 hover:border-sky-200 rounded-2xl p-4 shadow-md mb-5 transition-colors"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-gray-700">
@@ -502,7 +625,7 @@ export default function ProfilePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"
+            className="bg-white border border-gray-200 hover:border-sky-200 rounded-2xl p-6 shadow-md mb-6 transition-colors"
           >
             <h2 className="text-lg font-bold text-gray-900 mb-5">
               Profile Details
@@ -516,7 +639,9 @@ export default function ProfilePage() {
               >
                 Display Name
               </label>
-              {editingName ? (
+              {isProfileLocked ? (
+                <LockedField value={displayName} />
+              ) : editingName ? (
                 <div className="flex gap-2">
                   <Input
                     data-ocid="profile.name.input"
@@ -558,7 +683,6 @@ export default function ProfilePage() {
                   <p className="text-gray-900 font-medium text-base">
                     {displayName || "Not set"}
                   </p>
-                  {/* ── FIX 9: always-visible edit button ─────────────────── */}
                   <button
                     type="button"
                     data-ocid="profile.name.edit_button"
@@ -582,7 +706,9 @@ export default function ProfilePage() {
               >
                 Username
               </label>
-              {editingUsername ? (
+              {isProfileLocked ? (
+                <LockedField value={username} prefix={username ? "@" : ""} />
+              ) : editingUsername ? (
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -671,7 +797,6 @@ export default function ProfilePage() {
                   <p className="text-gray-900 font-medium text-base">
                     {username ? `@${username}` : "Not set"}
                   </p>
-                  {/* ── FIX 9: always-visible edit button ─────────────────── */}
                   <button
                     type="button"
                     data-ocid="profile.username.edit_button"
@@ -698,7 +823,7 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* ── Member Since card ──────────────────────────────────────────── */}
+          {/* Member Since card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -715,7 +840,6 @@ export default function ProfilePage() {
                     Member Since
                   </p>
                   <p className="text-white text-xl font-bold">{memberSince}</p>
-                  {/* ── FIX 8: account age text ──────────────────────────── */}
                   {effectiveRegistrationDateMs && (
                     <p className="text-sky-200 text-[11px] mt-0.5">
                       Account Age ·{" "}
@@ -732,7 +856,7 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* ── Account Badge card ────────────────────────────────────────── */}
+          {/* Account Badge card */}
           {accountBadge && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -759,13 +883,13 @@ export default function ProfilePage() {
             </motion.div>
           )}
 
-          {/* ── FIX 7: Badge progress bar ─────────────────────────────────── */}
+          {/* Badge progress bar */}
           {badgeProgress && effectiveRegistrationDateMs && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: 0.2 }}
-              className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-4"
+              className="bg-white border border-gray-200 hover:border-sky-200 rounded-2xl p-5 shadow-md mb-4 transition-colors"
             >
               {badgeProgress.maxRank ? (
                 <div className="flex items-center gap-3">

@@ -589,7 +589,7 @@ export default function MarketIntelPage() {
                       }}
                       onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
                       placeholder="Enter your passcode"
-                      className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 pr-10 font-mono"
+                      className="bg-white border-sky-200 text-gray-900 placeholder:text-gray-400 pr-10 font-mono focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                       disabled={!isAuthenticated || isVerifying}
                     />
                     <button
@@ -618,7 +618,7 @@ export default function MarketIntelPage() {
                   data-ocid="market-intel.unlock.button"
                   onClick={handleUnlock}
                   disabled={!isAuthenticated || isVerifying || !passcode.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider"
+                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold tracking-wider shadow-md shadow-sky-200"
                 >
                   {isVerifying ? (
                     <span className="flex items-center gap-2">
@@ -726,7 +726,7 @@ export default function MarketIntelPage() {
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleLockConfirm()}
                 placeholder="Enter passcode"
-                className="bg-gray-50 border-gray-300 text-gray-900 pr-10 font-mono"
+                className="bg-white border-sky-200 text-gray-900 pr-10 font-mono focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                 disabled={isLocking}
               />
               <button
@@ -754,7 +754,7 @@ export default function MarketIntelPage() {
                 data-ocid="market-intel.lock.confirm_button"
                 onClick={handleLockConfirm}
                 disabled={isLocking || !lockPasscode.trim()}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                className="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-bold"
               >
                 {isLocking ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
