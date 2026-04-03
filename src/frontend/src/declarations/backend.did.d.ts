@@ -230,6 +230,7 @@ export interface _SERVICE {
   'initialize' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isUsernameTaken' : ActorMethod<[string], boolean>,
+  'getTotalUserCount' : ActorMethod<[], bigint>,
   'markAlertAsRead' : ActorMethod<[bigint], boolean>,
   'publishBlogPost' : ActorMethod<
     [BlogPost, string],

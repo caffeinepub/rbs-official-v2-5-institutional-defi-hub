@@ -284,6 +284,7 @@ export const idlService = IDL.Service({
   'initialize' : IDL.Func([], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isUsernameTaken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+  'getTotalUserCount' : IDL.Func([], [IDL.Nat], ['query']),
   'markAlertAsRead' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'publishBlogPost' : IDL.Func(
       [BlogPost, IDL.Text],
@@ -609,6 +610,7 @@ export const idlFactory = ({ IDL }) => {
     'initialize' : IDL.Func([], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isUsernameTaken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'getTotalUserCount' : IDL.Func([], [IDL.Nat], ['query']),
     'markAlertAsRead' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'publishBlogPost' : IDL.Func(
         [BlogPost, IDL.Text],

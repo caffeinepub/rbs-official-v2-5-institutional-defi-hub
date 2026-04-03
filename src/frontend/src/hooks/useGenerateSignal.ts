@@ -173,56 +173,78 @@ function calcWeightedScore(
 ): number {
   let score = 0;
 
-  // RSI — weight 20 (+ extreme bonus)
-  if (rsi < 25) {
-    score += 20;
-    score += 20;
-  } // extreme oversold bonus
-  else if (rsi < 30) score += 20;
-  else if (rsi < 40) score += 12;
-  else if (rsi < 50) score += 4;
-  else if (rsi > 75) {
-    score -= 20;
-    score -= 20;
-  } // extreme overbought penalty
-  else if (rsi > 70) score -= 20;
-  else if (rsi > 60) score -= 12;
-  else if (rsi > 50) score -= 4;
+  // ── RSI: weight 22 (non-linear with extreme oversold/overbought bonus) ──
+  if (rsi < 20)
+    score += 32; // extreme oversold: very high conviction buy
+  else if (rsi < 30) score += 22;
+  else if (rsi < 40) score += 13;
+  else if (rsi < 48) score += 5;
+  else if (rsi > 80)
+    score -= 32; // extreme overbought: very high conviction sell
+  else if (rsi > 70) score -= 22;
+  else if (rsi > 60) score -= 13;
+  else if (rsi > 52) score -= 5;
 
-  // MACD histogram — weight 20
-  if (macdHist > 0) score += 20;
-  else score -= 20;
+  // ── MACD histogram — weight 18 (scaled by magnitude) ──
+  if (macdHist > 0) {
+    // Stronger histogram = stronger signal
+    score += Math.min(18, 12 + Math.log1p(macdHist * 1000) * 2);
+  } else {
+    score -= Math.min(18, 12 + Math.log1p(-macdHist * 1000) * 2);
+  }
 
-  // EMA 9 vs 21 cross — weight 15
-  if (ema9 > ema21) score += 15;
-  else score -= 15;
+  // ── EMA 9 vs 21 cross — weight 16 ──
+  const emaDiff = Math.abs(ema9 - ema21) / ((ema9 + ema21) / 2);
+  const emaStrength = Math.min(1, emaDiff * 200); // 0.5% spread = full strength
+  if (ema9 > ema21) score += 8 + 8 * emaStrength;
+  else score -= 8 + 8 * emaStrength;
 
-  // SMA 20 vs 50 trend — weight 15
-  if (sma20 > sma50) score += 15;
-  else score -= 15;
+  // ── SMA 20 vs 50 trend — weight 14 ──
+  const smaDiff = Math.abs(sma20 - sma50) / ((sma20 + sma50) / 2);
+  const smaStrength = Math.min(1, smaDiff * 100);
+  if (sma20 > sma50) score += 7 + 7 * smaStrength;
+  else score -= 7 + 7 * smaStrength;
 
-  // Bollinger Band position — weight 10
+  // ── Bollinger Band position — weight 12 (mean reversion signal) ──
   const bbRange = bb.upper - bb.lower;
   if (bbRange > 0) {
     const pct = (price - bb.lower) / bbRange;
-    if (pct < 0.2) score += 10;
-    else if (pct > 0.8) score -= 10;
-    else score += (0.5 - pct) * 10;
+    if (pct < 0.1)
+      score += 12; // touching lower band: strong buy signal
+    else if (pct < 0.2) score += 8;
+    else if (pct < 0.35) score += 4;
+    else if (pct > 0.9)
+      score -= 12; // touching upper band: strong sell signal
+    else if (pct > 0.8) score -= 8;
+    else if (pct > 0.65) score -= 4;
+    // Note: mid-band is neutral
   }
 
-  // Volume ratio — weight 10
-  if (volumeRatio > 1.5) score += 10 * Math.sign(momentum);
-  else if (volumeRatio > 1.2) score += 5 * Math.sign(momentum);
+  // ── Volume ratio with momentum confirmation — weight 10 ──
+  if (volumeRatio > 2.0)
+    score += 10 * Math.sign(momentum); // massive surge confirms move
+  else if (volumeRatio > 1.5) score += 7 * Math.sign(momentum);
+  else if (volumeRatio > 1.2) score += 4 * Math.sign(momentum);
+  // Low volume: slight penalty (no conviction)
+  else if (volumeRatio < 0.6) score -= 3;
 
-  // Momentum — weight 10
-  if (momentum > 0) score += 10;
-  else score -= 10;
+  // ── Momentum (10-period ROC) — weight 10 ──
+  const momPct = price > 0 ? (momentum / price) * 100 : 0;
+  if (momPct > 1)
+    score += 10; // >1% positive momentum
+  else if (momPct > 0.3) score += 6;
+  else if (momPct > 0) score += 2;
+  else if (momPct < -1) score -= 10;
+  else if (momPct < -0.3) score -= 6;
+  else if (momPct < 0) score -= 2;
 
-  // CCI — weight 10
-  if (cci > 200) score += 10;
-  else if (cci > 100) score += 7;
-  else if (cci < -200) score -= 10;
-  else if (cci < -100) score -= 7;
+  // ── CCI — weight 8 (extra weight at extremes) ──
+  if (cci > 250) score += 8;
+  else if (cci > 150) score += 6;
+  else if (cci > 100) score += 3;
+  else if (cci < -250) score -= 8;
+  else if (cci < -150) score -= 6;
+  else if (cci < -100) score -= 3;
 
   return Math.max(-100, Math.min(100, score));
 }
@@ -360,26 +382,101 @@ async function enhanceWithGemini(
       bb && bb.upper !== bb.lower
         ? (((price - bb.lower) / (bb.upper - bb.lower)) * 100).toFixed(1)
         : "50.0";
-    const prompt = `You are a professional crypto/forex technical analyst. Based on the following real-time indicator data, provide a precise trading signal.
+    const atrPct = atr && price > 0 ? ((atr / price) * 100).toFixed(3) : "N/A";
+    const rsiZone =
+      rsi < 20
+        ? "EXTREME OVERSOLD"
+        : rsi < 30
+          ? "OVERSOLD"
+          : rsi < 45
+            ? "SLIGHTLY BEARISH"
+            : rsi > 80
+              ? "EXTREME OVERBOUGHT"
+              : rsi > 70
+                ? "OVERBOUGHT"
+                : rsi > 55
+                  ? "SLIGHTLY BULLISH"
+                  : "NEUTRAL";
+    const macdStrength =
+      Math.abs(macdHistogram) > price * 0.001 ? "STRONG" : "WEAK";
+    const bbZone =
+      Number(bbPos) < 20
+        ? "NEAR LOWER BAND (support)"
+        : Number(bbPos) > 80
+          ? "NEAR UPPER BAND (resistance)"
+          : Number(bbPos) > 45 && Number(bbPos) < 55
+            ? "AT MIDBAND (neutral)"
+            : "MID RANGE";
+    const cciZone =
+      (cci ?? 0) > 200
+        ? "EXTREME OVERBOUGHT"
+        : (cci ?? 0) > 100
+          ? "OVERBOUGHT"
+          : (cci ?? 0) < -200
+            ? "EXTREME OVERSOLD"
+            : (cci ?? 0) < -100
+              ? "OVERSOLD"
+              : "NORMAL";
+    const volStr =
+      volumeRatio && volumeRatio > 2
+        ? "VERY HIGH VOLUME"
+        : volumeRatio && volumeRatio > 1.5
+          ? "HIGH VOLUME"
+          : volumeRatio && volumeRatio < 0.7
+            ? "LOW VOLUME"
+            : "NORMAL VOLUME";
+    // Count bullish vs bearish signals for Gemini context
+    let bullCount = 0;
+    let bearCount = 0;
+    if (rsi < 40) bullCount++;
+    else if (rsi > 60) bearCount++;
+    if (macdHistogram > 0) bullCount++;
+    else bearCount++;
+    if (ema9 > ema21) bullCount++;
+    else bearCount++;
+    if (sma20 && sma50) {
+      if (sma20 > sma50) bullCount++;
+      else bearCount++;
+    }
+    if (Number(bbPos) < 30) bullCount++;
+    else if (Number(bbPos) > 70) bearCount++;
+    if ((cci ?? 0) < -100) bullCount++;
+    else if ((cci ?? 0) > 100) bearCount++;
 
-Asset: ${asset} | Timeframe: ${timeframe}
-Current Price: $${price.toFixed(6)}
+    const prompt = `You are an expert algorithmic trading analyst with 15 years of institutional experience. Analyze these REAL-TIME technical indicators and give the most accurate signal possible.
 
-Indicator Values:
-- RSI(14): ${rsi.toFixed(2)} [${rsi < 30 ? "OVERSOLD" : rsi > 70 ? "OVERBOUGHT" : "NEUTRAL"}]
-- MACD Histogram: ${macdHistogram.toFixed(6)} [${macdHistogram > 0 ? "BULLISH" : "BEARISH"}]
-- EMA9 vs EMA21: ${ema9 > ema21 ? "EMA9 ABOVE EMA21 (bullish)" : "EMA9 BELOW EMA21 (bearish)"}
-- SMA20 vs SMA50: ${sma20 && sma50 ? (sma20 > sma50 ? "SMA20 ABOVE SMA50 (uptrend)" : "SMA20 BELOW SMA50 (downtrend)") : "N/A"}
-- Bollinger Band Position: ${bbPos}% (0%=lower, 100%=upper)
-- ATR(14): ${atr ? atr.toFixed(6) : "N/A"} (volatility)
-- Volume Ratio: ${volumeRatio ? volumeRatio.toFixed(2) : "1.00"}x average
-- CCI(20): ${cci ? cci.toFixed(2) : "0"} [${cci && cci > 100 ? "OVERBOUGHT" : cci && cci < -100 ? "OVERSOLD" : "NORMAL"}]
-- Math Score: ${score}/100 (weighted indicator consensus)
-- Math Signal: ${signal} (confidence: ${confidence}%)
-- Trend: ${trendDirection}
+=== MARKET DATA ===
+Asset: ${asset} | Timeframe: ${timeframe} | Price: $${price.toFixed(price > 100 ? 2 : price > 1 ? 4 : 8)}
+Trend Direction: ${trendDirection} | Weighted Score: ${score > 0 ? "+" : ""}${score.toFixed(1)}/100
 
-Respond with ONLY a JSON object (no markdown):
-{"signal":"Strong Buy","confidence":85,"insight":"Key reason in one precise sentence","trend":"Bullish"}`;
+=== OSCILLATORS ===
+RSI(14): ${rsi.toFixed(2)} → ${rsiZone}
+CCI(20): ${(cci ?? 0).toFixed(2)} → ${cciZone}
+MACD Histogram: ${macdHistogram.toFixed(8)} → ${macdHistogram > 0 ? "BULLISH crossover" : "BEARISH crossover"} (${macdStrength} momentum)
+
+=== TREND INDICATORS ===
+EMA9 vs EMA21: ${ema9.toFixed(price > 1 ? 4 : 8)} vs ${ema21.toFixed(price > 1 ? 4 : 8)} → ${ema9 > ema21 ? "GOLDEN CROSS ▲" : "DEATH CROSS ▼"}
+SMA20 vs SMA50: ${sma20 ? sma20.toFixed(price > 1 ? 4 : 8) : "N/A"} vs ${sma50 ? sma50.toFixed(price > 1 ? 4 : 8) : "N/A"} → ${sma20 && sma50 ? (sma20 > sma50 ? "UPTREND ▲" : "DOWNTREND ▼") : "N/A"}
+
+=== VOLATILITY & PRICE STRUCTURE ===
+Bollinger Band Position: ${bbPos}% → ${bbZone}
+ATR(14): ${atr ? atr.toFixed(price > 1 ? 4 : 8) : "N/A"} (${atrPct}% of price)
+Volume: ${volStr} (${volumeRatio ? volumeRatio.toFixed(2) : "1.00"}x 20-period avg)
+
+=== CONSENSUS ===
+Bullish signals: ${bullCount}/6 | Bearish signals: ${bearCount}/6
+Algorithm signal: ${signal} (${confidence}% confidence)
+
+=== INSTRUCTION ===
+Based ONLY on the indicators above, determine the optimal trade signal. 
+- Strong Buy: clear bullish confluence, multiple confirming signals
+- Buy: bullish lean with moderate confirmation  
+- Neutral: mixed signals, no clear edge
+- Sell: bearish lean with moderate confirmation
+- Strong Sell: clear bearish confluence
+
+Respond with ONLY valid JSON (no markdown, no explanation outside JSON):
+{"signal":"Strong Buy","confidence":87,"insight":"RSI oversold at 28 with MACD bullish crossover confirms strong reversal setup","trend":"Bullish"}`;
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -388,21 +485,37 @@ Respond with ONLY a JSON object (no markdown):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 150 },
+          generationConfig: {
+            temperature: 0.05,
+            maxOutputTokens: 200,
+            topP: 0.9,
+          },
         }),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(10000),
       },
     );
     if (!res.ok) return null;
     const data = await res.json();
     const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    const jsonMatch = text.match(/\{[^}]+\}/);
+    // Try to extract JSON more robustly
+    const jsonMatch = text.match(/\{[\s\S]*?"signal"[\s\S]*?\}/);
     if (!jsonMatch) return null;
     const parsed = JSON.parse(jsonMatch[0]);
     if (!parsed.signal || !parsed.confidence || !parsed.insight) return null;
+    // Only accept valid signal values
+    const validSignals = [
+      "Strong Buy",
+      "Buy",
+      "Neutral",
+      "Sell",
+      "Strong Sell",
+    ];
+    const finalSig = validSignals.includes(parsed.signal)
+      ? parsed.signal
+      : signal;
     return {
-      signal: parsed.signal,
-      confidence: Math.min(99, Math.max(50, Number(parsed.confidence))),
+      signal: finalSig,
+      confidence: Math.min(97, Math.max(52, Number(parsed.confidence))),
       insight: parsed.insight,
     };
   } catch {

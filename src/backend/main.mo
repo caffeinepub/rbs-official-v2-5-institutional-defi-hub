@@ -418,6 +418,11 @@ actor {
     };
   };
 
+  // Returns the total number of registered user accounts
+  public query func getTotalUserCount() : async Nat {
+    userProfiles.size();
+  };
+
   public type UserProfileEntry = {
     principal : Principal;
     profile : UserProfile;

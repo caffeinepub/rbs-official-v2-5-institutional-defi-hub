@@ -67,6 +67,27 @@ function useCountdown(target: Date) {
   };
 }
 
+// ── Refresh Countdown ─────────────────────────────────────────────────────────
+
+function RefreshCountdown({ interval }: { interval: number }) {
+  const [count, setCount] = useState(interval);
+  useEffect(() => {
+    setCount(interval);
+    const id = setInterval(() => {
+      setCount((prev) => {
+        if (prev <= 1) return interval;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [interval]);
+  return (
+    <span className="text-xs text-gray-400">
+      Refreshing in <span className="font-semibold text-sky-500">{count}s</span>
+    </span>
+  );
+}
+
 // ── Market Pulse section ──────────────────────────────────────────────────────
 
 function MarketPulseEmbed() {
@@ -204,6 +225,49 @@ function MarketPulseEmbed() {
   );
 }
 
+// ── BNB Chain Info Box ─────────────────────────────────────────────────────────
+
+function BnbChainInfoBox() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-5 flex gap-4 items-start"
+    >
+      <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center flex-shrink-0 text-white font-black text-sm shadow-sm">
+        BNB
+      </div>
+      <div>
+        <p className="font-bold text-amber-800 text-sm mb-1">
+          RBS is a BEP-20 Token on BNB Smart Chain
+        </p>
+        <p className="text-amber-700 text-xs leading-relaxed">
+          RBS operates on BNB Smart Chain (BSC) — one of the world&apos;s most
+          active blockchains. BSC offers near-instant transactions, ultra-low
+          fees, and deep DeFi liquidity. Holding RBS means you benefit from the
+          full BNB Chain ecosystem.
+        </p>
+        <div className="flex flex-wrap gap-2 mt-3">
+          {[
+            "BEP-20 Standard",
+            "Low Gas Fees",
+            "Fast Finality",
+            "EVM Compatible",
+          ].map((tag) => (
+            <span
+              key={tag}
+              className="text-xs bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 font-semibold"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function RbsPricePage() {
@@ -217,7 +281,7 @@ export default function RbsPricePage() {
     setLoadingPrices(true);
     try {
       const symbolsParam = encodeURIComponent(
-        JSON.stringify(["BTCUSDT", "ETHUSDT"]),
+        JSON.stringify(["BTCUSDT", "ETHUSDT", "BNBUSDT"]),
       );
       const res = await fetch(
         `https://api.binance.com/api/v3/ticker/24hr?symbols=${symbolsParam}`,
@@ -262,7 +326,7 @@ export default function RbsPricePage() {
       title: "Token Creation",
       status: "complete",
       date: "2025",
-      desc: "RBS token minted on Internet Computer",
+      desc: "RBS token minted on BNB Chain (BEP-20)",
     },
     {
       phase: "Phase 2",
@@ -303,11 +367,18 @@ export default function RbsPricePage() {
       bg: "bg-emerald-50",
     },
     {
-      label: "Network",
-      value: "Internet Computer",
+      label: "Chain",
+      value: "BNB Chain (BEP-20)",
       icon: Globe,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+    },
+    {
+      label: "Standard",
+      value: "BEP-20",
+      icon: Shield,
+      color: "text-amber-700",
+      bg: "bg-amber-50",
     },
     {
       label: "Status",
@@ -346,11 +417,17 @@ export default function RbsPricePage() {
     "Ecosystem Access — Premium features and early access",
   ];
 
+  // BNB badge color for coin rows
+  const coinBadgeColor = (symbol: string) => {
+    if (symbol === "BNB") return "text-amber-600 font-black";
+    return "font-bold text-gray-900";
+  };
+
   return (
     <>
       <PageHead
         title="RBS Token Price | Pre-Launch Phase"
-        description="Track the RBS token pre-launch status, countdown to presale, and community sentiment. Fixed supply of 100,000 RBS on Internet Computer."
+        description="Track the RBS token pre-launch status, countdown to presale, and community sentiment. Fixed supply of 100,000 RBS on BNB Smart Chain (BEP-20)."
       />
       <div className="min-h-screen bg-white">
         {/* Hero */}
@@ -359,13 +436,26 @@ export default function RbsPricePage() {
             className="pt-24 pb-12 px-4"
             style={{
               background:
-                "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 50%, #f8faff 100%)",
+                "linear-gradient(135deg, #fffbeb 0%, #e0f2fe 50%, #f8faff 100%)",
             }}
           >
             <div className="max-w-5xl mx-auto text-center">
+              {/* BNB Chain badge */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-full px-4 py-1.5 text-xs text-amber-700 font-bold mb-3 shadow-sm"
+              >
+                <span className="w-4 h-4 rounded-full bg-amber-400 inline-flex items-center justify-center text-white text-[9px] font-black">
+                  B
+                </span>
+                Built on BNB Chain • BEP-20
+              </motion.div>
+
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
                 className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-1.5 text-xs text-orange-700 font-semibold mb-5"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -474,14 +564,18 @@ export default function RbsPricePage() {
                 <Coins className="w-5 h-5 text-emerald-600" />
                 Token Overview
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {tokenStats.map((stat) => (
                   <motion.div
                     key={stat.label}
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all"
+                    className={`bg-white rounded-2xl border p-4 shadow-sm hover:shadow-md transition-all ${
+                      stat.label === "Chain" || stat.label === "Standard"
+                        ? "border-amber-200 hover:border-amber-300"
+                        : "border-gray-200 hover:border-emerald-200"
+                    }`}
                   >
                     <div
                       className={`w-8 h-8 ${stat.bg} rounded-lg flex items-center justify-center mb-3`}
@@ -490,6 +584,13 @@ export default function RbsPricePage() {
                     </div>
                     <div className={`font-bold text-sm ${stat.color}`}>
                       {stat.value}
+                      {stat.label === "Chain" && (
+                        <span className="ml-1 inline-flex items-center align-middle">
+                          <span className="w-4 h-4 rounded-full bg-amber-400 inline-flex items-center justify-center text-white text-[8px] font-black">
+                            B
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-gray-400 mt-0.5">
                       {stat.label}
@@ -498,6 +599,11 @@ export default function RbsPricePage() {
                 ))}
               </div>
             </div>
+          </SmokySectionTransition>
+
+          {/* BNB Chain Info */}
+          <SmokySectionTransition>
+            <BnbChainInfoBox />
           </SmokySectionTransition>
 
           {/* Price Card — Locked */}
@@ -529,8 +635,8 @@ export default function RbsPricePage() {
                   <p className="font-bold text-gray-900 text-sm">100,000</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs">Network</p>
-                  <p className="font-bold text-gray-900 text-sm">ICP</p>
+                  <p className="text-gray-400 text-xs">Chain</p>
+                  <p className="font-bold text-amber-600 text-sm">BNB</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-xs">Type</p>
@@ -545,7 +651,7 @@ export default function RbsPricePage() {
             {/* Major Assets */}
             <SmokySectionTransition>
               <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-1">
                   <h3 className="font-bold text-gray-900 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                     Major Assets
@@ -566,15 +672,18 @@ export default function RbsPricePage() {
                   </button>
                 </div>
 
-                {lastUpdated && (
-                  <p className="text-xs text-gray-400 mb-3">
-                    Updated: {lastUpdated.toLocaleTimeString()}
-                  </p>
-                )}
+                <div className="flex items-center justify-between mb-3">
+                  {lastUpdated && (
+                    <p className="text-xs text-gray-400">
+                      Updated: {lastUpdated.toLocaleTimeString()}
+                    </p>
+                  )}
+                  <RefreshCountdown interval={15} />
+                </div>
 
                 {loadingPrices && marketCoins.length === 0 ? (
                   <div className="space-y-3">
-                    {[1, 2].map((k) => (
+                    {[1, 2, 3].map((k) => (
                       <div
                         key={k}
                         className="h-16 bg-gray-100 rounded-xl animate-pulse"
@@ -586,20 +695,31 @@ export default function RbsPricePage() {
                     {marketCoins.map((coin) => (
                       <div
                         key={coin.symbol}
-                        className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100"
+                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                          coin.symbol === "BNB"
+                            ? "bg-amber-50 border-amber-200"
+                            : "bg-gray-50 border-gray-100"
+                        }`}
                       >
                         <div>
-                          <p className="font-bold text-gray-900">
+                          <p className={coinBadgeColor(coin.symbol)}>
                             {coin.symbol}
+                            {coin.symbol === "BNB" && (
+                              <span className="ml-1.5 text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-semibold align-middle">
+                                RBS Chain
+                              </span>
+                            )}
                           </p>
                           <p className="text-xs text-gray-400">
                             H: $
                             {coin.high.toLocaleString("en-US", {
-                              maximumFractionDigits: 0,
+                              maximumFractionDigits:
+                                coin.symbol === "BNB" ? 2 : 0,
                             })}{" "}
                             / L: $
                             {coin.low.toLocaleString("en-US", {
-                              maximumFractionDigits: 0,
+                              maximumFractionDigits:
+                                coin.symbol === "BNB" ? 2 : 0,
                             })}
                           </p>
                         </div>

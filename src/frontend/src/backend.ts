@@ -331,6 +331,7 @@ export interface backendInterface {
     initialize(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     isUsernameTaken(username: string): Promise<boolean>;
+    getTotalUserCount(): Promise<bigint>;
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     publishBlogPost(post: BlogPost, passcode: string): Promise<{
         __kind__: "ok";
@@ -1141,6 +1142,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getTotalUserCount(): Promise<bigint> {
+        try {
+            if (this.actor) {
+                const result = await this.actor.getTotalUserCount();
+                return result;
+            }
+        } catch (e) {
+            return BigInt(0);
+        }
+        return BigInt(0);
+    }
+
     async markAlertAsRead(arg0: bigint): Promise<boolean> {
         if (this.processError) {
             try {

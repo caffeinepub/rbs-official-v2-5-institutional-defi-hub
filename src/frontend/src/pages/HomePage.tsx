@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Send,
   Shield,
+  TrendingDown,
   TrendingUp,
   Users,
   Zap,
@@ -49,6 +50,111 @@ function useCountUp(target: number, inView: boolean, duration = 1500) {
 }
 
 // ── Static data ───────────────────────────────────────────────────────────────
+
+// ── Live Hero Price Banner ─────────────────────────────────────────────────────
+
+interface PriceData {
+  symbol: string;
+  price: number;
+  change: number;
+  trend: "up" | "down" | "neutral";
+}
+
+function LiveHeroPriceBanner() {
+  const [prices, setPrices] = useState<PriceData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const prevPrices = useRef<Record<string, number>>({});
+
+  const fetchPrices = useCallback(async () => {
+    try {
+      const res = await fetch(
+        'https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","BNBUSDT"]',
+      );
+      const data = await res.json();
+      const updated: PriceData[] = data.map(
+        (d: {
+          symbol: string;
+          lastPrice: string;
+          priceChangePercent: string;
+        }) => {
+          const price = Number.parseFloat(d.lastPrice);
+          const prev = prevPrices.current[d.symbol];
+          const trend: "up" | "down" | "neutral" =
+            prev === undefined
+              ? "neutral"
+              : price > prev
+                ? "up"
+                : price < prev
+                  ? "down"
+                  : "neutral";
+          prevPrices.current[d.symbol] = price;
+          const name = d.symbol.replace("USDT", "");
+          return {
+            symbol: name,
+            price,
+            change: Number.parseFloat(d.priceChangePercent),
+            trend,
+          };
+        },
+      );
+      setPrices(updated);
+      setLoading(false);
+    } catch {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 15000);
+    return () => clearInterval(interval);
+  }, [fetchPrices]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center gap-3 mb-6">
+        {["BTC", "ETH", "BNB"].map((s) => (
+          <div
+            key={s}
+            className="h-8 w-32 rounded-full bg-white/40 animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="flex flex-wrap justify-center gap-2 mb-6"
+    >
+      {prices.map((p) => (
+        <motion.span
+          key={p.symbol}
+          animate={p.trend !== "neutral" ? { scale: [1, 1.04, 1] } : {}}
+          transition={{ duration: 0.3 }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm text-sm font-medium"
+        >
+          <span className="font-bold text-gray-700">{p.symbol}</span>
+          <span className="font-mono text-gray-900">
+            $
+            {p.price.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+          <span
+            className={`text-xs font-semibold flex items-center gap-0.5 ${p.change >= 0 ? "text-green-600" : "text-red-500"}`}
+          >
+            {p.change >= 0 ? "▲" : "▼"} {Math.abs(p.change).toFixed(2)}%
+          </span>
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
 
 const STATS = [
   {
@@ -106,6 +212,7 @@ const FEATURES = [
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     cardBorder: "border-emerald-100 hover:border-emerald-300",
+    path: "/rbs-price",
   },
   {
     icon: Zap,
@@ -115,6 +222,7 @@ const FEATURES = [
     iconBg: "bg-sky-50",
     iconColor: "text-sky-600",
     cardBorder: "border-sky-100 hover:border-sky-300",
+    path: "/market-intel",
   },
   {
     icon: Shield,
@@ -124,6 +232,7 @@ const FEATURES = [
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
     cardBorder: "border-blue-100 hover:border-blue-300",
+    path: "/market-intel",
   },
   {
     icon: Users,
@@ -133,6 +242,7 @@ const FEATURES = [
     iconBg: "bg-purple-50",
     iconColor: "text-purple-600",
     cardBorder: "border-purple-100 hover:border-purple-300",
+    path: "/trading-tools",
   },
   {
     icon: Globe,
@@ -142,6 +252,7 @@ const FEATURES = [
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     cardBorder: "border-emerald-100 hover:border-emerald-300",
+    path: "/trading-tools",
   },
   {
     icon: Lock,
@@ -151,6 +262,7 @@ const FEATURES = [
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     cardBorder: "border-emerald-100 hover:border-emerald-300",
+    path: "/staking",
   },
 ];
 
@@ -443,14 +555,39 @@ export default function HomePage() {
               </div>
             </motion.div>
 
+            <LiveHeroPriceBanner />
+
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 shimmer-turquoise leading-tight"
+              className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 leading-tight"
             >
-              Return Be Superior
+              Always Stay{" "}
+              <span
+                style={{
+                  background:
+                    "linear-gradient(135deg, #0ea5e9, #06b6d4, #22d3ee)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                SUPERIOR
+              </span>
             </motion.h1>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="flex justify-center mb-4"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-yellow-300 bg-yellow-50 text-yellow-700 text-sm font-semibold">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                BNB Chain · BEP-20
+              </span>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -469,14 +606,17 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.6, ease: [0.4, 0, 0.2, 1] }}
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
             >
-              <Button
-                data-ocid="home.primary_button"
-                onClick={() => navigate({ to: "/acquisition" })}
-                size="lg"
-                className="bg-emerald-500 hover:bg-emerald-500 text-white font-bold text-lg px-8 py-6 magnetic-hover"
-              >
-                Get RBS Tokens <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <div className="relative inline-block">
+                <div className="absolute inset-0 rounded-full bg-emerald-400 blur-xl opacity-50 animate-pulse" />
+                <Button
+                  data-ocid="home.primary_button"
+                  onClick={() => navigate({ to: "/acquisition" })}
+                  size="lg"
+                  className="relative bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg px-8 py-6 magnetic-hover"
+                >
+                  Get RBS Tokens <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
               <Button
                 data-ocid="home.secondary_button"
                 onClick={() => navigate({ to: "/market-intel" })}
@@ -522,6 +662,65 @@ export default function HomePage() {
             </div>
           </section>
         </SmokySectionTransition>
+
+        {/* ── Token Snapshot ───────────────────────────────────────────── */}
+        <section className="py-6 px-4 bg-white border-b border-gray-100">
+          <div className="container mx-auto max-w-4xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                {
+                  label: "Total Supply",
+                  value: "100,000 RBS",
+                  icon: Coins,
+                  color: "text-sky-600",
+                  bg: "bg-sky-50",
+                },
+                {
+                  label: "Blockchain",
+                  value: "BNB Chain",
+                  icon: Globe,
+                  color: "text-yellow-600",
+                  bg: "bg-yellow-50",
+                },
+                {
+                  label: "Token Burn",
+                  value: "15%",
+                  icon: Zap,
+                  color: "text-red-500",
+                  bg: "bg-red-50",
+                },
+                {
+                  label: "Presale Date",
+                  value: "Q1 2027",
+                  icon: Calendar,
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-50",
+                },
+              ].map((item) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-white border border-gray-200 hover:border-sky-200 hover:shadow-sm transition-all"
+                >
+                  <div
+                    className={`w-9 h-9 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <item.icon className={`w-4 h-4 ${item.color}`} />
+                  </div>
+                  <div>
+                    <div className={`text-sm font-bold ${item.color}`}>
+                      {item.value}
+                    </div>
+                    <div className="text-xs text-gray-400">{item.label}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ── NEW: How to Get RBS Steps ────────────────────────────────── */}
         <SmokySectionTransition delay={80}>
@@ -730,7 +929,12 @@ export default function HomePage() {
                       boxShadow: "0 20px 40px rgba(14,165,233,0.12)",
                       transition: { duration: 0.2 },
                     }}
-                    className={`relative p-6 rounded-2xl border bg-white ${feature.cardBorder} shadow-sm hover:shadow-md cursor-default group overflow-hidden transition-all duration-300`}
+                    className={`relative p-6 rounded-2xl border bg-white ${feature.cardBorder} shadow-sm hover:shadow-md cursor-pointer group overflow-hidden transition-all duration-300`}
+                    onClick={() =>
+                      navigate({
+                        to: ((feature as { path?: string }).path as "/") || "/",
+                      })
+                    }
                   >
                     <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute w-full h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent animate-scan" />
@@ -743,9 +947,14 @@ export default function HomePage() {
                     <h3 className="text-gray-900 font-bold text-lg mb-2">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">
+                    <p className="text-gray-500 text-sm leading-relaxed mb-3">
                       {feature.description}
                     </p>
+                    <div
+                      className={`flex items-center gap-1 text-xs font-semibold ${feature.iconColor} opacity-0 group-hover:opacity-100 transition-opacity`}
+                    >
+                      Explore <ArrowRight className="w-3 h-3" />
+                    </div>
                   </motion.div>
                 ))}
               </div>

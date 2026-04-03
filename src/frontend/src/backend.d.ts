@@ -231,6 +231,7 @@ export interface backendInterface {
     initialize(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     isUsernameTaken(username: string): Promise<boolean>;
+    getTotalUserCount(): Promise<bigint>;
     markAlertAsRead(alertId: bigint): Promise<boolean>;
     publishBlogPost(post: BlogPost, passcode: string): Promise<{
         __kind__: "ok";

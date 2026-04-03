@@ -442,23 +442,59 @@ export default function FundingRatesPage() {
               </motion.div>
             )}
 
-            {/* Market Sentiment Gauge */}
+            {/* Premium Sentiment Gauge */}
             {rates.length > 0 &&
               (() => {
+                const gaugePosition = Math.max(
+                  0,
+                  Math.min(100, 50 - (avgFundingRate / 0.001) * 50),
+                );
                 const sentiment = getMarketSentiment(avgFundingRate);
                 return (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.5 }}
-                    className={`inline-flex items-center gap-3 mt-4 px-5 py-3 rounded-2xl border ${sentiment.bg}`}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                    className="mt-6 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
                   >
-                    <span className="text-sm font-semibold text-gray-600">
-                      Market Greed vs Fear:
-                    </span>
-                    <span className={`text-sm font-bold ${sentiment.color}`}>
-                      {sentiment.label}
-                    </span>
+                    <div className="flex justify-between text-xs font-bold mb-3">
+                      <span className="text-red-600 flex items-center gap-1">
+                        <TrendingDown className="w-3 h-3" />
+                        BEARISH
+                      </span>
+                      <span className="text-gray-500">NEUTRAL</span>
+                      <span className="text-emerald-600 flex items-center gap-1">
+                        BULLISH
+                        <TrendingUp className="w-3 h-3" />
+                      </span>
+                    </div>
+                    <div
+                      className="relative h-4 rounded-full overflow-visible"
+                      style={{
+                        background:
+                          "linear-gradient(to right, #ef4444, #f97316, #d1d5db, #22c55e, #16a34a)",
+                      }}
+                    >
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 border-gray-800 shadow-lg z-10"
+                        animate={{ left: `calc(${gaugePosition}% - 10px)` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                      <span>Shorts Paying</span>
+                      <span>Balanced</span>
+                      <span>Longs Paying</span>
+                    </div>
+                    <div className="text-center mt-3">
+                      <span className={`text-sm font-bold ${sentiment.color}`}>
+                        {sentiment.label}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        avg {(avgFundingRate * 100).toFixed(4)}%
+                      </span>
+                    </div>
                   </motion.div>
                 );
               })()}
@@ -479,6 +515,15 @@ export default function FundingRatesPage() {
                     : "Loading..."}{" "}
                   · Next refresh in {nextRefreshSecs}s
                 </p>
+                <div className="mt-1.5 h-1 w-48 rounded-full bg-gray-100 overflow-hidden">
+                  <motion.div
+                    key={lastUpdated?.getTime()}
+                    className="h-full bg-sky-400 rounded-full"
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: 30, ease: "linear" }}
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {error && (

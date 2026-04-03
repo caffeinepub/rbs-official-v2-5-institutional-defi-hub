@@ -1032,8 +1032,13 @@ function LiveSignalCard({ signal }: { signal: LiveSignalItem }) {
           </span>
           {signal.change24h !== undefined && (
             <span
-              className={`ml-2 text-xs ${signal.change24h >= 0 ? "text-green-600" : "text-red-500"}`}
+              className={`ml-2 text-xs inline-flex items-center gap-0.5 ${signal.change24h >= 0 ? "text-green-600" : "text-red-500"}`}
             >
+              {signal.change24h >= 0 ? (
+                <TrendingUp className="w-3 h-3" />
+              ) : (
+                <TrendingDown className="w-3 h-3" />
+              )}
               {signal.change24h >= 0 ? "+" : ""}
               {signal.change24h.toFixed(2)}%
             </span>
@@ -1046,14 +1051,29 @@ function LiveSignalCard({ signal }: { signal: LiveSignalItem }) {
           <span>Confidence</span>
           <span className="font-bold text-gray-700">{signal.confidence}%</span>
         </div>
-        <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
-          <motion.div
-            className="h-full rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${signal.confidence}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            style={{ background: barBg }}
-          />
+        <div className="flex gap-0.5 h-2">
+          {[
+            { threshold: 33, label: "low", activeColor: "#94a3b8" },
+            { threshold: 66, label: "mid", activeColor: "#f59e0b" },
+            { threshold: 100, label: "high", activeColor: barBg },
+          ].map((seg, idx) => {
+            const isActive = signal.confidence > seg.threshold - 33;
+            return (
+              <motion.div
+                key={seg.label}
+                className="flex-1 rounded-sm"
+                initial={{ opacity: 0.2 }}
+                animate={{
+                  opacity: isActive ? 1 : 0.2,
+                  backgroundColor: isActive ? seg.activeColor : "#e5e7eb",
+                }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                style={{
+                  backgroundColor: isActive ? seg.activeColor : "#e5e7eb",
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 

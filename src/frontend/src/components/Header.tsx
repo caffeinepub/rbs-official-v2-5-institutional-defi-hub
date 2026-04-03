@@ -32,6 +32,7 @@ import {
   useTransform,
 } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAccountCount } from "../hooks/useAccountCount";
 import { useActor } from "../hooks/useActor";
 import { useReliableAuth } from "../hooks/useReliableAuth";
 import LivePriceTicker from "./LivePriceTicker";
@@ -148,6 +149,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { count: memberCount, isLoaded: memberCountLoaded } = useAccountCount();
   const dropdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { scrollYProgress } = useScroll();
@@ -244,14 +246,49 @@ export default function Header() {
             className="flex items-center gap-2.5 group flex-shrink-0"
           >
             <div className="relative">
-              <div className="h-9 w-9 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-sm ring-2 ring-sky-100 group-hover:ring-sky-300 transition-all group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.4)]">
+              <motion.div
+                animate={{
+                  boxShadow: [
+                    "0 0 0px rgba(14,165,233,0)",
+                    "0 0 16px rgba(14,165,233,0.6)",
+                    "0 0 0px rgba(14,165,233,0)",
+                  ],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
+                className="h-9 w-9 rounded-full bg-sky-500 flex items-center justify-center text-white font-black text-sm ring-2 ring-sky-100 group-hover:ring-sky-300 transition-all"
+              >
                 RBS
-              </div>
+              </motion.div>
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
             </div>
-            <div className="leading-none">
-              <span className="font-bold text-base text-gray-900">RBS</span>
-              <span className="font-bold text-base text-sky-500">Superior</span>
+            <div className="leading-tight">
+              <div>
+                <span className="font-bold text-base text-gray-900">RBS</span>
+                <span className="font-bold text-base text-sky-500">
+                  Superior
+                </span>
+              </div>
+              {/* Live member count */}
+              <div className="flex items-center gap-1 mt-0.5">
+                <motion.span
+                  animate={{ opacity: [1, 0.4, 1] }}
+                  transition={{
+                    duration: 2,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
+                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"
+                />
+                <span className="text-[10px] font-medium text-gray-500 leading-none">
+                  {memberCountLoaded
+                    ? `${memberCount.toLocaleString()} Members`
+                    : "Loading..."}
+                </span>
+              </div>
             </div>
           </button>
 
@@ -454,24 +491,33 @@ export default function Header() {
                 </AnimatePresence>
               </div>
             ) : (
-              <button
-                type="button"
-                data-ocid="nav.auth.button"
-                onClick={handleAuth}
-                disabled={isDisabled}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(135deg, #0ea5e9, #06b6d4)",
-                  boxShadow: "0 4px 14px rgba(14,165,233,0.35)",
+              <motion.div
+                whileHover={{
+                  scale: 1.03,
+                  filter: "drop-shadow(0 0 12px rgba(14,165,233,0.55))",
                 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
               >
-                {isDisabled ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <LogIn className="h-4 w-4" />
-                )}
-                {isDisabled ? "Connecting..." : "Sign In"}
-              </button>
+                <button
+                  type="button"
+                  data-ocid="nav.auth.button"
+                  onClick={handleAuth}
+                  disabled={isDisabled}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all disabled:opacity-50"
+                  style={{
+                    background: "linear-gradient(135deg, #0ea5e9, #06b6d4)",
+                    boxShadow: "0 4px 14px rgba(14,165,233,0.35)",
+                  }}
+                >
+                  {isDisabled ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogIn className="h-4 w-4" />
+                  )}
+                  {isDisabled ? "Connecting..." : "Sign In"}
+                </button>
+              </motion.div>
             )}
           </div>
 
